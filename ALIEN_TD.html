@@ -2,16 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Alien TD</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Alien TD">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -29,7 +19,6 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
-  overscroll-behavior:none;
   background:#000;
   color:#fff;
   font-family:'Orbitron',sans-serif;
@@ -122,7 +111,6 @@ canvas{
   height:100%;
   background:#050805;
   cursor:crosshair;
-  touch-action:none;
 }
 #hud{
   position:absolute;
@@ -252,60 +240,6 @@ canvas{
   display:none;
   margin-top:20px;
   font-size:1.2rem;
-}
-
-/* ---------- Mobile responsiveness ---------- */
-/* This is a fixed 16:9 landscape board - on narrow/portrait phones the
-   overlay panels (sized for desktop) would otherwise swamp the screen. */
-@media (max-width:820px){
-  h1{ font-size:2.3rem; letter-spacing:4px; margin-bottom:10px; }
-  .meta-stats,.armory-panel,.settings-panel{ width:min(92vw,380px); }
-  #hud{ padding:10px 14px; }
-  .hud-stat{ font-size:1.05rem; }
-  #shop-panel{
-    width:min(46vw,260px);
-    top:70px;
-    right:10px;
-    padding:12px;
-    max-height:calc(100vh - 90px);
-  }
-  #shop-open-btn{ top:70px; right:10px; padding:8px 10px; font-size:.85rem; }
-  .shop-title{ font-size:1.05rem; }
-  .tower-card{ padding:10px; margin-bottom:10px; }
-  .t-name{ font-size:1rem; }
-  .t-desc{ font-size:.72rem; }
-  #upgrade-panel{
-    width:min(46vw,240px);
-    left:10px;
-    bottom:10px;
-    padding:12px;
-  }
-  #btn-quit{ padding:8px 12px; font-size:.85rem; }
-  button{ padding:12px 24px; font-size:1rem; }
-}
-
-.rotate-hint{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  background:#000;
-  color:var(--green);
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:16px;
-  text-align:center;
-  padding:30px;
-}
-.rotate-hint svg{ animation:rotateHintSpin 1.8s ease-in-out infinite; }
-@keyframes rotateHintSpin{
-  0%,20%{ transform:rotate(0deg); }
-  50%,70%{ transform:rotate(-90deg); }
-  100%{ transform:rotate(-90deg); }
-}
-@media (max-width:820px) and (orientation:portrait){
-  .rotate-hint{ display:flex; }
 }
 
 /* ---------- Armory (lobby shop) ---------- */
@@ -800,15 +734,6 @@ canvas{
 </style>
 </head>
 <body>
-
-<div class="rotate-hint">
-  <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-    <rect x="6" y="2" width="12" height="20" rx="2"/>
-    <line x1="10" y1="19" x2="14" y2="19"/>
-  </svg>
-  <div style="font-size:1.1rem;letter-spacing:2px;">ROTATE YOUR DEVICE</div>
-  <div style="font-family:Arial;font-size:.85rem;color:#8fa08f;max-width:280px;">This game is designed for landscape play.</div>
-</div>
 
 <div class="ui-modal-overlay" id="ui-modal-overlay">
   <div class="ui-modal-box">
@@ -1900,13 +1825,12 @@ function resize(){
 }
 window.addEventListener("resize",resize);
 
-// convert a mouse/click/touch event (in CSS pixels) into internal game coordinates
+// convert a mouse/click event (in CSS pixels) into internal game coordinates
 function getCanvasCoords(e){
   const rect=canvas.getBoundingClientRect();
-  const point=(e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
   return {
-    x:(point.clientX-rect.left)*(BASE_W/rect.width),
-    y:(point.clientY-rect.top)*(BASE_H/rect.height)
+    x:(e.clientX-rect.left)*(BASE_W/rect.width),
+    y:(e.clientY-rect.top)*(BASE_H/rect.height)
   };
 }
 
@@ -3024,11 +2948,11 @@ function buildTower(x,y,type){
   updateHUD();
 }
 
-function handlePointerDown(x,y){
+canvas.addEventListener("mousedown",()=>{
   if(selectedShopItem){
     const stat=TOWER_STATS[selectedShopItem];
-    if(gold>=stat.cost && isValidPlacement(x,y)){
-      buildTower(x,y,selectedShopItem);
+    if(gold>=stat.cost && isValidPlacement(mousePos.x,mousePos.y)){
+      buildTower(mousePos.x,mousePos.y,selectedShopItem);
       playSound("build");
       selectedShopItem=null;
       document.querySelectorAll(".tower-card").forEach(c=>c.classList.remove("active"));
@@ -3038,39 +2962,13 @@ function handlePointerDown(x,y){
   selectedTower=null;
   document.getElementById("upgrade-panel").style.display="none";
   for(const t of towers){
-    if(Math.hypot(t.x-x,t.y-y)<25){
+    if(Math.hypot(t.x-mousePos.x,t.y-mousePos.y)<25){
       selectedTower=t;
       updateUpgradePanel();
       break;
     }
   }
-}
-
-canvas.addEventListener("mousedown",e=>{
-  const c=getCanvasCoords(e);
-  mousePos.x=c.x;
-  mousePos.y=screenToWorldY(c.y);
-  handlePointerDown(mousePos.x,mousePos.y);
 });
-
-// Touch input: a tap has no preceding "mousemove" to prime mousePos with,
-// so compute the position straight from the touch itself. preventDefault
-// stops the page from scrolling/zooming and suppresses the browser's own
-// synthetic mouse events (which would otherwise double-fire this).
-canvas.addEventListener("touchstart",e=>{
-  e.preventDefault();
-  const c=getCanvasCoords(e);
-  mousePos.x=c.x;
-  mousePos.y=screenToWorldY(c.y);
-  handlePointerDown(mousePos.x,mousePos.y);
-},{passive:false});
-
-canvas.addEventListener("touchmove",e=>{
-  e.preventDefault();
-  const c=getCanvasCoords(e);
-  mousePos.x=c.x;
-  mousePos.y=screenToWorldY(c.y);
-},{passive:false});
 
 function updateUpgradePanel(){
   if(!selectedTower) return;
@@ -5374,14 +5272,6 @@ window.restartFromGameOver = restartFromGameOver;
 window.returnToLobbyFromGameOver = returnToLobbyFromGameOver;
 
 resize();
-
-if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("sw.js").catch(()=>{
-      // no https/localhost, or sw.js not hosted alongside this file - game still works, just not installable
-    });
-  });
-}
 </script>
 
 </body>
