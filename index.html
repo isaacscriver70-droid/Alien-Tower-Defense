@@ -836,6 +836,7 @@ canvas{
     <button id="btn-save-lobby" onclick="saveProgressManually()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">SAVE PROGRESS</button>
     <button onclick="toggleSettings()" style="border-color:var(--purple);color:var(--purple);box-shadow:0 0 20px rgba(176,38,255,.5);">SETTINGS</button>
     <button onclick="openBestiary()" style="border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">BESTIARY</button>
+    <button id="btn-update-app" onclick="forceUpdateApp()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">CHECK FOR UPDATES</button>
   </div>
 
   <div class="settings-panel" id="settings-panel" style="display:none;">
@@ -1172,8 +1173,11 @@ const AudioEngine=(function(){
     el.preload="auto";
     el.volume=0;
     el.addEventListener("error",()=>{
-      // Missing/blocked file (e.g. the music/ folder wasn't uploaded
-      // alongside this page) - fail silently, the game still works.
+      // Missing/blocked file (e.g. the music/ folder wasn't deployed
+      // alongside this page, or a stale service-worker cache is still
+      // serving the old version) - log it but keep the game working.
+      console.warn("[AlienTD] Music track failed to load:",src,
+        "- make sure the music/ folder sits next to this HTML file, and try CHECK FOR UPDATES if you just updated the game.");
     });
     musicElements[key]=el;
     return el;
@@ -1560,6 +1564,33 @@ function saveProgressManually(){
     btn.innerText=old;
     btn.disabled=false;
   },1100);
+}
+
+// Forces this page past any stale offline/service-worker cache so a new
+// deploy actually loads, without touching localStorage (that's a
+// separate storage bucket from the service-worker's Cache Storage, so
+// save progress and Armory upgrades are completely unaffected by this).
+async function forceUpdateApp(){
+  showConfirmModal(
+    "This reloads the game and fetches the latest version. Your save progress is stored separately and will not be touched. Continue?",
+    async ()=>{
+      const btn=document.getElementById("btn-update-app");
+      if(btn){ btn.disabled=true; btn.innerText="UPDATING..."; }
+      try{
+        if("serviceWorker" in navigator){
+          const regs=await navigator.serviceWorker.getRegistrations();
+          for(const reg of regs){ await reg.unregister(); }
+        }
+        if("caches" in window){
+          const keys=await caches.keys();
+          for(const key of keys){ await caches.delete(key); }
+        }
+      }catch(e){
+        console.warn("Update cleanup hit an issue (reloading anyway):",e);
+      }
+      location.reload();
+    }
+  );
 }
 
 function requestMetaUpgrade(){
@@ -5376,6 +5407,7 @@ window.selectShopItem = selectShopItem;
 window.quitGame = quitGame;
 window.requestMetaUpgrade = requestMetaUpgrade;
 window.saveProgressManually = saveProgressManually;
+window.forceUpdateApp = forceUpdateApp;
 window.armoryBuyTower = armoryBuyTower;
 window.armoryToggleEquip = armoryToggleEquip;
 window.armoryBuySlot = armoryBuySlot;
