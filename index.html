@@ -61,8 +61,9 @@ body:after{
   z-index:100;
   overflow-y:auto;
   overflow-x:hidden;
-  padding:40px 0 40px 0;
+  padding:40px 0 max(40px, env(safe-area-inset-bottom)) 0;
 }
+.screen > button:last-child{ flex-shrink:0; }
 h1{
   font-size:4.5rem;
   letter-spacing:8px;
@@ -717,16 +718,24 @@ canvas{
   z-index:5000;
   width:34px;
   height:34px;
+  min-height:0; /* override the global button{min-height:44px} - that was stretching
+                   this into an oval since only height was constrained to 34px */
+  min-width:0;
   padding:0;
   border-radius:50%;
   font-size:1rem;
   line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   color:#444;
   border:2px solid #333;
   background:rgba(0,0,0,.4);
   box-shadow:none;
   opacity:.35;
   transition:opacity .2s,transform .2s;
+  font-family:"Segoe UI Symbol","Noto Sans Symbols",Arial,sans-serif;
+  font-variant-emoji:text; /* modern browsers: force monochrome glyph, not emoji */
 }
 #admin-secret-btn:hover{
   opacity:1;
@@ -945,7 +954,7 @@ canvas{
     <div id="bestiary-bosses"></div>
   </div>
 
-  <button onclick="closeBestiary()" style="margin-top:34px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE BESTIARY</button>
+  <button onclick="closeBestiary()" style="flex-shrink:0;margin:34px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE BESTIARY</button>
 </div>
 
 <div id="game-container">
@@ -1021,7 +1030,7 @@ canvas{
 </div>
 
 <!-- ---------- Secret admin panel ---------- -->
-<button id="admin-secret-btn" onclick="openAdminCodeModal()" title="&#8203;">&#9881;</button>
+<button id="admin-secret-btn" onclick="openAdminCodeModal()" title="&#8203;">&#9881;&#65038;</button>
 
 <div class="admin-overlay" id="admin-code-overlay">
   <div class="admin-box">
@@ -1866,7 +1875,8 @@ const BEAST_DESC={
 const BEAST_ORDER=["normal","runner","stunner","tank","shielded","splitter","splitling","cloaked","juggernaut",
   "glitch","cinder","frostfang","burrower","drifter","leech","leechling","wraith","specter","angler","broodling","broodletling",
   "sentinel","ashwraith","iceshard","shardling","sandviper","cometrider","sporecloud","hologram","poltergeist","wisp","deepcrawler","hiveguard",
-  "aegisdrone","moltengrub","glaciant","dunestalker","starlet","bogbeast","circuitrunner","grimshade","pressurefiend","broodwarden"];
+  "aegisdrone","moltengrub","glaciant","dunestalker","starlet","bogbeast","circuitrunner","grimshade","pressurefiend","broodwarden",
+  "trojan","pyroclast","blizzardling","scarab","voidwisp","mudcrawler","ripper","banshee","reeffish","swarmling"];
 
 function openBestiary(){
   document.getElementById("main-menu").style.display="none";
@@ -2821,6 +2831,107 @@ const ENEMY_TYPES={
     speed:1.0,
     reward:75,
     armored:true
+  },
+
+  // -------------------------------------------------------------------
+  // Fourth wave of area-signature aliens - a fourth unique alien per
+  // sector. reeffish gets its own true fish-shaped render (see
+  // drawAlienBody) instead of the shared blob body, since The Abyss
+  // asked for an actual fish enemy.
+  // -------------------------------------------------------------------
+  trojan:{ // The Mainframe
+    name:"Trojan Packet",
+    color:"#8cff6a",
+    size:13,
+    hp:95,
+    speed:2.0,
+    reward:26,
+    cloakInterval:60,
+    cloakDuration:30
+  },
+  pyroclast:{ // Magma Depths
+    name:"Pyroclast",
+    color:"#ff5500",
+    size:12,
+    hp:65,
+    speed:2.8,
+    reward:24
+  },
+  blizzardling:{ // Frozen Wastes
+    name:"Blizzardling",
+    color:"#e8fbff",
+    size:9,
+    hp:34,
+    speed:3.3,
+    reward:16,
+    splitsInto:"shardling",
+    splitCount:2
+  },
+  scarab:{ // Dune Sea
+    name:"Sand Scarab",
+    color:"#c8930f",
+    size:14,
+    hp:160,
+    speed:1.3,
+    reward:30,
+    armored:true
+  },
+  voidwisp:{ // Deep Space
+    name:"Void Wisp",
+    color:"#d8e0ff",
+    size:8,
+    hp:28,
+    speed:4.0,
+    reward:18,
+    tiny:true
+  },
+  mudcrawler:{ // Toxic Swamp
+    name:"Mud Crawler",
+    color:"#4a6b1a",
+    size:19,
+    hp:280,
+    speed:0.9,
+    reward:44,
+    armored:true,
+    heavy:true
+  },
+  ripper:{ // Neon City
+    name:"Street Ripper",
+    color:"#ff44aa",
+    size:11,
+    hp:130,
+    speed:2.6,
+    reward:32,
+    cloakInterval:55,
+    cloakDuration:30
+  },
+  banshee:{ // Haunted Grounds
+    name:"Manor Banshee",
+    color:"#c9c9ff",
+    size:13,
+    hp:140,
+    speed:2.1,
+    reward:34,
+    stunRadius:120,
+    stunDuration:45,
+    stunInterval:90
+  },
+  reeffish:{ // The Abyss - true fish silhouette, not the usual blob body
+    name:"Reef Stalker",
+    color:"#38c6ff",
+    size:15,
+    hp:150,
+    speed:2.2,
+    reward:30
+  },
+  swarmling:{ // The Hive Core - small, fast, flies in groups like the
+              // background wall-crawlers
+    name:"Swarmling",
+    color:"#ff6688",
+    size:9,
+    hp:38,
+    speed:2.9,
+    reward:16
   }
 };
 
@@ -3147,7 +3258,7 @@ function drawBackground(){
   ctx.fillStyle=grad;
   ctx.fillRect(0,0,w,h);
 
-  drawPlanet(area,w,h,t);
+  if(theme!=="underwater" && theme!=="hive") drawPlanet(area,w,h,t);
   drawParallaxHorizon(area,w,h,t);
 
   ctx.save();
@@ -3210,7 +3321,7 @@ function drawBackground(){
         p.char=Math.random()<0.5?"0":"1";
         p.changeTimer=20+Math.random()*30;
       }
-      if(p.y>h){ p.y=-10; p.x=Math.random()*w; }
+      if(p.y>h){ p.y-=h+10; }
     }
   }else if(theme==="volcano"){
     // glowing lava floor band across the bottom of the board
@@ -3275,17 +3386,48 @@ function drawBackground(){
     }
 
     // distant erupting volcano silhouette venting smoke, sitting on the
-    // horizon behind everything else in this scene
+    // horizon behind everything else in this scene. baseY sits on the
+    // horizon line (matching drawParallaxHorizon) so it reads as
+    // "standing on the ground" instead of floating mid-air.
     if(!bgParticles._volcanoShape){
-      bgParticles._volcanoShape={x:w*0.22,baseY:h*0.42,width:w*0.34,height:h*0.24};
+      bgParticles._volcanoShape={x:w*0.22,baseY:h*0.66,width:w*0.36,height:h*0.30};
       bgParticles._smoke=[];
       for(let i=0;i<16;i++){
         bgParticles._smoke.push({age:Math.random()*80,seed:Math.random()*100});
       }
+      // a low mountain range flanking the main volcano, for depth/scale
+      bgParticles._range=[];
+      for(let i=0;i<7;i++){
+        bgParticles._range.push({
+          x:w*(0.02+i*0.13)+ (Math.random()-0.5)*w*0.03,
+          hgt:h*(0.06+Math.random()*0.09),
+          wid:w*(0.09+Math.random()*0.05)
+        });
+      }
+      // ash flakes drifting down from the eruption cloud
+      bgParticles._ash=[];
+      for(let i=0;i<26;i++){
+        bgParticles._ash.push({x:Math.random()*w,y:Math.random()*h*0.5,speed:0.3+Math.random()*0.5,drift:(Math.random()-0.5)*0.5,size:1+Math.random()*2});
+      }
     }
     const vshape=bgParticles._volcanoShape;
+
+    // background mountain range silhouette (drawn first, behind the volcano)
     ctx.save();
-    ctx.globalAlpha=0.5;
+    ctx.globalAlpha=0.35;
+    ctx.fillStyle="#120500";
+    for(const m of bgParticles._range){
+      ctx.beginPath();
+      ctx.moveTo(m.x-m.wid/2,vshape.baseY);
+      ctx.lineTo(m.x,vshape.baseY-m.hgt);
+      ctx.lineTo(m.x+m.wid/2,vshape.baseY);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha=0.85;
     ctx.beginPath();
     ctx.moveTo(vshape.x-vshape.width/2,vshape.baseY);
     ctx.lineTo(vshape.x-vshape.width*0.12,vshape.baseY-vshape.height);
@@ -3294,6 +3436,20 @@ function drawBackground(){
     ctx.closePath();
     ctx.fillStyle="#1a0800";
     ctx.fill();
+    // glowing lava rivers cracking down the volcano's slope
+    const riverGlow=0.5+0.5*Math.sin(t*2.5);
+    ctx.strokeStyle=`rgba(255,${150+Math.floor(60*riverGlow)},40,${0.7+0.3*riverGlow})`;
+    ctx.lineWidth=Math.max(1.5,vshape.width*0.012);
+    ctx.shadowBlur=10;
+    ctx.shadowColor="rgba(255,120,30,0.8)";
+    [-0.06,0.03,0.09].forEach((off,ri)=>{
+      ctx.beginPath();
+      ctx.moveTo(vshape.x+off*vshape.width,vshape.baseY-vshape.height*0.94);
+      ctx.lineTo(vshape.x+(off+0.03)*vshape.width,vshape.baseY-vshape.height*0.55);
+      ctx.lineTo(vshape.x+(off-0.02+ri*0.01)*vshape.width,vshape.baseY-vshape.height*0.15);
+      ctx.stroke();
+    });
+    ctx.shadowBlur=0;
     // glowing crater mouth
     ctx.beginPath();
     ctx.moveTo(vshape.x-vshape.width*0.1,vshape.baseY-vshape.height*0.98);
@@ -3316,6 +3472,17 @@ function drawBackground(){
       ctx.arc(sx,sy,10+p*40,0,Math.PI*2);
       ctx.fillStyle=`rgba(60,50,50,${0.22*(1-p)})`;
       ctx.fill();
+    }
+    // ash flakes sifting down from the eruption cloud
+    for(const a of bgParticles._ash){
+      ctx.beginPath();
+      ctx.arc(a.x,a.y,a.size,0,Math.PI*2);
+      ctx.fillStyle="rgba(80,70,65,0.35)";
+      ctx.fill();
+      a.y+=a.speed;
+      a.x+=a.drift;
+      if(a.y>h){ a.y-=h; }
+      if(a.x<-5) a.x+=w+10; else if(a.x>w+5) a.x-=w+10;
     }
     // heat haze - thin wavy translucent bands drifting upward, giving the
     // whole scene a shimmering "hot air" distortion feel
@@ -3342,7 +3509,8 @@ function drawBackground(){
       ctx.fill();
       p.y-=p.speed;
       p.x+=p.drift;
-      if(p.y<-10){ p.y=h+10; p.x=Math.random()*w; }
+      if(p.y<-10){ p.y+=h+20; }
+      if(p.x<-10) p.x+=w+20; else if(p.x>w+10) p.x-=w+20;
     }
   }else if(theme==="arctic"){
     // soft aurora ribbons flowing across the upper sky
@@ -3369,6 +3537,54 @@ function drawBackground(){
       ag.addColorStop(1,`rgba(${band.hue},0)`);
       ctx.fillStyle=ag;
       ctx.fill();
+    }
+    // jagged icy mountain range on the horizon, near ridge brighter/closer
+    if(!bgParticles._peaks){
+      bgParticles._peaks=[];
+      for(let layer=0;layer<2;layer++){
+        const pts=[];
+        const n=8;
+        for(let i=0;i<=n;i++) pts.push(0.4+Math.random()*0.6);
+        bgParticles._peaks.push({pts,yBase:0.60+layer*0.06,amp:h*(0.08+layer*0.05),shade:layer===0?"200,225,240":"140,175,200"});
+      }
+    }
+    for(const range of bgParticles._peaks){
+      ctx.beginPath();
+      ctx.moveTo(0,h);
+      const n=range.pts.length-1;
+      for(let i=0;i<=n;i++){
+        const x=(w/n)*i;
+        const y=h*range.yBase-range.pts[i]*range.amp;
+        ctx.lineTo(x,y);
+      }
+      ctx.lineTo(w,h);
+      ctx.closePath();
+      ctx.fillStyle=`rgba(${range.shade},0.5)`;
+      ctx.fill();
+    }
+    // sharp ice-shard spires jutting up near the mountains, catching a cold glint
+    if(!bgParticles._shards){
+      bgParticles._shards=[];
+      for(let i=0;i<5;i++){
+        bgParticles._shards.push({x:w*(0.05+Math.random()*0.9),hgt:h*(0.05+Math.random()*0.07),wid:6+Math.random()*8,phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const sh of bgParticles._shards){
+      const glint=0.4+0.6*Math.abs(Math.sin(t*0.6+sh.phase));
+      ctx.beginPath();
+      ctx.moveTo(sh.x-sh.wid,h*0.66);
+      ctx.lineTo(sh.x,h*0.66-sh.hgt);
+      ctx.lineTo(sh.x+sh.wid,h*0.66);
+      ctx.closePath();
+      ctx.fillStyle="rgba(210,235,250,0.35)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(sh.x,h*0.66-sh.hgt,2.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${0.3+glint*0.5})`;
+      ctx.shadowBlur=8;
+      ctx.shadowColor="rgba(255,255,255,0.8)";
+      ctx.fill();
+      ctx.shadowBlur=0;
     }
     // drifting low mist band near the ground
     if(!bgParticles._mist){
@@ -3399,7 +3615,8 @@ function drawBackground(){
       }
       p.y+=p.speed;
       p.x+=p.drift+Math.sin(t*2+p.y*0.02)*0.3;
-      if(p.y>h){ p.y=-10; p.x=Math.random()*w; }
+      if(p.y>h){ p.y-=h+10; }
+      if(p.x<-10) p.x+=w+20; else if(p.x>w+10) p.x-=w+20;
     }
   }else if(theme==="desert"){
     // a hazy sun sitting low on the horizon
@@ -3471,31 +3688,9 @@ function drawBackground(){
       ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
       ctx.fill();
       p.x+=p.drift;
-      if(p.x>w){ p.x=-5; p.y=Math.random()*h; }
+      if(p.x>w){ p.x-=w+5; }
     }
   }else if(theme==="space"){
-    // layered nebula clouds drifting slowly, giving the void real color
-    if(!bgParticles._nebulae){
-      bgParticles._nebulae=[];
-      const colors=["180,120,255","80,180,255","255,120,200"];
-      for(let i=0;i<3;i++){
-        bgParticles._nebulae.push({
-          x:w*(0.2+Math.random()*0.6),y:h*(0.15+Math.random()*0.5),
-          r:120+Math.random()*140,color:colors[i%colors.length],
-          driftX:(Math.random()-0.5)*0.1,driftY:(Math.random()-0.5)*0.05
-        });
-      }
-    }
-    for(const n of bgParticles._nebulae){
-      const ng=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
-      ng.addColorStop(0,`rgba(${n.color},0.16)`);
-      ng.addColorStop(1,`rgba(${n.color},0)`);
-      ctx.fillStyle=ng;
-      ctx.beginPath();
-      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
-      ctx.fill();
-      n.x+=n.driftX; n.y+=n.driftY;
-    }
     // slow-drifting asteroid silhouettes
     if(!bgParticles._asteroids){
       bgParticles._asteroids=[];
@@ -3546,6 +3741,75 @@ function drawBackground(){
       s.x+=s.vx; s.y+=s.vy; s.life--;
     }
   }else if(theme==="swamp"){
+    // murky standing bog water pools along the ground, with a faint
+    // rippling reflection - this is the single biggest thing that was
+    // missing to make the scene actually read as a swamp
+    if(!bgParticles._bog){
+      bgParticles._bog=[];
+      for(let i=0;i<5;i++){
+        bgParticles._bog.push({x:w*(0.05+Math.random()*0.9),y:h*(0.72+Math.random()*0.22),rw:40+Math.random()*70,phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const b of bgParticles._bog){
+      const ripple=0.5+0.5*Math.sin(t*0.8+b.phase);
+      ctx.beginPath();
+      ctx.ellipse(b.x,b.y,b.rw,b.rw*0.28,0,0,Math.PI*2);
+      const bg=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.rw);
+      bg.addColorStop(0,`rgba(50,70,25,${0.5+0.1*ripple})`);
+      bg.addColorStop(1,"rgba(20,35,10,0.15)");
+      ctx.fillStyle=bg;
+      ctx.fill();
+      ctx.strokeStyle=`rgba(150,255,90,${0.15+0.15*ripple})`;
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.ellipse(b.x,b.y,b.rw*(0.5+0.15*ripple),b.rw*0.14,0,0,Math.PI*2);
+      ctx.stroke();
+    }
+    // gnarled dead trees rooted along the ground, twisted bare branches
+    if(!bgParticles._deadTrees){
+      bgParticles._deadTrees=[];
+      for(let i=0;i<6;i++){
+        bgParticles._deadTrees.push({x:w*(0.02+i*0.17)+(Math.random()-0.5)*w*0.05,hgt:h*(0.18+Math.random()*0.14),lean:(Math.random()-0.5)*0.3});
+      }
+    }
+    ctx.strokeStyle="rgba(15,35,8,0.7)";
+    for(const dt of bgParticles._deadTrees){
+      ctx.lineWidth=5;
+      ctx.beginPath();
+      ctx.moveTo(dt.x,h*0.9);
+      const topX=dt.x+dt.lean*dt.hgt, topY=h*0.9-dt.hgt;
+      ctx.quadraticCurveTo(dt.x+dt.lean*dt.hgt*0.5,h*0.9-dt.hgt*0.5,topX,topY);
+      ctx.stroke();
+      ctx.lineWidth=2.5;
+      [0.35,0.55,0.75].forEach((f,bi)=>{
+        const bx=dt.x+dt.lean*dt.hgt*f, by=h*0.9-dt.hgt*f;
+        const dir=bi%2===0?1:-1;
+        ctx.beginPath();
+        ctx.moveTo(bx,by);
+        ctx.lineTo(bx+dir*dt.hgt*0.22,by-dt.hgt*0.18);
+        ctx.stroke();
+      });
+    }
+    // reeds/cattails clustered near the bog pools
+    if(!bgParticles._reeds){
+      bgParticles._reeds=[];
+      for(let i=0;i<16;i++){
+        bgParticles._reeds.push({x:Math.random()*w,y:h*(0.8+Math.random()*0.16),hgt:14+Math.random()*16,phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const rd of bgParticles._reeds){
+      const sway=Math.sin(t*0.9+rd.phase)*4;
+      ctx.strokeStyle="rgba(40,80,15,0.6)";
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(rd.x,rd.y);
+      ctx.quadraticCurveTo(rd.x+sway*0.5,rd.y-rd.hgt*0.6,rd.x+sway,rd.y-rd.hgt);
+      ctx.stroke();
+      ctx.fillStyle="rgba(60,40,15,0.7)";
+      ctx.beginPath();
+      ctx.ellipse(rd.x+sway,rd.y-rd.hgt,2,5,0.2,0,Math.PI*2);
+      ctx.fill();
+    }
     // layered fog drifting near the ground
     if(!bgParticles._fog){
       bgParticles._fog=[];
@@ -3602,7 +3866,7 @@ function drawBackground(){
       ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
       ctx.stroke();
       p.y-=p.speed;
-      if(p.y<-10){ p.y=h+10; p.x=Math.random()*w; }
+      if(p.y<-10){ p.y+=h+20; }
     }
   }else if(theme==="cyberpunk"){
     // skyline buildings with flickering neon-lit windows
@@ -3656,7 +3920,7 @@ function drawBackground(){
       ctx.lineTo(r.x-2,r.y+r.len);
       ctx.stroke();
       r.y+=r.speed;
-      if(r.y>h){ r.y=-20; r.x=Math.random()*w; }
+      if(r.y>h){ r.y-=h+20; }
     }
     // distant flying vehicle lights drifting across the skyline
     if(!bgParticles._flyers){
@@ -3688,6 +3952,111 @@ function drawBackground(){
       ctx.lineTo(w,gy);
       ctx.stroke();
     }
+    // this city is under attack: sweeping red alarm beacons on the rooftops
+    if(!bgParticles._alarms){
+      bgParticles._alarms=[];
+      for(let i=0;i<4;i++){
+        const b=bgParticles[Math.floor(Math.random()*bgParticles.length)]||{x:w*0.3,baseY:h*0.5};
+        bgParticles._alarms.push({x:b.x,y:h-b.baseY-6,phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const al of bgParticles._alarms){
+      const on=Math.sin(t*6+al.phase)>0.2;
+      if(!on) continue;
+      const beam=ctx.createRadialGradient(al.x,al.y,0,al.x,al.y,90);
+      beam.addColorStop(0,"rgba(255,30,30,0.35)");
+      beam.addColorStop(1,"rgba(255,30,30,0)");
+      ctx.fillStyle=beam;
+      ctx.beginPath();
+      ctx.arc(al.x,al.y,90,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle="rgba(255,60,60,0.9)";
+      ctx.beginPath();
+      ctx.arc(al.x,al.y,3,0,Math.PI*2);
+      ctx.fill();
+    }
+    // faint city-wide alarm flash - a slow red pulse over the whole scene
+    ctx.fillStyle=`rgba(255,20,20,${0.03+0.05*Math.max(0,Math.sin(t*3))})`;
+    ctx.fillRect(0,0,w,h);
+    // panicked civilian silhouettes running along the street
+    if(!bgParticles._runners){
+      bgParticles._runners=[];
+      for(let i=0;i<5;i++){
+        bgParticles._runners.push({x:Math.random()*w,y:h*(0.85+Math.random()*0.1),speed:(Math.random()<0.5?1:-1)*(1.2+Math.random()*1.4),phase:Math.random()*10});
+      }
+    }
+    for(const r2 of bgParticles._runners){
+      const bob=Math.abs(Math.sin(t*10+r2.phase))*3;
+      const dir=r2.speed<0?-1:1;
+      ctx.save();
+      ctx.translate(r2.x,r2.y-bob);
+      ctx.scale(dir,1);
+      ctx.strokeStyle="rgba(10,5,15,0.75)";
+      ctx.lineWidth=2.2;
+      ctx.beginPath();
+      ctx.moveTo(0,-14); ctx.lineTo(0,-2); // torso
+      ctx.moveTo(0,-2); ctx.lineTo(5,6);   // back leg kicked out
+      ctx.moveTo(0,-2); ctx.lineTo(-4,7);  // front leg
+      ctx.moveTo(0,-11); ctx.lineTo(6,-13); // arm forward
+      ctx.moveTo(0,-11); ctx.lineTo(-5,-6); // arm back
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0,-17,3,0,Math.PI*2);
+      ctx.fillStyle="rgba(10,5,15,0.75)";
+      ctx.fill();
+      ctx.restore();
+      r2.x+=r2.speed;
+      if(r2.speed>0 && r2.x>w+15) r2.x=-15;
+      if(r2.speed<0 && r2.x<-15) r2.x=w+15;
+    }
+    // a crashed, sparking car abandoned in the street
+    if(!bgParticles._wreck){
+      bgParticles._wreck={x:w*0.62,y:h*0.93};
+      bgParticles._sparks=[];
+      for(let i=0;i<10;i++) bgParticles._sparks.push({age:Math.random()*30,seed:Math.random()*10});
+    }
+    const wr=bgParticles._wreck;
+    ctx.save();
+    ctx.translate(wr.x,wr.y);
+    ctx.rotate(-0.12);
+    ctx.fillStyle="rgba(15,10,20,0.85)";
+    ctx.beginPath();
+    ctx.moveTo(-30,10); ctx.lineTo(-24,-6); ctx.lineTo(-10,-12); ctx.lineTo(14,-12);
+    ctx.lineTo(24,-4); ctx.lineTo(30,10); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle="rgba(255,80,20,0.5)";
+    ctx.beginPath(); ctx.arc(-20,10,6,0,Math.PI*2); ctx.arc(18,10,6,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    for(const sp of bgParticles._sparks){
+      sp.age+=1;
+      if(sp.age>30) sp.age=0;
+      const p=sp.age/30;
+      const ang=sp.seed*2;
+      const sx=wr.x-6+Math.cos(ang)*p*22, sy=wr.y-10-p*18-Math.sin(ang)*4;
+      ctx.beginPath();
+      ctx.arc(sx,sy,1.4*(1-p),0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,${180+Math.floor(60*Math.random())},80,${0.8*(1-p)})`;
+      ctx.shadowBlur=6;
+      ctx.shadowColor="rgba(255,150,50,0.8)";
+      ctx.fill();
+      ctx.shadowBlur=0;
+    }
+    // rising smoke from the wreck
+    if(!bgParticles._wreckSmoke){
+      bgParticles._wreckSmoke=[];
+      for(let i=0;i<8;i++) bgParticles._wreckSmoke.push({age:Math.random()*60,seed:Math.random()*10});
+    }
+    for(const ws of bgParticles._wreckSmoke){
+      ws.age+=0.5;
+      if(ws.age>60) ws.age=0;
+      const p=ws.age/60;
+      const sx=wr.x+Math.sin(ws.seed+p*2)*10;
+      const sy=wr.y-14-p*70;
+      ctx.beginPath();
+      ctx.arc(sx,sy,6+p*16,0,Math.PI*2);
+      ctx.fillStyle=`rgba(40,35,45,${0.22*(1-p)})`;
+      ctx.fill();
+    }
   }else if(theme==="graveyard"){
     // pale moon glow
     if(!bgParticles._moon){ bgParticles._moon={x:w*0.82,y:h*0.18}; }
@@ -3698,40 +4067,87 @@ function drawBackground(){
     ctx.beginPath();
     ctx.arc(bgParticles._moon.x,bgParticles._moon.y,90,0,Math.PI*2);
     ctx.fill();
-    // a row of tombstone / dead-tree silhouettes along the ground
+    // a haunted mansion looming on the horizon - the real centerpiece of
+    // this area, with a pitched roof, turret, and flickering lit windows
+    if(!bgParticles._mansion){
+      const baseY=h*0.66, mx=w*0.5, mw=w*0.34;
+      bgParticles._mansion={x:mx,baseY,w:mw,h:h*0.24};
+      bgParticles._mansionWindows=[];
+      const rows=3, cols=5;
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          if(Math.random()<0.65){
+            bgParticles._mansionWindows.push({
+              x:mx-mw*0.36+c*(mw*0.72/(cols-1)),
+              y:baseY-bgParticles._mansion.h*0.85+r*(bgParticles._mansion.h*0.6/(rows-1)),
+              lit:Math.random()<0.6,phase:Math.random()*Math.PI*2
+            });
+          }
+        }
+      }
+      bgParticles._lightning={timer:4+Math.random()*6};
+    }
+    const mn=bgParticles._mansion;
+    ctx.save();
+    ctx.fillStyle="rgba(8,7,12,0.92)";
+    // main block
+    ctx.fillRect(mn.x-mn.w*0.42,mn.baseY-mn.h*0.65,mn.w*0.84,mn.h*0.65);
+    // pitched roof
+    ctx.beginPath();
+    ctx.moveTo(mn.x-mn.w*0.48,mn.baseY-mn.h*0.65);
+    ctx.lineTo(mn.x,mn.baseY-mn.h*1.02);
+    ctx.lineTo(mn.x+mn.w*0.48,mn.baseY-mn.h*0.65);
+    ctx.closePath();
+    ctx.fill();
+    // turret on the left
+    ctx.fillRect(mn.x-mn.w*0.42,mn.baseY-mn.h*0.95,mn.w*0.11,mn.h*0.95);
+    ctx.beginPath();
+    ctx.moveTo(mn.x-mn.w*0.44,mn.baseY-mn.h*0.95);
+    ctx.lineTo(mn.x-mn.w*0.365,mn.baseY-mn.h*1.25);
+    ctx.lineTo(mn.x-mn.w*0.29,mn.baseY-mn.h*0.95);
+    ctx.closePath();
+    ctx.fill();
+    // dead spike/finial on the main roof peak
+    ctx.strokeStyle="rgba(8,7,12,0.92)";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(mn.x,mn.baseY-mn.h*1.02);
+    ctx.lineTo(mn.x,mn.baseY-mn.h*1.14);
+    ctx.stroke();
+    ctx.restore();
+    // flickering lit windows
+    for(const win of bgParticles._mansionWindows){
+      const flicker=win.lit && Math.sin(t*1.5+win.phase)>-0.5 && Math.random()>0.02;
+      ctx.fillStyle=flicker?`rgba(255,200,90,${0.55+0.25*Math.sin(t*3+win.phase)})`:"rgba(40,35,45,0.5)";
+      if(flicker){ ctx.shadowBlur=10; ctx.shadowColor="rgba(255,180,80,0.7)"; }
+      ctx.fillRect(win.x-3.5,win.y-4,7,8);
+      ctx.shadowBlur=0;
+    }
+    // occasional distant lightning flash silhouetting the mansion
+    bgParticles._lightning.timer-=1/60;
+    if(bgParticles._lightning.timer<=0){
+      bgParticles._lightning={timer:5+Math.random()*8,flashUntil:t+0.15};
+    }
+    if(bgParticles._lightning.flashUntil && t<bgParticles._lightning.flashUntil){
+      ctx.fillStyle="rgba(210,220,255,0.18)";
+      ctx.fillRect(0,0,w,h);
+    }
+    // a few weathered gravestones out front leading up to the mansion
     if(!bgParticles._graves){
       bgParticles._graves=[];
-      for(let i=0;i<12;i++){
-        bgParticles._graves.push({
-          x:Math.random()*w,
-          w:18+Math.random()*20,
-          hgt:30+Math.random()*50,
-          tree:Math.random()<0.3
-        });
+      for(let i=0;i<5;i++){
+        bgParticles._graves.push({x:Math.random()*w,w:16+Math.random()*16,hgt:22+Math.random()*20});
       }
     }
+    ctx.fillStyle="rgba(10,10,14,0.55)";
     for(const g of bgParticles._graves){
-      ctx.fillStyle="rgba(10,10,14,0.6)";
-      if(g.tree){
-        ctx.strokeStyle="rgba(10,10,14,0.6)";
-        ctx.lineWidth=4;
-        ctx.beginPath();
-        ctx.moveTo(g.x,h);
-        ctx.lineTo(g.x-6,h-g.hgt);
-        ctx.moveTo(g.x,h-g.hgt*0.5);
-        ctx.lineTo(g.x+14,h-g.hgt*0.9);
-        ctx.moveTo(g.x,h-g.hgt*0.6);
-        ctx.lineTo(g.x-16,h-g.hgt);
-        ctx.stroke();
-      }else{
-        ctx.beginPath();
-        ctx.moveTo(g.x,h);
-        ctx.lineTo(g.x,h-g.hgt+8);
-        ctx.arc(g.x+g.w/2,h-g.hgt+8,g.w/2,Math.PI,0);
-        ctx.lineTo(g.x+g.w,h);
-        ctx.closePath();
-        ctx.fill();
-      }
+      ctx.beginPath();
+      ctx.moveTo(g.x,h);
+      ctx.lineTo(g.x,h-g.hgt+7);
+      ctx.arc(g.x+g.w/2,h-g.hgt+7,g.w/2,Math.PI,0);
+      ctx.lineTo(g.x+g.w,h);
+      ctx.closePath();
+      ctx.fill();
     }
     // floating will-o-wisps drifting between the graves
     if(!bgParticles._wisps){
@@ -3797,18 +4213,20 @@ function drawBackground(){
       ctx.quadraticCurveTo(k.x+sway,h-k.hgt*0.6,k.x+sway*1.4,h-k.hgt);
       ctx.stroke();
     }
-    // distant fish silhouettes drifting past
+    // distant fish silhouettes drifting past - several different species
+    // now, not just one repeated shape/size
     if(!bgParticles._fish){
       bgParticles._fish=[];
+      const palette=["10,40,60","20,70,90","50,30,80"];
       for(let i=0;i<5;i++){
-        bgParticles._fish.push({x:Math.random()*w,y:h*(0.3+Math.random()*0.4),size:6+Math.random()*8,speed:(Math.random()<0.5?1:-1)*(0.4+Math.random()*0.5)});
+        bgParticles._fish.push({x:Math.random()*w,y:h*(0.3+Math.random()*0.4),size:6+Math.random()*8,speed:(Math.random()<0.5?1:-1)*(0.4+Math.random()*0.5),color:palette[i%palette.length]});
       }
     }
     for(const f of bgParticles._fish){
       ctx.save();
       ctx.translate(f.x,f.y+Math.sin(t*2+f.x)*4);
       ctx.scale(f.speed<0?-1:1,1);
-      ctx.fillStyle="rgba(10,40,60,0.45)";
+      ctx.fillStyle=`rgba(${f.color||"10,40,60"},0.45)`;
       ctx.beginPath();
       ctx.ellipse(0,0,f.size,f.size*0.4,0,0,Math.PI*2);
       ctx.moveTo(-f.size,0);
@@ -3821,6 +4239,59 @@ function drawBackground(){
       if(f.speed>0 && f.x>w+20) f.x=-20;
       if(f.speed<0 && f.x<-20) f.x=w+20;
     }
+    // small schooling fish - tight clusters of tiny fish that turn together
+    if(!bgParticles._schools){
+      bgParticles._schools=[];
+      for(let s=0;s<3;s++){
+        const school={x:Math.random()*w,y:h*(0.2+Math.random()*0.5),speed:(Math.random()<0.5?1:-1)*(0.7+Math.random()*0.6),members:[]};
+        for(let m=0;m<7;m++) school.members.push({ox:(Math.random()-0.5)*30,oy:(Math.random()-0.5)*18,phase:Math.random()*Math.PI*2});
+        bgParticles._schools.push(school);
+      }
+    }
+    for(const school of bgParticles._schools){
+      school.x+=school.speed;
+      if(school.speed>0 && school.x>w+30) school.x=-30;
+      if(school.speed<0 && school.x<-30) school.x=w+30;
+      ctx.fillStyle="rgba(150,210,230,0.5)";
+      for(const m of school.members){
+        const mx=school.x+m.ox, my=school.y+m.oy+Math.sin(t*3+m.phase)*2;
+        ctx.save();
+        ctx.translate(mx,my);
+        ctx.scale(school.speed<0?-1:1,1);
+        ctx.beginPath();
+        ctx.moveTo(2.5,0); ctx.lineTo(-2.5,-1.6); ctx.lineTo(-2.5,1.6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    // drifting jellyfish, pulsing their bell as they rise
+    if(!bgParticles._jellies){
+      bgParticles._jellies=[];
+      for(let i=0;i<3;i++){
+        bgParticles._jellies.push({x:Math.random()*w,y:h*(0.3+Math.random()*0.5),size:8+Math.random()*6,phase:Math.random()*Math.PI*2,speed:0.15+Math.random()*0.15});
+      }
+    }
+    for(const j of bgParticles._jellies){
+      const pulse=0.5+0.5*Math.sin(t*1.6+j.phase);
+      ctx.save();
+      ctx.translate(j.x,j.y);
+      ctx.fillStyle="rgba(220,160,255,0.28)";
+      ctx.beginPath();
+      ctx.ellipse(0,0,j.size*(0.9+0.15*pulse),j.size*0.65,0,Math.PI,0);
+      ctx.fill();
+      ctx.strokeStyle="rgba(220,160,255,0.25)";
+      ctx.lineWidth=1;
+      for(let ti=-2;ti<=2;ti++){
+        ctx.beginPath();
+        ctx.moveTo(ti*j.size*0.3,0);
+        ctx.quadraticCurveTo(ti*j.size*0.3+Math.sin(t*2+ti)*3,j.size*0.9,ti*j.size*0.3,j.size*1.6);
+        ctx.stroke();
+      }
+      ctx.restore();
+      j.y-=j.speed;
+      if(j.y<-20) j.y=h+20;
+    }
     // rising bubbles (original layer)
     for(const p of bgParticles){
       ctx.strokeStyle="rgba(100,200,255,0.35)";
@@ -3830,9 +4301,39 @@ function drawBackground(){
       ctx.stroke();
       p.y-=p.speed;
       p.x+=p.drift;
-      if(p.y<-10){ p.y=h+10; p.x=Math.random()*w; }
+      if(p.y<-10){ p.y+=h+20; }
+      if(p.x<-10) p.x+=w+20; else if(p.x>w+10) p.x-=w+20;
     }
   }else if(theme==="hive"){
+    // honeycomb cell texture across the back wall - the thing that was
+    // missing to make this actually read as a hive interior
+    if(!bgParticles._cells){
+      bgParticles._cells=[];
+      const cellR=Math.min(w,h)*0.045;
+      const cw=cellR*1.73, ch=cellR*1.5;
+      for(let row=-1;row*ch<h+cellR*2;row++){
+        for(let col=-1;col*cw<w+cellR*2;col++){
+          const offset=(row%2===0)?0:cw/2;
+          bgParticles._cells.push({x:col*cw+offset,y:row*ch,r:cellR,phase:Math.random()*Math.PI*2});
+        }
+      }
+    }
+    ctx.save();
+    ctx.globalAlpha=0.5;
+    for(const c of bgParticles._cells){
+      const pulse=0.5+0.5*Math.sin(t*0.8+c.phase);
+      ctx.beginPath();
+      for(let i=0;i<6;i++){
+        const ang=Math.PI/6+i*Math.PI/3;
+        const px=c.x+Math.cos(ang)*c.r, py=c.y+Math.sin(ang)*c.r;
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle=`rgba(255,50,110,${0.1+pulse*0.1})`;
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+    }
+    ctx.restore();
     // pulsing veiny tendrils connecting the organic pulse-nodes, so the
     // background reads as one living membrane rather than loose dots
     if(!bgParticles._tendrilPairs){
@@ -3878,6 +4379,42 @@ function drawBackground(){
       ctx.beginPath();
       ctx.arc(p.x,p.y,p.r*(0.85+pulse*0.15),0,Math.PI*2);
       ctx.fill();
+    }
+    // small background aliens skittering across the hive walls - pure
+    // ambience, not actual enemies
+    if(!bgParticles._wallCrawlers){
+      bgParticles._wallCrawlers=[];
+      for(let i=0;i<6;i++){
+        bgParticles._wallCrawlers.push({
+          x:Math.random()*w,y:h*(0.1+Math.random()*0.75),
+          speed:(Math.random()<0.5?1:-1)*(0.6+Math.random()*0.9),
+          size:5+Math.random()*5,bob:Math.random()*Math.PI*2
+        });
+      }
+    }
+    for(const wc of bgParticles._wallCrawlers){
+      const legPhase=t*8+wc.bob;
+      ctx.save();
+      ctx.translate(wc.x,wc.y+Math.sin(t*2+wc.bob)*2);
+      ctx.scale(wc.speed<0?-1:1,1);
+      ctx.fillStyle="rgba(120,10,45,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(0,0,wc.size,wc.size*0.6,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle="rgba(120,10,45,0.55)";
+      ctx.lineWidth=1.2;
+      for(let leg=0;leg<3;leg++){
+        const lx=-wc.size*0.5+leg*wc.size*0.5;
+        const swing=Math.sin(legPhase+leg)*wc.size*0.4;
+        ctx.beginPath();
+        ctx.moveTo(lx,wc.size*0.3);
+        ctx.lineTo(lx+swing,wc.size*0.9);
+        ctx.stroke();
+      }
+      ctx.restore();
+      wc.x+=wc.speed;
+      if(wc.speed>0 && wc.x>w+15) wc.x=-15;
+      if(wc.speed<0 && wc.x<-15) wc.x=w+15;
     }
   }
 
@@ -4333,16 +4870,19 @@ function callNextWave(){
 const AREA_SIGNATURE_TYPE=["glitch","cinder","frostfang","burrower","drifter","leech","wraith","specter","angler","broodling"];
 const AREA_SIGNATURE_TYPE_2=["sentinel","ashwraith","iceshard","sandviper","cometrider","sporecloud","hologram","poltergeist","deepcrawler","hiveguard"];
 const AREA_SIGNATURE_TYPE_3=["aegisdrone","moltengrub","glaciant","dunestalker","starlet","bogbeast","circuitrunner","grimshade","pressurefiend","broodwarden"];
+const AREA_SIGNATURE_TYPE_4=["trojan","pyroclast","blizzardling","scarab","voidwisp","mudcrawler","ripper","banshee","reeffish","swarmling"];
 
 function pickEnemyType(){
   const idx=getAreaIndex();
   const sig1=AREA_SIGNATURE_TYPE[idx];
   const sig2=AREA_SIGNATURE_TYPE_2[idx];
   const sig3=AREA_SIGNATURE_TYPE_3[idx];
+  const sig4=AREA_SIGNATURE_TYPE_4[idx];
   const roll=Math.random();
-  if(sig1 && roll<0.16) return sig1;
-  if(sig2 && roll<0.30) return sig2;
-  if(sig3 && roll<0.44) return sig3;
+  if(sig1 && roll<0.14) return sig1;
+  if(sig2 && roll<0.26) return sig2;
+  if(sig3 && roll<0.38) return sig3;
+  if(sig4 && roll<0.50) return sig4;
   return pickGenericEnemyType();
 }
 
@@ -5248,7 +5788,18 @@ const TYPE_SHAPE={
   circuitrunner:{bw:0.75, bh:1.15,legs:3, eyes:2, spikes:0, segmented:false, lean:true},
   grimshade:   {bw:0.9,  bh:1.2,  legs:0, eyes:2, spikes:0, segmented:false, lean:false},
   pressurefiend:{bw:1.15, bh:1.0, legs:4, eyes:1, spikes:2, segmented:false, lean:false},
-  broodwarden: {bw:1.25, bh:1.1,  legs:6, eyes:3, spikes:4, segmented:false, lean:false}
+  broodwarden: {bw:1.25, bh:1.1,  legs:6, eyes:3, spikes:4, segmented:false, lean:false},
+
+  trojan:      {bw:0.9,  bh:1.1,  legs:3, eyes:2, spikes:0, segmented:false, lean:true},
+  pyroclast:   {bw:0.85, bh:0.9,  legs:0, eyes:1, spikes:2, segmented:false, lean:true},
+  blizzardling:{bw:0.75, bh:0.85, legs:0, eyes:2, spikes:1, segmented:false, lean:true},
+  scarab:      {bw:1.2,  bh:0.8,  legs:6, eyes:2, spikes:0, segmented:false, lean:false},
+  voidwisp:    {bw:0.7,  bh:0.7,  legs:0, eyes:1, spikes:0, segmented:false, lean:true},
+  mudcrawler:  {bw:1.3,  bh:0.85, legs:4, eyes:2, spikes:1, segmented:false, lean:false},
+  ripper:      {bw:0.8,  bh:1.15, legs:2, eyes:2, spikes:0, segmented:false, lean:true},
+  banshee:     {bw:0.9,  bh:1.25, legs:0, eyes:2, spikes:0, segmented:false, lean:false},
+  reeffish:    {bw:1.3,  bh:0.8,  legs:0, eyes:1, spikes:0, segmented:false, lean:false},
+  swarmling:   {bw:0.7,  bh:0.7,  legs:0, eyes:2, spikes:1, segmented:false, lean:true}
 };
 
 function drawAlienBody(e,t,themeOverride){
@@ -5265,6 +5816,60 @@ function drawAlienBody(e,t,themeOverride){
   ctx.scale(dscale,dscale);
   const bob=Math.sin(t*5+e.x*0.15)*(isTiny?1:2);
   ctx.translate(0,bob);
+
+  if(e.type==="reeffish"){
+    // an actual fish: torpedo body, tail fin, dorsal fin, single eye -
+    // deliberately not built from the shared leg/spike blob system
+    const facing=Math.sin(t*0.7+e.x*0.05)>0?1:-1;
+    ctx.save();
+    ctx.scale(facing,1);
+    ctx.beginPath();
+    ctx.ellipse(0,0,s*1.1,s*0.6,0,0,Math.PI*2);
+    ctx.fillStyle=lightenColor(e.color,20);
+    ctx.shadowBlur=14;
+    ctx.shadowColor=e.color;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    // tail fin, swishing
+    const tailSwish=Math.sin(t*9+e.x*0.2)*0.35;
+    ctx.save();
+    ctx.translate(-s*1.05,0);
+    ctx.rotate(tailSwish);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(-s*0.7,-s*0.55);
+    ctx.lineTo(-s*0.7,s*0.55);
+    ctx.closePath();
+    ctx.fillStyle=e.color;
+    ctx.fill();
+    ctx.restore();
+    // dorsal fin on top
+    ctx.beginPath();
+    ctx.moveTo(-s*0.1,-s*0.55);
+    ctx.lineTo(s*0.25,-s*1.05);
+    ctx.lineTo(s*0.45,-s*0.5);
+    ctx.closePath();
+    ctx.fillStyle=e.color;
+    ctx.fill();
+    // belly stripe highlight
+    ctx.beginPath();
+    ctx.ellipse(0,s*0.25,s*0.85,s*0.2,0,0,Math.PI*2);
+    ctx.fillStyle="rgba(255,255,255,0.25)";
+    ctx.fill();
+    // eye
+    ctx.beginPath();
+    ctx.arc(s*0.65,-s*0.05,s*0.14,0,Math.PI*2);
+    ctx.fillStyle="#fff";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(s*0.68,-s*0.05,s*0.07,0,Math.PI*2);
+    ctx.fillStyle="#001018";
+    ctx.fill();
+    ctx.restore();
+    drawAreaThemeDecor(e,theme,s,shape.bw,shape.bh,t);
+    ctx.restore();
+    return;
+  }
 
   // soft ground shadow so the creature reads as sitting above the floor,
   // one of the simplest tricks for pseudo-3d depth
