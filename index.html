@@ -1839,11 +1839,34 @@ const BEAST_DESC={
   specter:"A restless spirit of the Haunted Grounds. Fades from sight for long stretches.",
   angler:"A deep-sea lurker from the Abyss. Its lure pulses a stunning field like a boss's.",
   broodling:"A bloated Hive Core matriarch. Splits into three Broodletlings on death.",
-  broodletling:"A skittering offshoot left behind when a Brood Mother dies."
+  broodletling:"A skittering offshoot left behind when a Brood Mother dies.",
+  sentinel:"An armored Mainframe watchdog process. Slow but heavily plated.",
+  ashwraith:"A smoldering ember-spirit that flickers out of targeting range in bursts.",
+  iceshard:"A brittle ice elemental that shatters into two Shardlings on death.",
+  shardling:"A tiny frozen splinter left behind when an Ice Shard breaks.",
+  sandviper:"A whip-fast dune serpent - low health, but outruns almost everything.",
+  cometrider:"A tiny fragment of debris riding a Deep Space current at reckless speed.",
+  sporecloud:"A drifting fungal mass from the Toxic Swamp that pulses a stun cloud.",
+  hologram:"A Neon City decoy projection that flickers between visible and hidden.",
+  poltergeist:"A restless haunt that splits into two Lost Wisps on death.",
+  wisp:"A faint, quick spirit left behind when a Poltergeist is destroyed.",
+  deepcrawler:"An armored Abyssal bottom-feeder. Slow, thick-shelled, and relentless.",
+  hiveguard:"An armored Hive Core defender that pulses a stun field like its queen.",
+  aegisdrone:"A Mainframe defense drone with a rotating deflector plate.",
+  moltengrub:"A larval magma-crawler that leaves a smoldering trail as it moves.",
+  glaciant:"A slow-moving wall of packed ice - tough, but easy to outmaneuver.",
+  dunestalker:"A patient predator that lies still beneath the sand before lunging.",
+  starlet:"A tiny bright mote that streaks across the void, hard to track.",
+  bogbeast:"A hulking swamp brute wrapped in living vines and rot.",
+  circuitrunner:"A neon courier-drone, quick and erratic through the datastream.",
+  grimshade:"A lingering grave-shadow that phases through targeting for long stretches.",
+  pressurefiend:"A deep-pressure horror that pulses crushing shockwaves outward.",
+  broodwarden:"An elite Hive Core sentinel guarding the matriarch's brood."
 };
 const BEAST_ORDER=["normal","runner","stunner","tank","shielded","splitter","splitling","cloaked","juggernaut",
   "glitch","cinder","frostfang","burrower","drifter","leech","leechling","wraith","specter","angler","broodling","broodletling",
-  "sentinel","ashwraith","iceshard","shardling","sandviper","cometrider","sporecloud","hologram","poltergeist","wisp","deepcrawler","hiveguard"];
+  "sentinel","ashwraith","iceshard","shardling","sandviper","cometrider","sporecloud","hologram","poltergeist","wisp","deepcrawler","hiveguard",
+  "aegisdrone","moltengrub","glaciant","dunestalker","starlet","bogbeast","circuitrunner","grimshade","pressurefiend","broodwarden"];
 
 function openBestiary(){
   document.getElementById("main-menu").style.display="none";
@@ -2694,6 +2717,110 @@ const ENEMY_TYPES={
     stunRadius:160,
     stunDuration:60,
     stunInterval:120
+  },
+
+  // -------------------------------------------------------------------
+  // Third wave of area-signature aliens - a THIRD unique alien per
+  // sector, so every zone now mixes in three signature types on top of
+  // the recurring roster. Same approach as before: each reuses an
+  // existing mechanic so it slots into the shared update/render loop
+  // for free, just with its own stats/look/area flavor.
+  // -------------------------------------------------------------------
+  aegisdrone:{ // The Mainframe
+    name:"Aegis Drone",
+    color:"#5cffe0",
+    size:15,
+    hp:200,
+    speed:1.0,
+    reward:30,
+    armored:true
+  },
+  moltengrub:{ // Magma Depths
+    name:"Molten Grub",
+    color:"#ffb020",
+    size:13,
+    hp:75,
+    speed:1.5,
+    reward:20
+  },
+  glaciant:{ // Frozen Wastes
+    name:"Glaciant",
+    color:"#cfeeff",
+    size:19,
+    hp:260,
+    speed:0.8,
+    reward:38,
+    armored:true,
+    heavy:true
+  },
+  dunestalker:{ // Dune Sea
+    name:"Dune Stalker",
+    color:"#e0b060",
+    size:14,
+    hp:95,
+    speed:1.6,
+    reward:26,
+    cloakInterval:120,
+    cloakDuration:60
+  },
+  starlet:{ // Deep Space
+    name:"Starlet",
+    color:"#ffffff",
+    size:7,
+    hp:20,
+    speed:4.2,
+    reward:16,
+    tiny:true
+  },
+  bogbeast:{ // Toxic Swamp
+    name:"Bog Beast",
+    color:"#5ecf3a",
+    size:21,
+    hp:340,
+    speed:0.9,
+    reward:48,
+    armored:true,
+    heavy:true
+  },
+  circuitrunner:{ // Neon City
+    name:"Circuit Runner",
+    color:"#00e5ff",
+    size:10,
+    hp:60,
+    speed:3.3,
+    reward:24,
+    cloakInterval:60,
+    cloakDuration:30
+  },
+  grimshade:{ // Haunted Grounds
+    name:"Grimshade",
+    color:"#8fd6a8",
+    size:13,
+    hp:170,
+    speed:1.4,
+    reward:32,
+    cloakInterval:75,
+    cloakDuration:60
+  },
+  pressurefiend:{ // The Abyss
+    name:"Pressure Fiend",
+    color:"#1c8fff",
+    size:17,
+    hp:320,
+    speed:1.1,
+    reward:56,
+    stunRadius:140,
+    stunDuration:55,
+    stunInterval:100
+  },
+  broodwarden:{ // The Hive Core
+    name:"Brood Warden",
+    color:"#ff3366",
+    size:19,
+    hp:520,
+    speed:1.0,
+    reward:75,
+    armored:true
   }
 };
 
@@ -3026,10 +3153,57 @@ function drawBackground(){
   ctx.save();
 
   if(theme==="hacker"){
+    // faint circuit-board grid etched into the floor, glowing at the
+    // intersections - reads as "inside a machine" rather than empty space
+    if(!bgParticles._nodes){
+      bgParticles._nodes=[];
+      const cols=10,rows=6;
+      for(let cx=0;cx<=cols;cx++){
+        for(let cy=0;cy<=rows;cy++){
+          if(Math.random()<0.4){
+            bgParticles._nodes.push({x:(w/cols)*cx,y:(h/rows)*cy,phase:Math.random()*Math.PI*2});
+          }
+        }
+      }
+    }
+    ctx.strokeStyle="rgba(57,255,20,0.08)";
+    ctx.lineWidth=1;
+    const cols=10,rows=6;
+    for(let i=0;i<=cols;i++){
+      ctx.beginPath(); ctx.moveTo((w/cols)*i,0); ctx.lineTo((w/cols)*i,h); ctx.stroke();
+    }
+    for(let i=0;i<=rows;i++){
+      ctx.beginPath(); ctx.moveTo(0,(h/rows)*i); ctx.lineTo(w,(h/rows)*i); ctx.stroke();
+    }
+    for(const n of bgParticles._nodes){
+      const pulse=0.4+0.6*Math.abs(Math.sin(t*1.4+n.phase));
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,2+pulse*2.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(57,255,20,${0.15+pulse*0.35})`;
+      ctx.shadowBlur=6+pulse*8;
+      ctx.shadowColor="rgba(57,255,20,0.8)";
+      ctx.fill();
+      ctx.shadowBlur=0;
+    }
+    // a horizontal scanline sweeping slowly down the screen
+    const scanY=(t*90)%(h+120)-60;
+    const scanGrad=ctx.createLinearGradient(0,scanY-40,0,scanY+40);
+    scanGrad.addColorStop(0,"rgba(57,255,20,0)");
+    scanGrad.addColorStop(0.5,"rgba(120,255,150,0.10)");
+    scanGrad.addColorStop(1,"rgba(57,255,20,0)");
+    ctx.fillStyle=scanGrad;
+    ctx.fillRect(0,scanY-40,w,80);
+    // falling digital rain, brighter "head" character with a fading tail
     ctx.font="16px monospace";
+    ctx.textAlign="left";
     for(const p of bgParticles){
-      ctx.fillStyle="rgba(57,255,20,0.35)";
-      ctx.fillText(p.char,p.x,p.y);
+      for(let ti=0;ti<3;ti++){
+        const ty=p.y-ti*18;
+        if(ty<-10||ty>h+10) continue;
+        const a=0.5-ti*0.15;
+        ctx.fillStyle=ti===0?`rgba(180,255,190,${a+0.1})`:`rgba(57,255,20,${a})`;
+        ctx.fillText(ti===0?p.char:(Math.random()<0.5?"0":"1"),p.x,ty);
+      }
       p.y+=p.speed;
       p.changeTimer--;
       if(p.changeTimer<=0){
@@ -3100,6 +3274,66 @@ function drawBackground(){
       ctx.fill();
     }
 
+    // distant erupting volcano silhouette venting smoke, sitting on the
+    // horizon behind everything else in this scene
+    if(!bgParticles._volcanoShape){
+      bgParticles._volcanoShape={x:w*0.22,baseY:h*0.42,width:w*0.34,height:h*0.24};
+      bgParticles._smoke=[];
+      for(let i=0;i<16;i++){
+        bgParticles._smoke.push({age:Math.random()*80,seed:Math.random()*100});
+      }
+    }
+    const vshape=bgParticles._volcanoShape;
+    ctx.save();
+    ctx.globalAlpha=0.5;
+    ctx.beginPath();
+    ctx.moveTo(vshape.x-vshape.width/2,vshape.baseY);
+    ctx.lineTo(vshape.x-vshape.width*0.12,vshape.baseY-vshape.height);
+    ctx.lineTo(vshape.x+vshape.width*0.12,vshape.baseY-vshape.height);
+    ctx.lineTo(vshape.x+vshape.width/2,vshape.baseY);
+    ctx.closePath();
+    ctx.fillStyle="#1a0800";
+    ctx.fill();
+    // glowing crater mouth
+    ctx.beginPath();
+    ctx.moveTo(vshape.x-vshape.width*0.1,vshape.baseY-vshape.height*0.98);
+    ctx.lineTo(vshape.x,vshape.baseY-vshape.height*1.05);
+    ctx.lineTo(vshape.x+vshape.width*0.1,vshape.baseY-vshape.height*0.98);
+    ctx.closePath();
+    ctx.fillStyle=`rgba(255,${140+Math.floor(60*Math.sin(t*3))},40,0.8)`;
+    ctx.shadowBlur=25;
+    ctx.shadowColor="rgba(255,120,30,0.9)";
+    ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.restore();
+    for(const s of bgParticles._smoke){
+      s.age+=0.4;
+      if(s.age>80) s.age=0;
+      const p=s.age/80;
+      const sx=vshape.x+Math.sin(s.seed+p*3)*vshape.width*0.15;
+      const sy=vshape.baseY-vshape.height*1.05-p*h*0.35;
+      ctx.beginPath();
+      ctx.arc(sx,sy,10+p*40,0,Math.PI*2);
+      ctx.fillStyle=`rgba(60,50,50,${0.22*(1-p)})`;
+      ctx.fill();
+    }
+    // heat haze - thin wavy translucent bands drifting upward, giving the
+    // whole scene a shimmering "hot air" distortion feel
+    ctx.save();
+    ctx.globalAlpha=0.05;
+    ctx.fillStyle="#fff2c8";
+    for(let i=0;i<4;i++){
+      const hy=h-((t*30+i*140)%(h+100));
+      ctx.beginPath();
+      for(let x=0;x<=w;x+=40){
+        const yy=hy+Math.sin(x*0.02+t*2+i)*8;
+        if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
+      }
+      ctx.lineTo(w,hy+30); ctx.lineTo(0,hy+30);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
     // rising embers (original layer, kept on top of the new lava floor)
     for(const p of bgParticles){
       ctx.fillStyle="rgba(255,140,40,0.55)";
@@ -3111,16 +3345,101 @@ function drawBackground(){
       if(p.y<-10){ p.y=h+10; p.x=Math.random()*w; }
     }
   }else if(theme==="arctic"){
+    // soft aurora ribbons flowing across the upper sky
+    if(!bgParticles._aurora){
+      bgParticles._aurora=[
+        {yBase:0.08,amp:22,hue:"160,255,220",speed:0.4,phase:0},
+        {yBase:0.14,amp:28,hue:"120,200,255",speed:0.3,phase:2},
+        {yBase:0.20,amp:18,hue:"200,160,255",speed:0.5,phase:4}
+      ];
+    }
+    for(const band of bgParticles._aurora){
+      ctx.beginPath();
+      const baseY=h*band.yBase;
+      ctx.moveTo(0,baseY);
+      for(let x=0;x<=w;x+=30){
+        const yy=baseY+Math.sin(x*0.01+t*band.speed+band.phase)*band.amp;
+        ctx.lineTo(x,yy);
+      }
+      ctx.lineTo(w,0); ctx.lineTo(0,0);
+      ctx.closePath();
+      const ag=ctx.createLinearGradient(0,baseY-band.amp,0,baseY+band.amp*1.5);
+      ag.addColorStop(0,`rgba(${band.hue},0)`);
+      ag.addColorStop(0.5,`rgba(${band.hue},0.16)`);
+      ag.addColorStop(1,`rgba(${band.hue},0)`);
+      ctx.fillStyle=ag;
+      ctx.fill();
+    }
+    // drifting low mist band near the ground
+    if(!bgParticles._mist){
+      bgParticles._mist=[];
+      for(let i=0;i<5;i++){
+        bgParticles._mist.push({x:Math.random()*w,y:h*(0.7+Math.random()*0.25),r:80+Math.random()*100,speed:0.15+Math.random()*0.2});
+      }
+    }
+    for(const m of bgParticles._mist){
+      ctx.beginPath();
+      ctx.ellipse(m.x,m.y,m.r,m.r*0.35,0,0,Math.PI*2);
+      ctx.fillStyle="rgba(220,240,255,0.06)";
+      ctx.fill();
+      m.x+=m.speed;
+      if(m.x-m.r>w) m.x=-m.r;
+    }
+    // falling snow with subtle glint sparkle
     for(const p of bgParticles){
       ctx.fillStyle="rgba(255,255,255,0.7)";
       ctx.beginPath();
       ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
       ctx.fill();
+      if(Math.random()<0.01){
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.size*2.5,0,Math.PI*2);
+        ctx.fillStyle="rgba(255,255,255,0.25)";
+        ctx.fill();
+      }
       p.y+=p.speed;
-      p.x+=p.drift;
+      p.x+=p.drift+Math.sin(t*2+p.y*0.02)*0.3;
       if(p.y>h){ p.y=-10; p.x=Math.random()*w; }
     }
   }else if(theme==="desert"){
+    // a hazy sun sitting low on the horizon
+    if(!bgParticles._sun){
+      bgParticles._sun={x:w*0.5,y:h*0.32};
+    }
+    const sunGlow=ctx.createRadialGradient(bgParticles._sun.x,bgParticles._sun.y,10,bgParticles._sun.x,bgParticles._sun.y,180);
+    sunGlow.addColorStop(0,"rgba(255,230,180,0.5)");
+    sunGlow.addColorStop(1,"rgba(255,200,120,0)");
+    ctx.fillStyle=sunGlow;
+    ctx.beginPath();
+    ctx.arc(bgParticles._sun.x,bgParticles._sun.y,180,0,Math.PI*2);
+    ctx.fill();
+    // layered dune silhouettes, far ones darker/flatter, near ones brighter
+    if(!bgParticles._dunes){
+      bgParticles._dunes=[];
+      for(let layer=0;layer<3;layer++){
+        const pts=[];
+        const n=6;
+        for(let i=0;i<=n;i++){
+          pts.push(0.5+Math.random()*0.5);
+        }
+        bgParticles._dunes.push({pts,yBase:0.45+layer*0.15,amp:h*(0.05+layer*0.03),shade:layer*35});
+      }
+    }
+    for(const dune of bgParticles._dunes){
+      ctx.beginPath();
+      ctx.moveTo(0,h);
+      const n=dune.pts.length-1;
+      for(let i=0;i<=n;i++){
+        const x=(w/n)*i;
+        const y=h*dune.yBase-dune.pts[i]*dune.amp;
+        ctx.lineTo(x,y);
+      }
+      ctx.lineTo(w,h);
+      ctx.closePath();
+      ctx.fillStyle=lightenColor("#3a2a0d",dune.shade)+"cc";
+      ctx.fill();
+    }
+    // wind ripple lines across the sand
     ctx.strokeStyle="rgba(255,220,150,0.15)";
     ctx.lineWidth=2;
     for(let i=0;i<5;i++){
@@ -3129,6 +3448,23 @@ function drawBackground(){
       ctx.quadraticCurveTo(w/2,h*0.2*i+h*0.1+30,w,h*0.2*i+h*0.1);
       ctx.stroke();
     }
+    // heat shimmer haze near the ground
+    ctx.save();
+    ctx.globalAlpha=0.05;
+    ctx.fillStyle="#ffe9c2";
+    for(let i=0;i<3;i++){
+      const hy=h*0.7+i*h*0.08;
+      ctx.beginPath();
+      for(let x=0;x<=w;x+=40){
+        const yy=hy+Math.sin(x*0.03+t*3+i)*6;
+        if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
+      }
+      ctx.lineTo(w,hy+20); ctx.lineTo(0,hy+20);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+    // drifting sand specs, occasionally gusting into streak clusters
     for(const p of bgParticles){
       ctx.fillStyle="rgba(255,220,150,0.4)";
       ctx.beginPath();
@@ -3138,6 +3474,53 @@ function drawBackground(){
       if(p.x>w){ p.x=-5; p.y=Math.random()*h; }
     }
   }else if(theme==="space"){
+    // layered nebula clouds drifting slowly, giving the void real color
+    if(!bgParticles._nebulae){
+      bgParticles._nebulae=[];
+      const colors=["180,120,255","80,180,255","255,120,200"];
+      for(let i=0;i<3;i++){
+        bgParticles._nebulae.push({
+          x:w*(0.2+Math.random()*0.6),y:h*(0.15+Math.random()*0.5),
+          r:120+Math.random()*140,color:colors[i%colors.length],
+          driftX:(Math.random()-0.5)*0.1,driftY:(Math.random()-0.5)*0.05
+        });
+      }
+    }
+    for(const n of bgParticles._nebulae){
+      const ng=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+      ng.addColorStop(0,`rgba(${n.color},0.16)`);
+      ng.addColorStop(1,`rgba(${n.color},0)`);
+      ctx.fillStyle=ng;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fill();
+      n.x+=n.driftX; n.y+=n.driftY;
+    }
+    // slow-drifting asteroid silhouettes
+    if(!bgParticles._asteroids){
+      bgParticles._asteroids=[];
+      for(let i=0;i<6;i++){
+        bgParticles._asteroids.push({x:Math.random()*w,y:Math.random()*h,size:6+Math.random()*14,speed:0.1+Math.random()*0.2,rot:Math.random()*Math.PI*2,spin:(Math.random()-0.5)*0.01});
+      }
+    }
+    for(const a of bgParticles._asteroids){
+      ctx.save();
+      ctx.translate(a.x,a.y);
+      ctx.rotate(a.rot);
+      ctx.fillStyle="rgba(120,120,140,0.5)";
+      ctx.beginPath();
+      for(let i=0;i<6;i++){
+        const ang=(i/6)*Math.PI*2;
+        const rad=a.size*(0.7+((i%2)?0.3:0));
+        ctx.lineTo(Math.cos(ang)*rad,Math.sin(ang)*rad);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      a.x+=a.speed; a.rot+=a.spin;
+      if(a.x>w+20) a.x=-20;
+    }
+    // twinkling starfield
     for(const p of bgParticles){
       const alpha=0.4+0.6*Math.abs(Math.sin(t+p.twinkle));
       ctx.fillStyle=`rgba(255,255,255,${alpha})`;
@@ -3145,11 +3528,73 @@ function drawBackground(){
       ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
       ctx.fill();
     }
-    ctx.fillStyle="rgba(180,120,255,0.25)";
-    ctx.beginPath();
-    ctx.arc(w*0.85,h*0.15,60,0,Math.PI*2);
-    ctx.fill();
+    // occasional shooting star streaking across
+    if(!bgParticles._shootingStar || bgParticles._shootingStar.life<=0){
+      if(Math.random()<0.004){
+        bgParticles._shootingStar={x:Math.random()*w*0.5,y:Math.random()*h*0.3,vx:6+Math.random()*4,vy:3+Math.random()*2,life:40};
+      }else{
+        bgParticles._shootingStar={life:0};
+      }
+    }else{
+      const s=bgParticles._shootingStar;
+      ctx.strokeStyle="rgba(255,255,255,0.8)";
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(s.x,s.y);
+      ctx.lineTo(s.x-s.vx*6,s.y-s.vy*6);
+      ctx.stroke();
+      s.x+=s.vx; s.y+=s.vy; s.life--;
+    }
   }else if(theme==="swamp"){
+    // layered fog drifting near the ground
+    if(!bgParticles._fog){
+      bgParticles._fog=[];
+      for(let i=0;i<6;i++){
+        bgParticles._fog.push({x:Math.random()*w,y:h*(0.65+Math.random()*0.3),r:100+Math.random()*140,speed:0.1+Math.random()*0.25});
+      }
+    }
+    for(const f of bgParticles._fog){
+      ctx.beginPath();
+      ctx.ellipse(f.x,f.y,f.r,f.r*0.3,0,0,Math.PI*2);
+      ctx.fillStyle="rgba(120,200,80,0.06)";
+      ctx.fill();
+      f.x+=f.speed;
+      if(f.x-f.r>w) f.x=-f.r;
+    }
+    // hanging vine silhouettes dropping from the top of the screen
+    if(!bgParticles._vines){
+      bgParticles._vines=[];
+      for(let i=0;i<9;i++){
+        bgParticles._vines.push({x:Math.random()*w,len:h*(0.1+Math.random()*0.22),sway:Math.random()*Math.PI*2});
+      }
+    }
+    for(const v of bgParticles._vines){
+      const sway=Math.sin(t*0.6+v.sway)*14;
+      ctx.strokeStyle="rgba(20,50,10,0.55)";
+      ctx.lineWidth=4;
+      ctx.beginPath();
+      ctx.moveTo(v.x,0);
+      ctx.quadraticCurveTo(v.x+sway,v.len*0.5,v.x+sway*1.6,v.len);
+      ctx.stroke();
+    }
+    // drifting firefly glow motes
+    if(!bgParticles._fireflies){
+      bgParticles._fireflies=[];
+      for(let i=0;i<14;i++){
+        bgParticles._fireflies.push({x:Math.random()*w,y:h*(0.4+Math.random()*0.5),phase:Math.random()*Math.PI*2,speed:0.3+Math.random()*0.4});
+      }
+    }
+    for(const fl of bgParticles._fireflies){
+      const glow=0.3+0.7*Math.abs(Math.sin(t*fl.speed+fl.phase));
+      ctx.beginPath();
+      ctx.arc(fl.x+Math.sin(t*0.5+fl.phase)*20,fl.y+Math.cos(t*0.4+fl.phase)*14,2+glow*1.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(210,255,140,${0.2+glow*0.6})`;
+      ctx.shadowBlur=8;
+      ctx.shadowColor="rgba(210,255,140,0.8)";
+      ctx.fill();
+      ctx.shadowBlur=0;
+    }
+    // rising toxic bubbles (original layer)
     for(const p of bgParticles){
       ctx.strokeStyle="rgba(140,255,80,0.3)";
       ctx.lineWidth=1.5;
@@ -3160,14 +3605,81 @@ function drawBackground(){
       if(p.y<-10){ p.y=h+10; p.x=Math.random()*w; }
     }
   }else if(theme==="cyberpunk"){
+    // skyline buildings with flickering neon-lit windows
     for(const b of bgParticles){
       ctx.fillStyle="rgba(20,5,35,0.9)";
       ctx.fillRect(b.x,h-b.baseY,b.width,b.baseY);
-      ctx.fillStyle=b.lit?"rgba(255,47,208,0.6)":"rgba(100,220,255,0.3)";
       for(let wy=h-b.baseY+10;wy<h-10;wy+=18){
+        const flicker=Math.random()<0.02;
+        ctx.fillStyle=flicker ? "rgba(255,255,255,0.4)" : (b.lit?"rgba(255,47,208,0.6)":"rgba(100,220,255,0.3)");
         ctx.fillRect(b.x+6,wy,6,6);
       }
     }
+    // a couple of oversized neon sign glyphs mounted on the skyline
+    if(!bgParticles._signs){
+      bgParticles._signs=[];
+      const glyphs=["◆","▲","⬡","▣"];
+      for(let i=0;i<3;i++){
+        const b=bgParticles[Math.floor(Math.random()*bgParticles.length)]||{x:w*0.3,baseY:h*0.5,width:40};
+        bgParticles._signs.push({
+          x:b.x+b.width*0.3,y:h-b.baseY-18,
+          glyph:glyphs[i%glyphs.length],
+          color:i%2===0?"255,47,208":"100,220,255",
+          phase:Math.random()*Math.PI*2
+        });
+      }
+    }
+    ctx.font="24px monospace";
+    ctx.textAlign="center";
+    for(const s of bgParticles._signs){
+      const on=Math.sin(t*3+s.phase)>-0.7;
+      if(!on) continue;
+      ctx.fillStyle=`rgba(${s.color},0.8)`;
+      ctx.shadowBlur=14;
+      ctx.shadowColor=`rgba(${s.color},0.9)`;
+      ctx.fillText(s.glyph,s.x,s.y);
+      ctx.shadowBlur=0;
+    }
+    ctx.textAlign="left";
+    // rain streaks falling through the neon glow
+    if(!bgParticles._rain){
+      bgParticles._rain=[];
+      for(let i=0;i<60;i++){
+        bgParticles._rain.push({x:Math.random()*w,y:Math.random()*h,len:10+Math.random()*16,speed:8+Math.random()*6});
+      }
+    }
+    ctx.strokeStyle="rgba(150,220,255,0.25)";
+    ctx.lineWidth=1;
+    for(const r of bgParticles._rain){
+      ctx.beginPath();
+      ctx.moveTo(r.x,r.y);
+      ctx.lineTo(r.x-2,r.y+r.len);
+      ctx.stroke();
+      r.y+=r.speed;
+      if(r.y>h){ r.y=-20; r.x=Math.random()*w; }
+    }
+    // distant flying vehicle lights drifting across the skyline
+    if(!bgParticles._flyers){
+      bgParticles._flyers=[];
+      for(let i=0;i<3;i++){
+        bgParticles._flyers.push({x:Math.random()*w,y:h*(0.2+Math.random()*0.3),speed:0.6+Math.random()*0.8});
+      }
+    }
+    for(const fl of bgParticles._flyers){
+      ctx.fillStyle="rgba(255,120,220,0.7)";
+      ctx.beginPath();
+      ctx.arc(fl.x,fl.y,2.2,0,Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle="rgba(255,120,220,0.25)";
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(fl.x,fl.y);
+      ctx.lineTo(fl.x-16,fl.y);
+      ctx.stroke();
+      fl.x+=fl.speed;
+      if(fl.x>w+20) fl.x=-20;
+    }
+    // reflective street-level grid
     ctx.strokeStyle="rgba(255,47,208,0.15)";
     ctx.lineWidth=1;
     for(let gy=h*0.6;gy<h;gy+=20){
@@ -3177,6 +3689,68 @@ function drawBackground(){
       ctx.stroke();
     }
   }else if(theme==="graveyard"){
+    // pale moon glow
+    if(!bgParticles._moon){ bgParticles._moon={x:w*0.82,y:h*0.18}; }
+    const moonGlow=ctx.createRadialGradient(bgParticles._moon.x,bgParticles._moon.y,4,bgParticles._moon.x,bgParticles._moon.y,90);
+    moonGlow.addColorStop(0,"rgba(220,230,220,0.5)");
+    moonGlow.addColorStop(1,"rgba(220,230,220,0)");
+    ctx.fillStyle=moonGlow;
+    ctx.beginPath();
+    ctx.arc(bgParticles._moon.x,bgParticles._moon.y,90,0,Math.PI*2);
+    ctx.fill();
+    // a row of tombstone / dead-tree silhouettes along the ground
+    if(!bgParticles._graves){
+      bgParticles._graves=[];
+      for(let i=0;i<12;i++){
+        bgParticles._graves.push({
+          x:Math.random()*w,
+          w:18+Math.random()*20,
+          hgt:30+Math.random()*50,
+          tree:Math.random()<0.3
+        });
+      }
+    }
+    for(const g of bgParticles._graves){
+      ctx.fillStyle="rgba(10,10,14,0.6)";
+      if(g.tree){
+        ctx.strokeStyle="rgba(10,10,14,0.6)";
+        ctx.lineWidth=4;
+        ctx.beginPath();
+        ctx.moveTo(g.x,h);
+        ctx.lineTo(g.x-6,h-g.hgt);
+        ctx.moveTo(g.x,h-g.hgt*0.5);
+        ctx.lineTo(g.x+14,h-g.hgt*0.9);
+        ctx.moveTo(g.x,h-g.hgt*0.6);
+        ctx.lineTo(g.x-16,h-g.hgt);
+        ctx.stroke();
+      }else{
+        ctx.beginPath();
+        ctx.moveTo(g.x,h);
+        ctx.lineTo(g.x,h-g.hgt+8);
+        ctx.arc(g.x+g.w/2,h-g.hgt+8,g.w/2,Math.PI,0);
+        ctx.lineTo(g.x+g.w,h);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    // floating will-o-wisps drifting between the graves
+    if(!bgParticles._wisps){
+      bgParticles._wisps=[];
+      for(let i=0;i<8;i++){
+        bgParticles._wisps.push({x:Math.random()*w,y:h*(0.6+Math.random()*0.3),phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const wsp of bgParticles._wisps){
+      const glow=0.4+0.6*Math.abs(Math.sin(t*0.8+wsp.phase));
+      ctx.beginPath();
+      ctx.arc(wsp.x+Math.sin(t*0.3+wsp.phase)*24,wsp.y+Math.sin(t*0.5+wsp.phase)*10,3+glow*2,0,Math.PI*2);
+      ctx.fillStyle=`rgba(180,255,210,${0.15+glow*0.35})`;
+      ctx.shadowBlur=10;
+      ctx.shadowColor="rgba(180,255,210,0.7)";
+      ctx.fill();
+      ctx.shadowBlur=0;
+    }
+    // creeping ground fog drifting across the graves
     for(const p of bgParticles){
       ctx.fillStyle="rgba(200,200,220,0.06)";
       ctx.beginPath();
@@ -3186,6 +3760,68 @@ function drawBackground(){
       if(p.x>w+100){ p.x=-100; }
     }
   }else if(theme==="underwater"){
+    // shafts of light filtering down from the surface
+    if(!bgParticles._rays){
+      bgParticles._rays=[];
+      for(let i=0;i<5;i++){
+        bgParticles._rays.push({x:Math.random()*w,width:40+Math.random()*60,phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const r of bgParticles._rays){
+      const sway=Math.sin(t*0.3+r.phase)*30;
+      const rg=ctx.createLinearGradient(r.x,0,r.x,h);
+      rg.addColorStop(0,"rgba(140,220,255,0.10)");
+      rg.addColorStop(1,"rgba(140,220,255,0)");
+      ctx.fillStyle=rg;
+      ctx.beginPath();
+      ctx.moveTo(r.x-r.width/2+sway,0);
+      ctx.lineTo(r.x+r.width/2+sway,0);
+      ctx.lineTo(r.x+r.width*1.4+sway,h);
+      ctx.lineTo(r.x-r.width*1.4+sway,h);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // swaying kelp silhouettes rooted at the seafloor
+    if(!bgParticles._kelp){
+      bgParticles._kelp=[];
+      for(let i=0;i<10;i++){
+        bgParticles._kelp.push({x:Math.random()*w,hgt:h*(0.2+Math.random()*0.25),phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const k of bgParticles._kelp){
+      ctx.strokeStyle="rgba(20,90,70,0.5)";
+      ctx.lineWidth=6;
+      ctx.beginPath();
+      ctx.moveTo(k.x,h);
+      const sway=Math.sin(t*0.7+k.phase)*22;
+      ctx.quadraticCurveTo(k.x+sway,h-k.hgt*0.6,k.x+sway*1.4,h-k.hgt);
+      ctx.stroke();
+    }
+    // distant fish silhouettes drifting past
+    if(!bgParticles._fish){
+      bgParticles._fish=[];
+      for(let i=0;i<5;i++){
+        bgParticles._fish.push({x:Math.random()*w,y:h*(0.3+Math.random()*0.4),size:6+Math.random()*8,speed:(Math.random()<0.5?1:-1)*(0.4+Math.random()*0.5)});
+      }
+    }
+    for(const f of bgParticles._fish){
+      ctx.save();
+      ctx.translate(f.x,f.y+Math.sin(t*2+f.x)*4);
+      ctx.scale(f.speed<0?-1:1,1);
+      ctx.fillStyle="rgba(10,40,60,0.45)";
+      ctx.beginPath();
+      ctx.ellipse(0,0,f.size,f.size*0.4,0,0,Math.PI*2);
+      ctx.moveTo(-f.size,0);
+      ctx.lineTo(-f.size*1.6,-f.size*0.5);
+      ctx.lineTo(-f.size*1.6,f.size*0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      f.x+=f.speed;
+      if(f.speed>0 && f.x>w+20) f.x=-20;
+      if(f.speed<0 && f.x<-20) f.x=w+20;
+    }
+    // rising bubbles (original layer)
     for(const p of bgParticles){
       ctx.strokeStyle="rgba(100,200,255,0.35)";
       ctx.lineWidth=1.5;
@@ -3197,6 +3833,45 @@ function drawBackground(){
       if(p.y<-10){ p.y=h+10; p.x=Math.random()*w; }
     }
   }else if(theme==="hive"){
+    // pulsing veiny tendrils connecting the organic pulse-nodes, so the
+    // background reads as one living membrane rather than loose dots
+    if(!bgParticles._tendrilPairs){
+      bgParticles._tendrilPairs=[];
+      for(let i=0;i<Math.min(10,bgParticles.length);i++){
+        const a=bgParticles[i];
+        const b=bgParticles[(i+3)%bgParticles.length];
+        if(a && b) bgParticles._tendrilPairs.push({a,b,phase:Math.random()*Math.PI*2});
+      }
+    }
+    for(const pair of bgParticles._tendrilPairs){
+      const pulse=0.4+0.6*Math.abs(Math.sin(t*1.2+pair.phase));
+      ctx.strokeStyle=`rgba(255,40,100,${0.08+pulse*0.14})`;
+      ctx.lineWidth=2+pulse*2;
+      ctx.beginPath();
+      const mx=(pair.a.x+pair.b.x)/2+Math.sin(t+pair.phase)*30;
+      const my=(pair.a.y+pair.b.y)/2+Math.cos(t+pair.phase)*30;
+      ctx.moveTo(pair.a.x,pair.a.y);
+      ctx.quadraticCurveTo(mx,my,pair.b.x,pair.b.y);
+      ctx.stroke();
+    }
+    // drifting spore particles
+    if(!bgParticles._spores){
+      bgParticles._spores=[];
+      for(let i=0;i<20;i++){
+        bgParticles._spores.push({x:Math.random()*w,y:Math.random()*h,phase:Math.random()*Math.PI*2,speed:0.15+Math.random()*0.2});
+      }
+    }
+    for(const sp of bgParticles._spores){
+      const glow=0.3+0.7*Math.abs(Math.sin(t*sp.speed*3+sp.phase));
+      ctx.beginPath();
+      ctx.arc(sp.x,sp.y,1.5+glow,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,120,160,${0.15+glow*0.3})`;
+      ctx.fill();
+      sp.y-=sp.speed;
+      sp.x+=Math.sin(t*0.5+sp.phase)*0.3;
+      if(sp.y<-10) sp.y=h+10;
+    }
+    // pulsing organic membrane blobs (original layer)
     for(const p of bgParticles){
       const pulse=0.5+0.5*Math.sin(t*1.5+p.pulseOffset);
       ctx.fillStyle=`rgba(255,17,85,${0.08+pulse*0.12})`;
@@ -3650,19 +4325,24 @@ function callNextWave(){
   updateHUD();
 }
 
-// Two signature aliens per sector (index-matched to AREAS) - mixed into
-// that sector's waves on top of the recurring roster below, so every
-// area now has more enemy variety than the shared generic pool alone.
+// Three signature aliens per sector (index-matched to AREAS) - mixed
+// into that sector's waves on top of the recurring roster below, so
+// every area now has a lot more enemy variety than the shared generic
+// pool alone: three area-only types plus whatever the generic pool
+// rolls for the current wave tier.
 const AREA_SIGNATURE_TYPE=["glitch","cinder","frostfang","burrower","drifter","leech","wraith","specter","angler","broodling"];
 const AREA_SIGNATURE_TYPE_2=["sentinel","ashwraith","iceshard","sandviper","cometrider","sporecloud","hologram","poltergeist","deepcrawler","hiveguard"];
+const AREA_SIGNATURE_TYPE_3=["aegisdrone","moltengrub","glaciant","dunestalker","starlet","bogbeast","circuitrunner","grimshade","pressurefiend","broodwarden"];
 
 function pickEnemyType(){
   const idx=getAreaIndex();
   const sig1=AREA_SIGNATURE_TYPE[idx];
   const sig2=AREA_SIGNATURE_TYPE_2[idx];
+  const sig3=AREA_SIGNATURE_TYPE_3[idx];
   const roll=Math.random();
-  if(sig1 && roll<0.20) return sig1;
-  if(sig2 && roll<0.36) return sig2;
+  if(sig1 && roll<0.16) return sig1;
+  if(sig2 && roll<0.30) return sig2;
+  if(sig3 && roll<0.44) return sig3;
   return pickGenericEnemyType();
 }
 
@@ -4544,7 +5224,31 @@ const TYPE_SHAPE={
   specter:     {bw:0.95, bh:1.2,  legs:0, eyes:2, spikes:0, segmented:false, lean:false},
   angler:      {bw:1.1,  bh:1.0,  legs:4, eyes:1, spikes:1, segmented:false, lean:false},
   broodling:   {bw:1.3,  bh:1.1,  legs:6, eyes:3, spikes:3, segmented:true,  lean:false},
-  broodletling:{bw:0.85, bh:0.85, legs:3, eyes:2, spikes:0, segmented:false, lean:false}
+  broodletling:{bw:0.85, bh:0.85, legs:3, eyes:2, spikes:0, segmented:false, lean:false},
+
+  sentinel:    {bw:1.1,  bh:1.0,  legs:4, eyes:1, spikes:2, segmented:false, lean:false},
+  ashwraith:   {bw:0.8,  bh:1.1,  legs:2, eyes:2, spikes:0, segmented:false, lean:true},
+  iceshard:    {bw:1.0,  bh:1.05, legs:0, eyes:2, spikes:3, segmented:false, lean:false},
+  shardling:   {bw:0.8,  bh:0.8,  legs:0, eyes:2, spikes:1, segmented:false, lean:false},
+  sandviper:   {bw:0.7,  bh:1.3,  legs:0, eyes:2, spikes:0, segmented:false, lean:true},
+  cometrider:  {bw:0.85, bh:0.85, legs:0, eyes:2, spikes:0, segmented:false, lean:true},
+  sporecloud:  {bw:1.2,  bh:1.0,  legs:0, eyes:1, spikes:0, segmented:true,  lean:false},
+  hologram:    {bw:0.95, bh:1.1,  legs:3, eyes:2, spikes:0, segmented:false, lean:false},
+  poltergeist: {bw:0.9,  bh:1.15, legs:0, eyes:2, spikes:0, segmented:true,  lean:false},
+  wisp:        {bw:0.8,  bh:0.9,  legs:0, eyes:2, spikes:0, segmented:false, lean:false},
+  deepcrawler: {bw:1.35, bh:0.95, legs:6, eyes:2, spikes:2, segmented:false, lean:false},
+  hiveguard:   {bw:1.25, bh:1.1,  legs:5, eyes:3, spikes:3, segmented:false, lean:false},
+
+  aegisdrone:  {bw:1.05, bh:1.0,  legs:4, eyes:1, spikes:1, segmented:false, lean:false},
+  moltengrub:  {bw:1.2,  bh:0.85, legs:6, eyes:2, spikes:0, segmented:true,  lean:false},
+  glaciant:    {bw:1.3,  bh:1.1,  legs:4, eyes:2, spikes:2, segmented:false, lean:false},
+  dunestalker: {bw:0.95, bh:1.0,  legs:4, eyes:2, spikes:1, segmented:false, lean:true},
+  starlet:     {bw:0.7,  bh:0.7,  legs:0, eyes:2, spikes:0, segmented:false, lean:true},
+  bogbeast:    {bw:1.35, bh:1.1,  legs:4, eyes:2, spikes:3, segmented:false, lean:false},
+  circuitrunner:{bw:0.75, bh:1.15,legs:3, eyes:2, spikes:0, segmented:false, lean:true},
+  grimshade:   {bw:0.9,  bh:1.2,  legs:0, eyes:2, spikes:0, segmented:false, lean:false},
+  pressurefiend:{bw:1.15, bh:1.0, legs:4, eyes:1, spikes:2, segmented:false, lean:false},
+  broodwarden: {bw:1.25, bh:1.1,  legs:6, eyes:3, spikes:4, segmented:false, lean:false}
 };
 
 function drawAlienBody(e,t,themeOverride){
