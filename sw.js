@@ -1,9 +1,9 @@
 // Minimal service worker: caches the app shell on install so the game
 // still opens (and can be installed) without a network connection.
-const CACHE_NAME="alien-td-v1";
+const CACHE_NAME="alien-td-v2";
 const APP_SHELL=[
   "./",
-  "./ALIEN_TD.html",
+  "./index.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
