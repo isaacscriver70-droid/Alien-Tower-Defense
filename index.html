@@ -1053,6 +1053,7 @@ const AudioEngine=(function(){
   }
 
   function applyVolumes(){
+    applyMusicVolumeToAll();
     if(!ctx) return;
     const now=ctx.currentTime;
     masterGain.gain.setTargetAtTime(muted?0:1,now,0.01);
@@ -1136,110 +1137,118 @@ const AudioEngine=(function(){
     try{ SFX[name](); }catch(e){}
   }
 
-  // ---- Procedural chiptune music: one deterministic loop per area,
-  // plus a menu track and a boss track. Deterministic (seeded) so the
-  // same area always sounds the same between sessions, but every area
-  // gets its own scale/tempo/mood instead of one repeated track. ----
-  const SCALES={
-    minorPent:[0,3,5,7,10],
-    phrygian:[0,1,3,5,7,8,10],
-    lydian:[0,2,4,6,7,9,11],
-    harmonicMinor:[0,2,3,5,7,8,11],
-    wholeTone:[0,2,4,6,8,10],
-    dorian:[0,2,3,5,7,9,10]
+  // ---- Real recorded soundtrack: one looping MP3 per area, plus a menu
+  // track and a boss track. Files live alongside this HTML page in a
+  // "music/" folder. Playback is via plain <audio> elements (so looping,
+  // buffering, and file:// / same-origin playback all just work); volume
+  // and mute are applied directly to each element rather than routed
+  // through the Web Audio graph, so SFX (still Web Audio) and music can
+  // be controlled completely independently. ----
+  const MUSIC_FILES={
+    menu:"music/00_menu_theme.mp3",
+    boss:"music/00_boss_theme.mp3",
+    area0:"music/01_the_mainframe.mp3",
+    area1:"music/02_magma_depths.mp3",
+    area2:"music/03_frozen_wastes.mp3",
+    area3:"music/04_dune_sea.mp3",
+    area4:"music/05_deep_space.mp3",
+    area5:"music/06_toxic_swamp.mp3",
+    area6:"music/07_neon_city.mp3",
+    area7:"music/08_haunted_grounds.mp3",
+    area8:"music/09_the_abyss.mp3",
+    area9:"music/10_the_hive_core.mp3"
   };
 
-  function noteFreq(root,semitoneOffset){
-    return root*Math.pow(2,semitoneOffset/12);
+  const musicElements={};
+  let currentAudioEl=null;
+  let fadeRAF=null;
+
+  function getMusicEl(key){
+    if(musicElements[key]) return musicElements[key];
+    const src=MUSIC_FILES[key];
+    if(!src) return null;
+    const el=new Audio(src);
+    el.loop=true;
+    el.preload="auto";
+    el.volume=0;
+    el.addEventListener("error",()=>{
+      // Missing/blocked file (e.g. the music/ folder wasn't uploaded
+      // alongside this page) - fail silently, the game still works.
+    });
+    musicElements[key]=el;
+    return el;
   }
 
-  function seededRand(seed){
-    let s=seed%2147483647; if(s<=0) s+=2147483646;
-    return function(){ s=(s*16807)%2147483647; return (s-1)/2147483646; };
-  }
-
-  function buildPattern(seed,root,scale,steps,octaves,restChance){
-    const rnd=seededRand(seed);
-    const pattern=[];
-    for(let i=0;i<steps;i++){
-      if(rnd()<restChance){ pattern.push(null); continue; }
-      const degree=scale[Math.floor(rnd()*scale.length)];
-      const octave=Math.floor(rnd()*octaves)*12;
-      pattern.push(noteFreq(root,degree+octave));
+  function fadeTo(el,target,ms,onDone){
+    if(!el) return;
+    const start=el.volume;
+    const t0=performance.now();
+    function step(){
+      const p=Math.min(1,(performance.now()-t0)/ms);
+      el.volume=start+(target-start)*p;
+      if(p<1){ requestAnimationFrame(step); }
+      else if(onDone){ onDone(); }
     }
-    return pattern;
+    step();
   }
 
-  const AREA_MOOD=[
-    {root:196,scale:"minorPent",     tempo:190,seed:1},
-    {root:174,scale:"phrygian",      tempo:170,seed:2},
-    {root:262,scale:"lydian",        tempo:210,seed:3},
-    {root:220,scale:"harmonicMinor", tempo:200,seed:4},
-    {root:130,scale:"wholeTone",     tempo:260,seed:5},
-    {root:164,scale:"dorian",        tempo:220,seed:6},
-    {root:246,scale:"minorPent",     tempo:150,seed:7},
-    {root:146,scale:"harmonicMinor", tempo:240,seed:8},
-    {root:196,scale:"dorian",        tempo:230,seed:9},
-    {root:110,scale:"phrygian",      tempo:160,seed:10}
-  ];
-
-  const TRACK_DEFS={
-    menu:{root:220,scale:SCALES.minorPent,tempo:230,steps:16,octaves:2,restChance:0.35,bassWave:"triangle",leadWave:"square",seed:11},
-    boss:{root:110,scale:SCALES.harmonicMinor,tempo:150,steps:16,octaves:2,restChance:0.12,bassWave:"sawtooth",leadWave:"square",seed:999}
-  };
-  for(let i=0;i<AREA_MOOD.length;i++){
-    const m=AREA_MOOD[i];
-    TRACK_DEFS["area"+i]={
-      root:m.root,scale:SCALES[m.scale],tempo:m.tempo,steps:16,octaves:2,
-      restChance:0.3,bassWave:"triangle",leadWave:"square",seed:m.seed*17+3
-    };
+  function applyMusicVolumeToAll(){
+    const target=muted?0:musicVolume;
+    for(const key in musicElements){
+      if(musicElements[key]===currentAudioEl) continue; // let fades own the active track
+      musicElements[key].volume=target;
+    }
+    if(currentAudioEl) currentAudioEl.volume=target;
   }
 
   function stopMusic(){
-    musicGenToken++;
-    if(musicTimer) clearTimeout(musicTimer);
-    musicTimer=null;
     currentMusicKey=null;
+    if(currentAudioEl){
+      const el=currentAudioEl;
+      currentAudioEl=null;
+      fadeTo(el,0,450,()=>{ el.pause(); });
+    }
   }
 
   function playMusic(key){
     if(key===currentMusicKey) return;
-    const def=TRACK_DEFS[key];
-    if(!def){ stopMusic(); return; }
-    musicGenToken++;
-    const myToken=musicGenToken;
-    if(musicTimer) clearTimeout(musicTimer);
     currentMusicKey=key;
+    const prevEl=currentAudioEl;
+    const nextEl=getMusicEl(key);
+    currentAudioEl=nextEl;
 
-    const bass=buildPattern(def.seed,def.root/2,def.scale,def.steps,1,def.restChance*0.6);
-    const lead=buildPattern(def.seed+500,def.root*2,def.scale,def.steps,def.octaves,def.restChance);
-
-    function scheduleLoop(){
-      if(myToken!==musicGenToken) return;
-      const c=ensureCtx();
-      if(!c) return;
-      const stepDur=def.tempo/1000;
-      for(let i=0;i<def.steps;i++){
-        const t=i*stepDur;
-        const bf=bass[i];
-        const lf=lead[i];
-        if(bf) tone(bf,t,stepDur*0.85,def.bassWave,0.08,null,musicGain);
-        if(lf && i%2===0) tone(lf,t,stepDur*0.7,def.leadWave,0.06,null,musicGain);
-      }
-      musicTimer=setTimeout(scheduleLoop,def.steps*stepDur*1000-15);
+    if(prevEl && prevEl!==nextEl){
+      fadeTo(prevEl,0,450,()=>{ prevEl.pause(); });
     }
-    scheduleLoop();
+    if(nextEl){
+      if(nextEl.paused){
+        nextEl.currentTime=0;
+        nextEl.play().catch(()=>{}); // blocked until a user gesture - retried below
+      }
+      fadeTo(nextEl,muted?0:musicVolume,600);
+    }
+  }
+
+  // If autoplay was blocked before the first user interaction, retry
+  // starting the current track once a gesture arrives.
+  function resumeMusicIfNeeded(){
+    if(currentAudioEl && currentAudioEl.paused){
+      currentAudioEl.play().catch(()=>{});
+    }
   }
 
   return {
     ensureCtx,setMusicVolume,setSfxVolume,setMuted,
-    playSfx,playMusic,stopMusic,
+    playSfx,playMusic,stopMusic,resumeMusicIfNeeded,
     getCurrentMusicKey:()=>currentMusicKey
   };
 })();
 
 ["pointerdown","keydown"].forEach(evt=>{
-  window.addEventListener(evt,()=>{ AudioEngine.ensureCtx(); },{once:true});
+  window.addEventListener(evt,()=>{
+    AudioEngine.ensureCtx();
+    AudioEngine.resumeMusicIfNeeded();
+  },{once:true});
 });
 
 function playSound(type){
