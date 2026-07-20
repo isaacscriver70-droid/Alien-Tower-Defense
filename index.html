@@ -142,8 +142,10 @@ canvas{
   width:100%;
   padding:1.1rem 1.8rem;
   display:flex;
+  flex-wrap:wrap;
   justify-content:space-between;
   align-items:center;
+  row-gap:8px;
   background:linear-gradient(rgba(0,0,0,.9),transparent);
   pointer-events:none;
   gap:12px;
@@ -209,11 +211,8 @@ canvas{
   min-height:38px;
 }
 #shop-open-btn{
-  position:absolute;
-  right:25px;
-  top:100px;
   display:none;
-  z-index:21;
+  pointer-events:auto;
   padding:.6em 1em;
   min-height:38px;
 }
@@ -286,7 +285,7 @@ canvas{
     padding:12px;
     max-height:calc(100vh - 90px);
   }
-  #shop-open-btn{ top:70px; right:10px; padding:.55em .8em; font-size:.85rem; }
+  #shop-open-btn{ padding:.55em .8em; font-size:.85rem; }
   .shop-title{ font-size:1.05rem; }
   .tower-card{ padding:10px; margin-bottom:10px; }
   .t-name{ font-size:1rem; }
@@ -306,7 +305,11 @@ canvas{
    out the board on ~360-390px wide screens. */
 @media (max-width:400px){
   h1{ font-size:1.7rem; letter-spacing:2px; }
-  #shop-panel,#shop-open-btn{ right:6px; }
+  #hud{ padding:.5rem .6rem; gap:8px; row-gap:6px; }
+  .hud-stat{ font-size:.85rem; }
+  #btn-quit,#shop-open-btn{ padding:.45em .7em; font-size:.75rem; min-height:32px; }
+  .speed-btn{ padding:.4em .6em!important; font-size:.75rem!important; min-height:28px!important; }
+  #shop-panel{ right:6px; }
   #shop-panel{ width:min(50vw,220px); padding:9px; }
   #upgrade-panel{ left:6px; width:min(50vw,210px); padding:9px; }
   .t-desc{ display:none; } /* reclaim vertical space on the tower cards */
@@ -971,9 +974,8 @@ canvas{
       <button class="speed-btn" data-speed="3" onclick="setGameSpeed(3)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">3x</button>
     </div>
     <button id="btn-quit" onclick="quitGame()">CANCEL MISSION</button>
+    <button id="shop-open-btn" onclick="toggleShop()">OPEN SHOP</button>
   </div>
-
-<button id="shop-open-btn" onclick="toggleShop()">OPEN SHOP</button>
 
   <div id="shop-panel">
     <div class="shop-header">
@@ -1776,10 +1778,12 @@ function saveProgressManually(){
   },1100);
 }
 
-// Forces this page past any stale offline/service-worker cache so a new
-// deploy actually loads, without touching localStorage (that's a
-// separate storage bucket from the service-worker's Cache Storage, so
-// save progress and Armory upgrades are completely unaffected by this).
+// Forces this page past any stale offline/cached data so a new deploy
+// actually loads, without touching localStorage (that's where save
+// progress and Armory upgrades live, so it's the one thing this
+// deliberately leaves alone). Everything else - service workers, the
+// Cache Storage API, IndexedDB, sessionStorage, and this page's
+// cookies - gets wiped so nothing stale can survive a refresh.
 async function forceUpdateApp(){
   showConfirmModal(
     "This reloads the game and fetches the latest version. Your save progress is stored separately and will not be touched. Continue?",
@@ -1795,6 +1799,25 @@ async function forceUpdateApp(){
           const keys=await caches.keys();
           for(const key of keys){ await caches.delete(key); }
         }
+        if("indexedDB" in window && indexedDB.databases){
+          try{
+            const dbs=await indexedDB.databases();
+            for(const db of dbs){
+              if(db && db.name) await new Promise(res=>{
+                const req=indexedDB.deleteDatabase(db.name);
+                req.onsuccess=req.onerror=req.onblocked=res;
+              });
+            }
+          }catch(e){ console.warn("IndexedDB cleanup skipped:",e); }
+        }
+        try{ sessionStorage.clear(); }catch(e){ console.warn("sessionStorage cleanup skipped:",e); }
+        try{
+          document.cookie.split(";").forEach(c=>{
+            const name=c.split("=")[0].trim();
+            if(name) document.cookie=name+"=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+          });
+        }catch(e){ console.warn("cookie cleanup skipped:",e); }
+        // localStorage is intentionally left untouched here - that's the save file
       }catch(e){
         console.warn("Update cleanup hit an issue (reloading anyway):",e);
       }
@@ -4473,10 +4496,29 @@ function toggleShop(){
   const shop=document.getElementById("shop-panel");
   const openBtn=document.getElementById("shop-open-btn");
   const isHidden=shop.style.display==="none";
+  if(isHidden) positionShopPanel();
   shop.style.display=isHidden ? "block" : "none";
   openBtn.style.display=isHidden ? "none" : "block";
   playSound("click");
 }
+
+// The HUD can wrap onto a second line on narrow phones (CANCEL MISSION /
+// OPEN SHOP dropping below the stats row), which changes its actual
+// rendered height. Anchor the shop panel to the HUD's real bottom edge
+// instead of a hardcoded px offset, so it never overlaps regardless of
+// how many lines the HUD wraps to.
+function positionShopPanel(){
+  const shop=document.getElementById("shop-panel");
+  const hud=document.getElementById("hud");
+  const stage=document.getElementById("stage");
+  if(!shop || !hud || !stage) return;
+  const hudRect=hud.getBoundingClientRect();
+  const stageRect=stage.getBoundingClientRect();
+  const top=Math.round(hudRect.bottom-stageRect.top+10);
+  shop.style.top=top+"px";
+  shop.style.maxHeight="calc(100vh - "+(top+20)+"px)";
+}
+window.addEventListener("resize",positionShopPanel);
 
 function renderShopCards(){
   const container=document.getElementById("shop-cards");
