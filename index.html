@@ -107,6 +107,21 @@ button:hover:not(:disabled){
   transform:scale(1.05);
 }
 button:disabled{opacity:.4;cursor:default;}
+.click-ring{
+  position:fixed;
+  left:0; top:0;
+  width:14px; height:14px;
+  margin-left:-7px; margin-top:-7px;
+  border-radius:50%;
+  border:2px solid var(--green);
+  pointer-events:none;
+  z-index:99999;
+  animation:clickRingPulse .55s ease-out forwards;
+}
+@keyframes clickRingPulse{
+  0%{ transform:scale(0.3); opacity:.9; }
+  100%{ transform:scale(4.5); opacity:0; }
+}
 .speed-btn{box-shadow:none;}
 .speed-btn.active{background:var(--green);color:#000;}
 #game-container{
@@ -816,10 +831,11 @@ canvas{
       <label for="lobby-theme-select">Lobby Theme</label>
       <select id="lobby-theme-select" onchange="updateSetting('lobbyTheme', this.value)"></select>
     </div>
-    <div class="settings-row">
-      <label for="flashy-slider">Flashy FX</label>
-      <input type="range" id="flashy-slider" min="0" max="100" value="100" oninput="updateSetting('flashyLevel', this.value)">
-      <span id="flashy-val">100</span>
+    <div class="settings-row" style="justify-content:center;">
+      <label for="flashy-toggle" style="flex:none;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="flashy-toggle" checked onchange="updateSetting('flashyLevel', this.checked)">
+        Flashy FX (screen shake &amp; particles)
+      </label>
     </div>
     <div class="settings-row">
       <label for="mode-select">Difficulty</label>
@@ -1388,6 +1404,30 @@ const AudioEngine=(function(){
 function playSound(type){
   AudioEngine.playSfx(type);
 }
+
+// ---------- Click-effect ring: a colored pulse ring on every button press ----------
+function spawnClickRing(x,y,color){
+  if(flashyMul()<=0) return; // respects the Flashy FX setting
+  const ring=document.createElement("div");
+  ring.className="click-ring";
+  ring.style.left=x+"px";
+  ring.style.top=y+"px";
+  ring.style.borderColor=color;
+  ring.style.boxShadow="0 0 12px "+color;
+  document.body.appendChild(ring);
+  ring.addEventListener("animationend",()=>ring.remove());
+  setTimeout(()=>{ if(ring.parentNode) ring.remove(); },700);
+}
+document.addEventListener("pointerdown",e=>{
+  const btn=e.target.closest("button");
+  if(!btn || btn.disabled) return;
+  const cs=getComputedStyle(btn);
+  const color=cs.borderColor && cs.borderColor!=="rgba(0, 0, 0, 0)" ? cs.borderColor : (cs.color||"#39ff14");
+  const x=(e.clientX!==undefined && e.clientX!==0)?e.clientX:btn.getBoundingClientRect().left+btn.offsetWidth/2;
+  const y=(e.clientY!==undefined && e.clientY!==0)?e.clientY:btn.getBoundingClientRect().top+btn.offsetHeight/2;
+  spawnClickRing(x,y,color);
+},{passive:true});
+
 // ---------- Shared constants (also used for display in the armory) ----------
 const MAX_SLOTS_CLIENT=5;
 const SLOT_COSTS_CLIENT={3:150,4:300,5:500};
@@ -1607,7 +1647,7 @@ function applySettingsToUI(){
   const musicSlider=document.getElementById("music-vol-slider");
   const sfxSlider=document.getElementById("sfx-vol-slider");
   const muteToggle=document.getElementById("mute-toggle");
-  const flashySlider=document.getElementById("flashy-slider");
+  const flashyToggle=document.getElementById("flashy-toggle");
   const lobbySelect=document.getElementById("lobby-theme-select");
   if(musicSlider){
     musicSlider.value=s.musicVolume;
@@ -1618,10 +1658,7 @@ function applySettingsToUI(){
     document.getElementById("sfx-vol-val").innerText=s.sfxVolume;
   }
   if(muteToggle) muteToggle.checked=!!s.muted;
-  if(flashySlider){
-    flashySlider.value=s.flashyLevel;
-    document.getElementById("flashy-val").innerText=s.flashyLevel;
-  }
+  if(flashyToggle) flashyToggle.checked=s.flashyLevel>0;
   if(lobbySelect && lobbySelect.options.length===0){
     populateLobbyThemeSelect();
   }
@@ -1676,10 +1713,10 @@ function updateSetting(key,value){
     if(!isPlaying) AudioEngine.playMusic(value);
     playSound("click");
   }else if(key==="flashyLevel"){
-    const v=Math.max(0,Math.min(100,parseInt(value,10)||0));
+    const v=value?100:0;
     metaData.settings.flashyLevel=v;
-    document.getElementById("flashy-val").innerText=v;
     applyFlashyLevel(v);
+    playSound("click");
   }else{
     const v=Math.max(0,Math.min(100,parseInt(value,10)||0));
     metaData.settings[key]=v;
