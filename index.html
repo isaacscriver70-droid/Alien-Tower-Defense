@@ -1015,6 +1015,7 @@ canvas{
     <button id="btn-save-lobby" onclick="saveProgressManually()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">SAVE PROGRESS</button>
     <button onclick="toggleSettings()" style="border-color:var(--purple);color:var(--purple);box-shadow:0 0 20px rgba(176,38,255,.5);">SETTINGS</button>
     <button onclick="openBestiary()" style="border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">BESTIARY</button>
+    <button onclick="openInventory()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">INVENTORY</button>
     <button onclick="openSummoning()" style="border-color:#ff6a2b;color:#ff6a2b;box-shadow:0 0 20px rgba(255,106,43,.5);">SUMMONING</button>
     <button id="btn-update-app" onclick="forceUpdateApp()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">CHECK FOR UPDATES</button>
   </div>
@@ -1072,6 +1073,19 @@ canvas{
   </div>
 
   <button onclick="closeBestiary()" style="flex-shrink:0;margin:34px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE BESTIARY</button>
+</div>
+
+<div id="inventory-screen" class="screen" style="display:none;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">POWER CARD INVENTORY</h1>
+  <div style="color:#9fd8a0;letter-spacing:2px;font-size:.95rem;text-transform:uppercase;margin-bottom:6px;">Loadout Management</div>
+  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:1rem;line-height:1.5;margin-bottom:10px;">
+    Equip Power Cards earned from Summoning crates before you deploy. Their bonuses apply for the whole run. Only one level of each card can be equipped at a time - equipping a different level automatically swaps it in.
+  </div>
+  <div id="inventory-slots-info" style="color:var(--gold);font-size:.9rem;letter-spacing:1px;margin-bottom:20px;"></div>
+
+  <div style="max-width:680px;width:100%;" id="inventory-list"></div>
+
+  <button onclick="closeInventory()" style="flex-shrink:0;margin:34px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE INVENTORY</button>
 </div>
 
 <div id="game-container">
@@ -1643,6 +1657,8 @@ function playSound(type){
 // ---------- Shared constants (also used for display in the armory) ----------
 const MAX_SLOTS_CLIENT=5;
 const SLOT_COSTS_CLIENT={3:150,4:300,5:500};
+const MAX_POWERUP_SLOTS=5;
+const POWERUP_SLOT_COSTS={2:120,3:280,4:520,5:900};
 
 const STORAGE_KEY="alienTD_playerData";
 let memoryFallback=null;
@@ -1753,7 +1769,8 @@ function apiPost(fn, body){
       if(fn==="saveGameResult"){
         const waveReached=body.waveReached||0;
         const kills=body.killsThisGame||0;
-        state.biomass=(state.biomass??0)+kills;
+        const biomassMul=body.biomassMultiplier||1;
+        state.biomass=(state.biomass??0)+Math.floor(kills*biomassMul);
         state.bestWave=Math.max(state.bestWave??0,waveReached);
         const areasCleared=Math.floor(waveReached/10);
         if(areasCleared>(state.areasEverCleared||0)){
@@ -1772,6 +1789,17 @@ function apiPost(fn, body){
         }
         saveToStorage(state);
         resolve(state);
+        return;
+      }
+      if(fn==="buyPowerupSlot"){
+        const cur=state.maxPowerupSlots||1;
+        if(cur>=MAX_POWERUP_SLOTS){ resolve({success:false,message:"Max power slots reached.",data:state}); return; }
+        const cost=POWERUP_SLOT_COSTS[cur+1];
+        if((state.biomass??0)<cost){ resolve({success:false,message:"Not enough Biomass.",data:state}); return; }
+        state.biomass-=cost;
+        state.maxPowerupSlots=cur+1;
+        saveToStorage(state);
+        resolve({success:true,data:state});
         return;
       }
       resolve(null);
@@ -1800,7 +1828,8 @@ function defaultLocalState(){
     areasEverCleared:0,
     unlockedAreaTowers:[],
     powerups:{},
-    equippedPowerups:[]
+    equippedPowerups:[],
+    maxPowerupSlots:1
   };
 }
 
@@ -1845,6 +1874,7 @@ function onDataLoaded(data){
   if(metaData.summonTickets===undefined) metaData.summonTickets=0;
   if(metaData.powerups===undefined) metaData.powerups={};
   if(metaData.equippedPowerups===undefined) metaData.equippedPowerups=[];
+  if(metaData.maxPowerupSlots===undefined) metaData.maxPowerupSlots=1;
   if(metaData.unlockedAreaTowers===undefined) metaData.unlockedAreaTowers=[];
   document.getElementById("loader").style.display="none";
   document.getElementById("meta-stats").style.display="block";
@@ -2089,6 +2119,12 @@ for(const type in TOWER_STATS){ towerImages[type]=new Image(); }
 // position and already-rotated to face its target (see the draw loop).
 // Every shape scales its glow via flashyMul() so the existing Flashy FX
 // slider (0-100, settings panel) makes them punchier or flatter.
+//
+// Vector art helpers: a shared metallic gradient + rivet/mount details
+// so every turret reads as a real multi-part weapon rather than a flat
+// filled shape. lightenColor() lives further down the file (in the
+// alien-rendering section) but is a hoisted function declaration so it
+// is safe to reference here.
 // ---------------------------------------------------------------------
 // Classic arcade player-cannon bitmap, reused for every tower type when
 // Flashy Mode is off - flat, uniform, retro, no per-type glow/detail.
@@ -2099,112 +2135,191 @@ const CANNON_BITMAP=[
   [1,1,1,1,1,1,1]
 ];
 
+function barrelGrad(color,w,h){
+  w=w||12; h=h||12;
+  const g=ctx.createLinearGradient(0,-h/2,0,h/2);
+  g.addColorStop(0,lightenColor(color,75));
+  g.addColorStop(0.45,color);
+  g.addColorStop(1,lightenColor(color,-65));
+  return g;
+}
+function radialGlowGrad(color,r){
+  const g=ctx.createRadialGradient(0,0,0,0,0,r);
+  g.addColorStop(0,lightenColor(color,90));
+  g.addColorStop(0.6,color);
+  g.addColorStop(1,lightenColor(color,-70));
+  return g;
+}
+function drawMount(color,w,h){
+  ctx.fillStyle="#161616";
+  ctx.fillRect(-w/2,-h/2,w,h);
+  ctx.strokeStyle="#333"; ctx.lineWidth=1; ctx.strokeRect(-w/2,-h/2,w,h);
+  ctx.fillStyle=color; ctx.globalAlpha=0.5;
+  ctx.fillRect(-w/2,-h/2,w,1.4); ctx.fillRect(-w/2,h/2-1.4,w,1.4);
+  ctx.globalAlpha=1;
+}
+function drawRivet(x,y,color){
+  ctx.beginPath(); ctx.arc(x,y,1.4,0,Math.PI*2);
+  ctx.fillStyle="#3a3a3a"; ctx.fill();
+  ctx.beginPath(); ctx.arc(x-0.4,y-0.4,0.5,0,Math.PI*2);
+  ctx.fillStyle="rgba(255,255,255,.4)"; ctx.fill();
+}
+
 function drawTowerBarrel(t){
   if(!flashyMode){ drawPixelSprite(CANNON_BITMAP,30,t.color); return; }
   const c=t.color, fm=flashyMul(), now=performance.now();
   function glow(amt){ ctx.shadowBlur=amt*fm; ctx.shadowColor=c; }
   switch(t.type){
     case "acid":
-      ctx.fillStyle=c; ctx.fillRect(0,-6,18,4); ctx.fillRect(0,2,18,4);
-      glow(8); ctx.beginPath(); ctx.arc(18,-4,2.5,0,Math.PI*2); ctx.arc(18,4,2.5,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      drawMount(c,12,13);
+      ctx.fillStyle=barrelGrad(c); ctx.fillRect(2,-6,20,4); ctx.fillRect(2,2,20,4);
+      drawRivet(5,-6,c); drawRivet(5,6,c); drawRivet(16,-6,c); drawRivet(16,6,c);
+      glow(9); ctx.fillStyle=radialGlowGrad(c,3); ctx.beginPath(); ctx.arc(22,-4,2.6,0,Math.PI*2); ctx.arc(22,4,2.6,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
       break;
     case "super":
-      glow(18); ctx.fillStyle=c; ctx.beginPath(); ctx.arc(6,0,9,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      drawMount(c,14,14);
+      glow(20); ctx.fillStyle=radialGlowGrad(c,10); ctx.beginPath(); ctx.arc(6,0,9,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
       ctx.strokeStyle=c; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(6,0,13,now/300,now/300+4); ctx.stroke();
+      ctx.strokeStyle="rgba(255,255,255,.5)"; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(6,0,6,-now/220,-now/220+2.5); ctx.stroke();
+      for(let i=0;i<3;i++){ const a=now/260+i*(Math.PI*2/3); drawRivet(6+Math.cos(a)*9,Math.sin(a)*9,c); }
       break;
     case "freeze":
-      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(16,0); ctx.lineTo(6,-9); ctx.lineTo(-4,0); ctx.lineTo(6,9); ctx.closePath(); ctx.fill();
-      glow(10); ctx.strokeStyle=c; ctx.lineWidth=1.5;
-      for(let i=0;i<4;i++){ const a=i*Math.PI/2; ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(6+Math.cos(a)*11,Math.sin(a)*11); ctx.stroke(); }
+      drawMount(c,12,14);
+      ctx.fillStyle=barrelGrad(c); ctx.beginPath(); ctx.moveTo(17,0); ctx.lineTo(6,-9); ctx.lineTo(-3,0); ctx.lineTo(6,9); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.lineWidth=1; ctx.stroke();
+      glow(11); ctx.strokeStyle=c; ctx.lineWidth=1.5;
+      for(let i=0;i<4;i++){ const a=i*Math.PI/2+now/900; ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(6+Math.cos(a)*12,Math.sin(a)*12); ctx.stroke(); }
       ctx.shadowBlur=0;
       break;
     case "sniper":
-      ctx.fillStyle=c; ctx.fillRect(0,-2,32,4);
-      ctx.beginPath(); ctx.arc(12,0,4,0,Math.PI*2); ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.fillStyle="#222"; ctx.fillRect(2,-6,6,3); ctx.fillRect(2,3,6,3);
+      drawMount(c,10,12);
+      ctx.fillStyle=barrelGrad("#888",34,5); ctx.fillRect(2,-2.5,34,5);
+      ctx.strokeStyle=c; ctx.lineWidth=1; ctx.strokeRect(2,-2.5,34,5);
+      ctx.beginPath(); ctx.arc(14,0,4,0,Math.PI*2); ctx.strokeStyle=c; ctx.lineWidth=1.5; glow(6); ctx.stroke(); ctx.shadowBlur=0;
+      ctx.fillStyle="#222"; ctx.fillRect(2,-7,7,3.4); ctx.fillRect(2,3.6,7,3.4);
+      ctx.fillStyle=c; ctx.fillRect(34,-1,4,2);
       break;
     case "tesla":
-      ctx.strokeStyle=c; ctx.lineWidth=2; glow(12);
+      drawMount(c,12,12);
+      ctx.strokeStyle=c; ctx.lineWidth=2; glow(13);
       for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(4+i*4,0,4-i*0.7,0,Math.PI*2); ctx.stroke(); }
       ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,255,255,.7)"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(2,0); ctx.lineTo(4,-4); ctx.lineTo(6,3); ctx.lineTo(8,-2); ctx.stroke();
       break;
     case "missile":
-      ctx.fillStyle="#333"; ctx.fillRect(-2,-9,12,18);
-      ctx.fillStyle=c; ctx.beginPath(); ctx.arc(4,-9,3,0,Math.PI*2); ctx.arc(4,9,3,0,Math.PI*2); ctx.fill();
+      drawMount(c,14,16);
+      ctx.fillStyle=barrelGrad("#555",12,18); ctx.fillRect(-2,-9,12,18);
+      ctx.fillStyle=barrelGrad(c,6,6); ctx.beginPath(); ctx.arc(4,-9,3,0,Math.PI*2); ctx.arc(4,9,3,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#222"; ctx.lineWidth=1; ctx.strokeRect(-2,-9,12,18);
+      drawRivet(-1,-6,c); drawRivet(-1,6,c);
       break;
     case "railgun":
-      ctx.strokeStyle=c; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(28,-6); ctx.moveTo(0,6); ctx.lineTo(28,6); ctx.stroke();
+      drawMount(c,12,16);
+      ctx.strokeStyle=barrelGrad("#666",28,3); ctx.lineWidth=3.4;
+      ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(30,-6); ctx.moveTo(0,6); ctx.lineTo(30,6); ctx.stroke();
+      ctx.strokeStyle=c; ctx.lineWidth=1; glow(6);
+      ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(30,-6); ctx.moveTo(0,6); ctx.lineTo(30,6); ctx.stroke(); ctx.shadowBlur=0;
       if(Math.random()<0.5*fm){ ctx.strokeStyle="#fff"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(10,-6); ctx.lineTo(14,6); ctx.lineTo(20,-4); ctx.stroke(); }
       break;
     case "flame":
-      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(-4,-8); ctx.lineTo(16,0); ctx.lineTo(-4,8); ctx.closePath();
-      glow(10); ctx.fill(); ctx.shadowBlur=0;
+      drawMount(c,12,14);
+      ctx.fillStyle=barrelGrad(c,20,16); ctx.beginPath(); ctx.moveTo(-4,-8); ctx.lineTo(17,0); ctx.lineTo(-4,8); ctx.closePath();
+      glow(11); ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,255,255,.3)"; ctx.lineWidth=1; ctx.stroke();
       break;
     case "vortex":
+      drawMount(c,12,12);
       ctx.strokeStyle=c; ctx.lineWidth=1.5;
       for(let r=0;r<3;r++){ ctx.globalAlpha=0.7-r*0.2; ctx.beginPath(); ctx.arc(0,0,5+r*4,now/200+r,now/200+r+4); ctx.stroke(); }
       ctx.globalAlpha=1;
+      ctx.fillStyle=radialGlowGrad(c,3); glow(8); ctx.beginPath(); ctx.arc(0,0,2.5,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
       break;
     case "poison":
-      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(-3,-8); ctx.lineTo(10,-3); ctx.lineTo(10,3); ctx.lineTo(-3,8); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.arc(10,0,3,0,Math.PI*2); ctx.fill();
+      drawMount(c,12,12);
+      ctx.fillStyle=barrelGrad(c,13,12); ctx.beginPath(); ctx.moveTo(-3,-8); ctx.lineTo(11,-3); ctx.lineTo(11,3); ctx.lineTo(-3,8); ctx.closePath(); ctx.fill();
+      glow(9); ctx.fillStyle=c; ctx.beginPath(); ctx.arc(11,0,3,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
       break;
     case "emp":
+      drawMount(c,12,12);
       ctx.strokeStyle=c; ctx.lineWidth=2; glow(10);
       for(let r=0;r<2;r++){ ctx.beginPath(); ctx.arc(0,0,6+r*6,0,Math.PI*2); ctx.globalAlpha=0.7-r*0.3; ctx.stroke(); }
-      ctx.globalAlpha=1; ctx.shadowBlur=0; ctx.fillStyle=c; ctx.fillRect(-3,-3,6,6);
+      ctx.globalAlpha=1; ctx.shadowBlur=0; ctx.fillStyle=radialGlowGrad(c,3); ctx.fillRect(-3,-3,6,6);
       break;
     case "hijack":
-      ctx.fillStyle=c; ctx.beginPath(); ctx.ellipse(2,0,11,7,0,0,Math.PI*2); ctx.fill();
+      drawMount(c,14,10);
+      ctx.fillStyle=barrelGrad(c,22,14); ctx.beginPath(); ctx.ellipse(2,0,11,7,0,0,Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(2,0,3.5,0,Math.PI*2); ctx.fillStyle="#000"; ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.3)"; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(2,0,11,7,0,0,Math.PI*2); ctx.stroke();
       break;
     case "blackhole":
-      glow(14);
+      drawMount(c,14,14);
+      glow(15);
       for(let r=0;r<3;r++){ ctx.beginPath(); ctx.arc(0,0,5+r*4.5,0,Math.PI*2); ctx.strokeStyle=c; ctx.lineWidth=2; ctx.globalAlpha=0.55-r*0.15; ctx.stroke(); }
       ctx.globalAlpha=1; ctx.shadowBlur=0; ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fillStyle="#000"; ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.4)"; ctx.lineWidth=.7; ctx.stroke();
       break;
     case "hacktower":
-      ctx.fillStyle=c; ctx.fillRect(-6,-6,16,12);
+      drawMount(c,14,14);
+      ctx.fillStyle=barrelGrad(c,16,12); ctx.fillRect(-6,-6,16,12);
       ctx.fillStyle="#000";
       for(let i=0;i<2;i++) for(let j=0;j<2;j++) ctx.fillRect(-4+i*8,-4+j*8,3,3);
+      ctx.strokeStyle="rgba(255,255,255,.3)"; ctx.lineWidth=1; ctx.strokeRect(-6,-6,16,12);
       break;
     case "magmacannon":
-      ctx.fillStyle="#332015"; ctx.fillRect(0,-7,22,14);
-      glow(12); ctx.fillStyle=c; ctx.beginPath(); ctx.arc(22,0,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      drawMount(c,14,16);
+      ctx.fillStyle=barrelGrad("#3a241a",22,14); ctx.fillRect(0,-7,22,14);
+      glow(12); ctx.fillStyle=radialGlowGrad(c,4); ctx.beginPath(); ctx.arc(22,0,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,140,30,.5)"; ctx.lineWidth=1; ctx.strokeRect(0,-7,22,14);
       break;
     case "frostlance":
-      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(30,0); ctx.lineTo(6,-4); ctx.lineTo(6,4); ctx.closePath(); ctx.fill();
+      drawMount(c,12,10);
+      ctx.fillStyle=barrelGrad(c,24,8); ctx.beginPath(); ctx.moveTo(30,0); ctx.lineTo(6,-4); ctx.lineTo(6,4); ctx.closePath(); ctx.fill();
       ctx.globalAlpha=0.5; ctx.fillRect(-2,-2,10,4); ctx.globalAlpha=1;
+      ctx.strokeStyle="rgba(255,255,255,.4)"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(30,0); ctx.lineTo(6,-4); ctx.stroke();
       break;
     case "sandreaper":
-      ctx.strokeStyle=c; ctx.lineWidth=2.5;
-      for(let i=0;i<3;i++){ const a=now/100+i*(Math.PI*2/3); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*14,Math.sin(a)*14); ctx.stroke(); }
+      drawMount(c,12,12);
+      ctx.strokeStyle=c; ctx.lineWidth=2.8; glow(8);
+      for(let i=0;i<3;i++){ const a=now/100+i*(Math.PI*2/3); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*15,Math.sin(a)*15); ctx.stroke(); }
+      ctx.shadowBlur=0;
       break;
     case "voidray":
-      glow(14); ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(22,0); ctx.lineTo(0,6); ctx.closePath(); ctx.fill(); ctx.shadowBlur=0;
+      drawMount(c,12,12);
+      glow(15); ctx.fillStyle=barrelGrad(c,22,12); ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(23,0); ctx.lineTo(0,6); ctx.closePath(); ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.lineWidth=1; ctx.stroke();
       break;
     case "swampmaw":
-      ctx.fillStyle=c;
-      ctx.beginPath(); ctx.moveTo(-2,-9); ctx.lineTo(14,-2); ctx.lineTo(-2,0); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-2,9); ctx.lineTo(14,2); ctx.lineTo(-2,0); ctx.closePath(); ctx.fill();
+      drawMount(c,12,14);
+      ctx.fillStyle=barrelGrad(c,16,18);
+      ctx.beginPath(); ctx.moveTo(-2,-9); ctx.lineTo(15,-2); ctx.lineTo(-2,0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-2,9); ctx.lineTo(15,2); ctx.lineTo(-2,0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="rgba(0,0,0,.4)"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(-2,-9); ctx.lineTo(15,-2); ctx.moveTo(-2,9); ctx.lineTo(15,2); ctx.stroke();
       break;
     case "neonblade":
-      ctx.strokeStyle=c; ctx.lineWidth=2; glow(10);
-      for(let i=0;i<4;i++){ const a=i*Math.PI/2+now/150; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*13,Math.sin(a)*13); ctx.stroke(); }
+      drawMount(c,12,12);
+      ctx.strokeStyle=c; ctx.lineWidth=2; glow(11);
+      for(let i=0;i<4;i++){ const a=i*Math.PI/2+now/150; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*14,Math.sin(a)*14); ctx.stroke(); }
       ctx.shadowBlur=0;
       break;
     case "phantomtrap":
+      drawMount(c,12,12);
       ctx.strokeStyle=c; ctx.lineWidth=2; ctx.globalAlpha=0.7+0.3*Math.sin(now/200);
-      ctx.beginPath(); ctx.arc(6,0,10,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+      ctx.beginPath(); ctx.arc(6,0,10,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(6,0,5,0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha=1;
       break;
     case "krakenharpoon":
-      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(30,0); ctx.lineTo(10,-6); ctx.lineTo(14,0); ctx.lineTo(10,6); ctx.closePath(); ctx.fill();
-      ctx.fillRect(-2,-3,12,6);
+      drawMount(c,14,14);
+      ctx.fillStyle=barrelGrad(c,20,12); ctx.beginPath(); ctx.moveTo(32,0); ctx.lineTo(10,-6); ctx.lineTo(14,0); ctx.lineTo(10,6); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=barrelGrad("#666",12,6); ctx.fillRect(-2,-3,12,6);
+      ctx.strokeStyle="rgba(255,255,255,.3)"; ctx.lineWidth=1; ctx.stroke();
       break;
     case "hivespike":
-      ctx.fillStyle=c;
-      for(let i=0;i<3;i++){ const a=-0.5+i*0.5; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*16,Math.sin(a)*16-4); ctx.lineTo(Math.cos(a)*16,Math.sin(a)*16+4); ctx.closePath(); ctx.fill(); }
+      drawMount(c,14,14);
+      ctx.fillStyle=barrelGrad(c,18,10);
+      for(let i=0;i<3;i++){ const a=-0.5+i*0.5; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*17,Math.sin(a)*17-4); ctx.lineTo(Math.cos(a)*17,Math.sin(a)*17+4); ctx.closePath(); ctx.fill(); }
       break;
     case "omega":{
       const pulse=(Math.sin(now/150)+1)/2;
@@ -2213,108 +2328,24 @@ function drawTowerBarrel(t){
       glow(20); ctx.stroke(); ctx.shadowBlur=0;
       break;}
     case "secretop":
-      glow(16); ctx.fillStyle=c;
-      ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(10,0); ctx.lineTo(0,10); ctx.lineTo(-10,0); ctx.closePath(); ctx.fill();
+      drawMount(c,14,14);
+      glow(17); ctx.fillStyle=radialGlowGrad(c,10);
+      ctx.beginPath(); ctx.moveTo(0,-11); ctx.lineTo(11,0); ctx.lineTo(0,11); ctx.lineTo(-11,0); ctx.closePath(); ctx.fill();
       ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,255,255,.4)"; ctx.lineWidth=1; ctx.stroke();
       break;
     default:
-      ctx.fillStyle=c; ctx.fillRect(0,-4,20,8);
+      drawMount(c,12,12);
+      ctx.fillStyle=barrelGrad(c,20,8); ctx.fillRect(0,-4,20,8);
   }
 }
 
 // ---------------------------------------------------------------------
-// ENEMIES
-// ---------------------------------------------------------------------
-const ENEMY_TYPES={
-  normal:{name:"Alien",color:"#ffff00",size:12,hp:30,speed:1.8,reward:10},
-  runner:{name:"Runner",color:"#ff8a00",size:10,hp:18,speed:3.4,reward:14},
-  stunner:{name:"Stunner",color:"#b026ff",size:14,hp:50,speed:1.5,reward:22,stunRadius:150,stunDuration:60,stunInterval:110},
-  tank:{name:"Tank",color:"#ff0000",size:18,hp:120,speed:0.95,reward:30,armored:true},
-  shielded:{name:"Shielded Drone",color:"#00d4ff",size:15,hp:170,speed:1.3,reward:26},
-  splitter:{name:"Splitter",color:"#ff44cc",size:16,hp:60,speed:1.4,reward:20,splitsInto:"splitling",splitCount:2},
-  splitling:{name:"Splitling",color:"#ff99dd",size:8,hp:12,speed:2.1,reward:5,tiny:true},
-  cloaked:{name:"Cloaked Stalker",color:"#888888",size:13,hp:65,speed:1.9,reward:24,cloakInterval:90,cloakDuration:45},
-  juggernaut:{name:"Juggernaut",color:"#aa0000",size:22,hp:400,speed:0.6,reward:60,armored:true,heavy:true},
-  boss:{name:"Boss",color:"#00ff88",size:28,hp:850,speed:0.75,reward:200,stunRadius:250,stunDuration:90,stunInterval:75},
-  glitch:{name:"Glitch Wisp",color:"#39ff14",size:10,hp:20,speed:3.0,reward:16,cloakInterval:55,cloakDuration:25,shape:"wisp"},
-  cinder:{name:"Cinder Brute",color:"#ff6a00",size:17,hp:90,speed:1.2,reward:24,armored:true,shape:"brute"},
-  frostfang:{name:"Frostfang",color:"#aeeaff",size:12,hp:70,speed:3.0,reward:26,shape:"fang"},
-  burrower:{name:"Sand Burrower",color:"#ffcf6b",size:20,hp:220,speed:1.0,reward:40,armored:true,heavy:true,shape:"burrower"},
-  drifter:{name:"Void Drifter",color:"#c9d6ff",size:11,hp:140,speed:3.4,reward:42,shape:"drifter"},
-  leech:{name:"Bog Leech",color:"#8aff33",size:16,hp:260,speed:1.3,reward:50,splitsInto:"leechling",splitCount:3,shape:"leech"},
-  leechling:{name:"Leechling",color:"#c6ff99",size:8,hp:30,speed:2.4,reward:10,tiny:true,shape:"leech"},
-  wraith:{name:"Data Wraith",color:"#ff2fd0",size:14,hp:300,speed:1.8,reward:55,cloakInterval:80,cloakDuration:45,shape:"wraith"},
-  specter:{name:"Specter",color:"#b7ffcf",size:14,hp:360,speed:1.6,reward:62,cloakInterval:70,cloakDuration:55,shape:"wraith"},
-  angler:{name:"Angler Horror",color:"#33bbff",size:18,hp:430,speed:1.0,reward:70,stunRadius:180,stunDuration:70,stunInterval:95,shape:"angler"},
-  broodling:{name:"Brood Mother",color:"#ff1155",size:21,hp:600,speed:0.85,reward:90,heavy:true,splitsInto:"broodletling",splitCount:3,shape:"brute"},
-  broodletling:{name:"Broodletling",color:"#ff6699",size:9,hp:45,speed:2.6,reward:14,tiny:true},
-  impostor:{name:"The Impostor",color:"#c51111",size:16,hp:80,speed:2.0,reward:150,cloakInterval:200,cloakDuration:20,shape:"impostor"}
-};
-const BEAST_ORDER=["normal","runner","stunner","tank","shielded","splitter","splitling","cloaked","juggernaut",
-  "glitch","cinder","frostfang","burrower","drifter","leech","leechling","wraith","specter","angler","broodling","broodletling","impostor"];
-const BEAST_DESC={
-  normal:"The baseline grunt. No tricks, no gimmicks - just numbers.",
-  runner:"Fragile but fast. Outruns slow-firing towers if left unchecked.",
-  stunner:"Periodically pulses a stun field, freezing nearby towers.",
-  tank:"Slow-moving wall of health. Absorbs sustained fire.",
-  shielded:"Wrapped in a rotating energy barrier - high HP, mechanical.",
-  splitter:"Bursts into two Splitlings on death.",
-  splitling:"The quick, weak offspring left behind when a Splitter dies.",
-  cloaked:"Flickers in and out of visibility.",
-  juggernaut:"A crawling fortress. Glacially slow, but the toughest non-boss on the field.",
-  glitch:"A flickering corrupted process from the Mainframe.",
-  cinder:"A molten brawler dredged up from the Magma Depths.",
-  frostfang:"An arctic predator that closes distance fast.",
-  burrower:"An armored digger from the Dune Sea.",
-  drifter:"A weightless Deep Space stray.",
-  leech:"A swollen parasite from the Toxic Swamp.",
-  leechling:"A small hungry offshoot of a Bog Leech.",
-  wraith:"A rogue Neon City process that phases in and out.",
-  specter:"A restless spirit of the Haunted Grounds.",
-  angler:"A deep-sea lurker from the Abyss.",
-  broodling:"A bloated Hive Core matriarch. Splits into three on death.",
-  broodletling:"A skittering offshoot of a Brood Mother.",
-  impostor:"Sus. Definitely not one of us. Extremely rare, worth a huge bounty."
-};
-const AREA_SIGNATURE_TYPE=["glitch","cinder","frostfang","burrower","drifter","leech","wraith","specter","angler","broodling"];
-const RECURRING_TYPES=["normal","runner","stunner","tank","shielded","splitter","splitling","cloaked","juggernaut"];
-
-// ---------------------------------------------------------------------
-// AREAS
-// ---------------------------------------------------------------------
-const AREAS=[
-  { name:"The Mainframe",   theme:"hacker",    bg:["#001a00","#000d00"], accent:"#39ff14", boss:{name:"Mainframe Overlord",   color:"#39ff14"} },
-  { name:"Magma Depths",    theme:"volcano",   bg:["#3a0d02","#160400"], accent:"#ff6a00", boss:{name:"Magma Colossus",       color:"#ff6a00"} },
-  { name:"Frozen Wastes",   theme:"arctic",    bg:["#0d2a3a","#01121c"], accent:"#aeeaff", boss:{name:"Frost Wyrm",           color:"#aeeaff"} },
-  { name:"Dune Sea",        theme:"desert",    bg:["#3a2a0d","#1c1204"], accent:"#ffcf6b", boss:{name:"Sand Behemoth",        color:"#ffcf6b"} },
-  { name:"Deep Space",      theme:"space",     bg:["#020212","#000005"], accent:"#c9d6ff", boss:{name:"Void Leviathan",       color:"#c9d6ff"} },
-  { name:"Toxic Swamp",     theme:"swamp",     bg:["#132a0d","#081405"], accent:"#8aff33", boss:{name:"Sludge Titan",         color:"#8aff33"} },
-  { name:"Neon City",       theme:"cyberpunk", bg:["#1a0a2a","#0a0414"], accent:"#ff2fd0", boss:{name:"Neon Reaper",          color:"#ff2fd0"} },
-  { name:"Haunted Grounds", theme:"graveyard", bg:["#1c1c24","#0a0a0f"], accent:"#b7ffcf", boss:{name:"Wraith King",          color:"#b7ffcf"} },
-  { name:"The Abyss",       theme:"underwater",bg:["#021a2e","#010b15"], accent:"#33bbff", boss:{name:"Abyssal Kraken",       color:"#33bbff"} },
-  { name:"The Hive Core",   theme:"hive",      bg:["#2a0018","#12000a"], accent:"#ff1155", boss:{name:"Hive Mother",          color:"#ff1155"} }
-];
-
-// ---------------------------------------------------------------------
-// DIFFICULTY MODES
-// ---------------------------------------------------------------------
-const MODES={
-  easy:   {name:"EASY",     hpMul:0.7, speedMul:0.85, color:"#39ff14"},
-  normal: {name:"NORMAL",   hpMul:1.0, speedMul:1.0,  color:"#00f0ff"},
-  hard:   {name:"HARD",     hpMul:1.5, speedMul:1.15, color:"#ffae00"},
-  extreme:{name:"EXTREME MODE",  hpMul:2.2, speedMul:1.3, color:"#ff0055"},
-  expert: {name:"EXPERT MODE!",  hpMul:3.2, speedMul:1.5, color:"#ff00ff"}
-};
-let currentMode="normal";
-
-function getAreaIndex(){
-  const w=Math.max(1,wave);
-  return Math.min(AREAS.length-1, Math.floor((w-1)/10));
-}
-function getCurrentArea(){ return AREAS[getAreaIndex()]; }
-
-// ---------------------------------------------------------------------
-// POWERUPS
+// POWERUPS - Summoning cards. Once equipped through the Inventory menu
+// (metaData.equippedPowerups, up to metaData.maxPowerupSlots) their
+// effects are compiled into `powerupEffects` at the start of each run
+// and actually applied throughout gameplay (see computeActiveEffects,
+// applyDamage, buildTower, killEnemy, getReviveCost).
 // ---------------------------------------------------------------------
 const POWERUP_DEFS=[
   {id:"dmg",     name:"Overcharge",      rarity:"common",    desc:"+X% tower damage",              values:[10,20,35]},
@@ -2339,6 +2370,24 @@ function powerupDescForLevel(def,level){
 }
 const RARITY_ORDER=["common","uncommon","rare","epic","legendary","godly"];
 const RARITY_COLOR={common:"#9fd8a0",uncommon:"#39ff14",rare:"#00f0ff",epic:"#b026ff",legendary:"#ffd700",godly:"#ff0055"};
+
+// Compiles the player's equipped power cards into a flat {id:value} map
+// used throughout gameplay. Since equip/unequip logic only ever allows
+// one level of a given card id to be equipped at once, a simple sum is
+// safe and equivalent to "take the equipped level's value".
+function computeActiveEffects(){
+  const pe={};
+  const equipped=(metaData.equippedPowerups||[]);
+  equipped.forEach(key=>{
+    const parts=key.split("_");
+    const id=parts[0], lvl=parts[1];
+    const def=POWERUP_DEFS.find(p=>p.id===id);
+    if(!def) return;
+    const idx=Math.max(0,Math.min(def.values.length-1,(parseInt(lvl,10)||1)-1));
+    pe[id]=(pe[id]||0)+def.values[idx];
+  });
+  return pe;
+}
 
 const CRATES=[
   {id:1,name:"Common Crate",cost:5,music:"crate1",
@@ -2489,6 +2538,110 @@ function buildBestiary(){
     bossesEl.appendChild(entry);
   });
 }
+
+// ---------------------------------------------------------------------
+// Inventory - manage which Power Cards (from Summoning) are equipped
+// ---------------------------------------------------------------------
+function openInventory(){
+  document.getElementById("main-menu").style.display="none";
+  document.getElementById("inventory-screen").style.display="flex";
+  buildInventoryScreen();
+}
+function closeInventory(){
+  document.getElementById("inventory-screen").style.display="none";
+  document.getElementById("main-menu").style.display="flex";
+}
+window.openInventory=openInventory;
+window.closeInventory=closeInventory;
+
+function buildInventoryScreen(){
+  metaData.equippedPowerups=metaData.equippedPowerups||[];
+  metaData.maxPowerupSlots=metaData.maxPowerupSlots||1;
+  const slotsInfo=document.getElementById("inventory-slots-info");
+  slotsInfo.innerText=`Equipped: ${metaData.equippedPowerups.length} / ${metaData.maxPowerupSlots} (max ${MAX_POWERUP_SLOTS})  \u00b7  Summoning Tickets: ${metaData.summonTickets||0}`;
+
+  const el=document.getElementById("inventory-list");
+  el.innerHTML="";
+  const pu=metaData.powerups||{};
+  const ownedKeys=Object.keys(pu).filter(k=>pu[k]>0);
+
+  if(ownedKeys.length===0){
+    el.innerHTML=`<div style="text-align:center;color:#666;font-family:Arial;padding:24px 10px;">No Power Cards yet. Open crates in the SUMMONING menu to earn some, then equip them here before you deploy.</div>`;
+  }else{
+    RARITY_ORDER.slice().reverse().forEach(rar=>{
+      const keysOfRarity=ownedKeys.filter(k=>{
+        const id=k.split("_")[0];
+        const def=POWERUP_DEFS.find(p=>p.id===id);
+        return def && def.rarity===rar;
+      }).sort();
+      if(keysOfRarity.length===0) return;
+      const label=document.createElement("div");
+      label.className="admin-cat-label";
+      label.style.color=RARITY_COLOR[rar];
+      label.innerText=(rar==="godly"?"GODLY":rar.toUpperCase());
+      el.appendChild(label);
+      keysOfRarity.forEach(key=>{
+        const parts=key.split("_");
+        const id=parts[0], lvl=parts[1];
+        const def=POWERUP_DEFS.find(p=>p.id===id);
+        if(!def) return;
+        const equipped=metaData.equippedPowerups.includes(key);
+        const card=document.createElement("div");
+        card.className="armory-card"+(equipped?" equipped":"");
+        card.innerHTML=`
+          <div class="a-info">
+            <div class="a-name" style="color:${RARITY_COLOR[rar]}">${def.name} <span style="color:#888;font-size:.7rem;">Lvl ${lvl} &times;${pu[key]}</span></div>
+            <div class="a-desc">${powerupDescForLevel(def,lvl)}</div>
+          </div>
+          <button class="armory-btn${equipped?' unequip':''}" onclick="toggleEquipPowerup('${key}')">${equipped?'UNEQUIP':'EQUIP'}</button>`;
+        el.appendChild(card);
+      });
+    });
+  }
+
+  const slotRow=document.createElement("div");
+  slotRow.className="armory-slot-row";
+  if(metaData.maxPowerupSlots>=MAX_POWERUP_SLOTS){
+    slotRow.innerHTML=`<span class="maxed">Max power slots reached</span>`;
+  }else{
+    const nextCost=POWERUP_SLOT_COSTS[metaData.maxPowerupSlots+1];
+    slotRow.innerHTML=`<button onclick="buyPowerupSlot()">BUY POWER SLOT (${nextCost} Bio)</button>`;
+  }
+  el.appendChild(slotRow);
+}
+window.buildInventoryScreen=buildInventoryScreen;
+
+function toggleEquipPowerup(key){
+  metaData.equippedPowerups=metaData.equippedPowerups||[];
+  const id=key.split("_")[0];
+  if(metaData.equippedPowerups.includes(key)){
+    metaData.equippedPowerups=metaData.equippedPowerups.filter(k=>k!==key);
+  }else{
+    // Only one level of a given card id may be equipped at once - swap automatically.
+    metaData.equippedPowerups=metaData.equippedPowerups.filter(k=>k.split("_")[0]!==id);
+    if(metaData.equippedPowerups.length>=(metaData.maxPowerupSlots||1)){
+      playSound("denied");
+      showAlertModal("No free power slots - unequip a card first, or buy another slot.");
+      return;
+    }
+    metaData.equippedPowerups.push(key);
+  }
+  saveToStorage(metaData);
+  playSound("click");
+  buildInventoryScreen();
+}
+window.toggleEquipPowerup=toggleEquipPowerup;
+
+function buyPowerupSlot(){
+  apiPost("buyPowerupSlot").then(res=>{
+    if(res && res.data) metaData=res.data;
+    if(res && res.success) playSound("build");
+    else{ playSound("denied"); showAlertModal((res && res.message) || "Purchase failed."); }
+    updateMenuUI();
+    buildInventoryScreen();
+  });
+}
+window.buyPowerupSlot=buyPowerupSlot;
 
 // ---------------------------------------------------------------------
 // Area drop-rate popup (next to Deploy Defenses)
@@ -2642,12 +2795,12 @@ window.armoryToggleEquip=armoryToggleEquip;
 window.armoryBuySlot=armoryBuySlot;
 
 // ---------------------------------------------------------------------
-// SUMMONING SCREEN (crates + crafting + secret turret spin)
+// SUMMONING SCREEN (crates + crafting; equip your winnings in INVENTORY)
 // ---------------------------------------------------------------------
 function openSummoning(){
   const body=`
     <div style="font-family:Arial;color:#ccc;margin-bottom:14px;text-align:left;overflow-wrap:break-word;">Summoning Tickets: <b style="color:var(--gold)">${metaData.summonTickets||0}</b><br>
-    Earned by clearing areas (Area 1 clear = 1 ticket, Area 2 = 2, etc).</div>
+    Earned by clearing areas (Area 1 clear = 1 ticket, Area 2 = 2, etc). Cards you win here do nothing until you equip them in the <b style="color:var(--gold)">INVENTORY</b> menu on the main screen.</div>
     ${CRATES.map((c,i)=>`
       <div style="border:2px solid #ff6a2b55;border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;overflow-wrap:break-word;">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
@@ -2662,6 +2815,7 @@ function openSummoning(){
       </div>`).join("")}
     <div style="margin-top:10px;font-family:Arial;font-size:.8rem;color:#888;text-align:left;overflow-wrap:break-word;">Crafting: fuse two of the same level+type card into one higher level (cannot craft Godly cards). Cards you own are listed below - tap a pair to fuse.</div>
     <div id="crafting-inventory" style="margin-top:10px;text-align:left;font-family:Arial;font-size:.78rem;overflow-wrap:break-word;"></div>
+    <button style="width:100%;margin-top:10px;border-color:var(--gold);color:var(--gold);" onclick="closeSummoning();openInventory();">MANAGE / EQUIP CARDS (INVENTORY)</button>
     <button style="width:100%;margin-top:10px;border-color:#ff00ff;color:#ff00ff;" onclick="spinSecretTurret()">SECRET TURRET SPIN (0.1% chance) \u2014 25 tickets</button>`;
   document.getElementById("summoning-content").innerHTML=body;
   document.getElementById("summoning-overlay").style.display="flex";
@@ -2930,6 +3084,7 @@ let godArmorOn=false, oneHitModeOn=false, tinyAliensOn=false, discoBallOn=false;
 let flossWallPlaced=false;
 let pendingFlossTarget=null;
 let moveModeTower=null;
+let powerupEffects={};
 
 canvas.addEventListener("mousemove",e=>{ const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; });
 
@@ -3013,8 +3168,9 @@ function startGame(){
   document.getElementById("game-over-screen").style.display="none";
   towers=[]; resize();
   const mode=MODES[currentMode]||MODES.normal;
+  powerupEffects=computeActiveEffects();
   gold=adminInfiniteCreditsOn ? 999999999 : (400+((metaData.goldLevel ?? 0)*50));
-  lives=20; wave=0; killsThisGame=0;
+  lives=20+(powerupEffects.lives||0); wave=0; killsThisGame=0;
   enemies=[]; projectiles=[]; particles=[];
   discoveredTypes=new Set();
   enemiesLeft=0; spawnTimer=0;
@@ -3094,7 +3250,7 @@ function endGame(status){
     document.getElementById("game-over-screen").style.display="flex";
   };
 
-  apiPost("saveGameResult", { waveReached: wave, killsThisGame }).then(data=>{
+  apiPost("saveGameResult", { waveReached: wave, killsThisGame, biomassMultiplier: 1+((powerupEffects.biomass||0)/100) }).then(data=>{
     if(data) metaData=data;
     // If clearing this run's areas dropped a new area-exclusive tower,
     // show the tower-reward screen first, then chain into the normal
@@ -3109,7 +3265,11 @@ function endGame(status){
 }
 
 function getReviveCost(){
-  return Math.floor(50+lastDeathWave*15);
+  let cost=Math.floor(50+lastDeathWave*15);
+  if(!reviveUsedThisRun && powerupEffects.revive){
+    cost=Math.floor(cost*(1-(powerupEffects.revive/100)));
+  }
+  return Math.max(1,cost);
 }
 
 function requestRevive(){
@@ -3196,8 +3356,11 @@ window.selectShopItem=selectShopItem;
 function buildTower(x,y,type){
   const s=TOWER_STATS[type];
   gold-=s.cost;
+  const dmgMul=1+((powerupEffects.dmg||0)/100);
+  const rangeMul=1+((powerupEffects.range||0)/100);
+  const fireMul=Math.max(0.15,(1-((powerupEffects.fire||0)/100))*(1-((powerupEffects.cooldown||0)/100)));
   const t={
-    x,y,type,name:s.name,range:s.range,damage:s.damage,fireRate:s.fireRate,color:s.color,
+    x,y,type,name:s.name,range:s.range*rangeMul,damage:s.damage*dmgMul,fireRate:Math.max(1,s.fireRate*fireMul),color:s.color,
     cooldown:0,level:1,dmgDealt:0,angle:0,stunTimer:0,target:null,
     oneTime:!!s.oneTime,used:false,isWall:!!s.isWall,wallHp:s.wallHp||0,wallMaxHp:s.wallHp||0,
     flossed:false,isFlossling:false,armored:godArmorOn
@@ -3465,7 +3628,7 @@ function spawnEnemy(){
 function killEnemy(e){
   const index=enemies.indexOf(e);
   if(index===-1) return;
-  gold+=e.reward; killsThisGame++;
+  gold+=Math.floor(e.reward*(1+((powerupEffects.gold||0)/100))); killsThisGame++;
   enemies.splice(index,1);
   playSound("enemyDeath");
   if(Math.random()<0.05){
@@ -3520,6 +3683,21 @@ function stunNearbyTowers(source){
     if(d<=radius) t.stunTimer=Math.max(t.stunTimer||0,duration);
   }
   playSound("stun");
+}
+
+// Central damage-application helper: every attack (projectile hits and
+// area/beam ticks alike) routes through here so the equipped Power
+// Cards (crit chance, bonus boss damage) always take effect, and each
+// tower's total damage-dealt readout stays accurate.
+function applyDamage(target,dmg,parent){
+  if(!target) return 0;
+  const pe=powerupEffects||{};
+  let d=dmg;
+  if(target.isBoss && pe.godslayer) d*=(1+(pe.godslayer/100));
+  if(pe.crit && Math.random()*100<pe.crit) d*=2;
+  target.hp-=d;
+  if(parent) parent.dmgDealt=(parent.dmgDealt||0)+d;
+  return d;
 }
 
 let gameSpeed=1, speedAccumulator=0;
@@ -3602,29 +3780,29 @@ function updateStep(){
     if(oneHitModeOn && t.target){ t.target.hp=-9999; }
     if(t.type==="freeze"){
       if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; e.slowTimer=30; t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ applyDamage(e,t.damage,t); e.slowTimer=30; if(e.hp<=0) killEnemy(e); } }
         playSound("freeze"); t.cooldown=t.fireRate;
       }
     }else if(t.type==="flame" || t.type==="sandreaper" || t.type==="neonblade"){
       if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ applyDamage(e,t.damage,t); if(e.hp<=0) killEnemy(e); } }
         t.cooldown=t.fireRate;
       }
     }else if(t.type==="vortex"){
       if(t.cooldown<=0){
         for(const e of enemies){ if(e.cloaked) continue;
           const dx2=t.x-e.x, dy2=t.y-e.y, d2=Math.hypot(dx2,dy2);
-          if(d2<=t.range && d2>1){ e.x+=(dx2/d2)*0.6; e.y+=(dy2/d2)*0.6; e.hp-=t.damage; t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
+          if(d2<=t.range && d2>1){ e.x+=(dx2/d2)*0.6; e.y+=(dy2/d2)*0.6; applyDamage(e,t.damage,t); if(e.hp<=0) killEnemy(e); } }
         playSound("vortex"); t.cooldown=t.fireRate;
       }
     }else if(t.type==="emp"){
       if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; e.stunned=Math.max(e.stunned||0,70); t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ applyDamage(e,t.damage,t); e.stunned=Math.max(e.stunned||0,70); if(e.hp<=0) killEnemy(e); } }
         playSound("emp"); t.cooldown=t.fireRate;
       }
     }else if(t.type==="blackhole"){
       if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; t.dmgDealt+=t.damage; createExplosion(e.x,e.y,"#c084ff"); if(e.hp<=0) killEnemy(e); } }
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ applyDamage(e,t.damage,t); createExplosion(e.x,e.y,"#c084ff"); if(e.hp<=0) killEnemy(e); } }
         playSound("blackhole"); t.cooldown=t.fireRate;
       }
     }else if(t.type==="hijack"){
@@ -3647,9 +3825,20 @@ function updateStep(){
     if(!enemies.includes(p.target)){ projectiles.splice(i,1); continue; }
     const dx=p.target.x-p.x, dy=p.target.y-p.y, dist=Math.hypot(dx,dy);
     if(dist<=p.speed){
-      p.target.hp-=p.damage; p.parent.dmgDealt+=p.damage;
       const dyingTarget=p.target;
-      createExplosion(p.target.x,p.target.y,p.color);
+      applyDamage(dyingTarget,p.damage,p.parent);
+      createExplosion(dyingTarget.x,dyingTarget.y,p.color);
+      const splashBase=TOWER_STATS[p.type] && TOWER_STATS[p.type].splash;
+      if(splashBase){
+        const radius=splashBase*(1+((powerupEffects.splash||0)/100));
+        for(const other of enemies){
+          if(other===dyingTarget) continue;
+          if(Math.hypot(other.x-dyingTarget.x,other.y-dyingTarget.y)<=radius){
+            applyDamage(other,p.damage*0.5,p.parent);
+            if(other.hp<=0) killEnemy(other);
+          }
+        }
+      }
       if(dyingTarget.hp<=0) killEnemy(dyingTarget);
       if(p.type==="poison" && enemies.includes(dyingTarget)){ dyingTarget.poisonTimer=150; dyingTarget.poisonDps=5; }
       projectiles.splice(i,1);
