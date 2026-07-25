@@ -760,6 +760,13 @@ canvas{
   color:#ccc!important;
   box-shadow:none!important;
 }
+.summoning-box,
+#drop-rate-popup,
+.crate-odds-popup,
+.crate-reveal-item{
+  overflow-wrap:break-word;
+  word-break:break-word;
+}
 .crate-reveal{ text-align:center; padding:10px 0; }
 .crate-reveal-title{
   font-size:1.3rem;
@@ -2545,21 +2552,22 @@ window.armoryBuySlot=armoryBuySlot;
 // ---------------------------------------------------------------------
 function openSummoning(){
   const body=`
-    <div style="font-family:Arial;color:#ccc;margin-bottom:14px;text-align:left;">Summoning Tickets: <b style="color:var(--gold)">${metaData.summonTickets||0}</b><br>
+    <div style="font-family:Arial;color:#ccc;margin-bottom:14px;text-align:left;overflow-wrap:break-word;">Summoning Tickets: <b style="color:var(--gold)">${metaData.summonTickets||0}</b><br>
     Earned by clearing areas (Area 1 clear = 1 ticket, Area 2 = 2, etc).</div>
     ${CRATES.map((c,i)=>`
-      <div style="border:2px solid #ff6a2b55;border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;">
-        <b style="color:#ff6a2b;">${c.name}</b> \u2014 ${c.cost} tickets
-        <button class="crate-odds-toggle" style="float:right;margin-left:8px;" onclick="toggleCrateOdds(${i},event)">ODDS &#9662;</button>
-        <button style="float:right;padding:.4em .8em;font-size:.75rem;min-height:32px;" onclick="doOpenCrateBulk(${i},10)">OPEN x10 (${c.cost*10})</button>
-        <button style="float:right;padding:.4em 1em;font-size:.8rem;min-height:32px;margin-right:8px;" onclick="doOpenCrateBulk(${i},1)">OPEN</button>
-        <div style="clear:both;"></div>
+      <div style="border:2px solid #ff6a2b55;border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;overflow-wrap:break-word;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+          <span style="flex:1 1 140px;min-width:0;"><b style="color:#ff6a2b;">${c.name}</b> \u2014 ${c.cost} tickets</span>
+          <button class="crate-odds-toggle" style="flex:0 0 auto;" onclick="toggleCrateOdds(${i},event)">ODDS &#9662;</button>
+          <button style="flex:0 0 auto;padding:.4em .8em;font-size:.75rem;min-height:32px;white-space:nowrap;" onclick="doOpenCrateBulk(${i},10)">OPEN x10 (${c.cost*10})</button>
+          <button style="flex:0 0 auto;padding:.4em 1em;font-size:.8rem;min-height:32px;" onclick="doOpenCrateBulk(${i},1)">OPEN</button>
+        </div>
         <div class="crate-odds-popup" id="crate-odds-${i}">
           ${RARITY_ORDER.map(r=>`<div>${r==="godly"?"GODLY":r.toUpperCase()}: ${r==="godly"?"???":(c.odds[r]||0)+"%"}</div>`).join("")}
         </div>
       </div>`).join("")}
-    <div style="margin-top:10px;font-family:Arial;font-size:.8rem;color:#888;text-align:left;">Crafting: fuse two of the same level+type card into one higher level (cannot craft Godly cards). Cards you own are listed below - tap a pair to fuse.</div>
-    <div id="crafting-inventory" style="margin-top:10px;text-align:left;font-family:Arial;font-size:.78rem;"></div>
+    <div style="margin-top:10px;font-family:Arial;font-size:.8rem;color:#888;text-align:left;overflow-wrap:break-word;">Crafting: fuse two of the same level+type card into one higher level (cannot craft Godly cards). Cards you own are listed below - tap a pair to fuse.</div>
+    <div id="crafting-inventory" style="margin-top:10px;text-align:left;font-family:Arial;font-size:.78rem;overflow-wrap:break-word;"></div>
     <button style="width:100%;margin-top:10px;border-color:#ff00ff;color:#ff00ff;" onclick="spinSecretTurret()">SECRET TURRET SPIN (0.1% chance) \u2014 25 tickets</button>`;
   document.getElementById("summoning-content").innerHTML=body;
   document.getElementById("summoning-overlay").style.display="flex";
@@ -3440,82 +3448,220 @@ function drawAlienBodyRetro(e){
   ctx.restore();
 }
 
+// Per-type body proportions so every alien reads as a different creature
+// when Flashy Mode is on, not just a recolored blob.
+const TYPE_SHAPE={
+  normal:{bw:1,bh:1,legs:3,eyes:2,spikes:0,segmented:false,lean:false},
+  runner:{bw:0.75,bh:1.25,legs:3,eyes:2,spikes:0,segmented:false,lean:true},
+  stunner:{bw:1.05,bh:1.0,legs:4,eyes:3,spikes:3,segmented:false,lean:false},
+  tank:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  shielded:{bw:1.1,bh:1.05,legs:4,eyes:1,spikes:0,segmented:false,lean:false},
+  splitter:{bw:1.0,bh:1.0,legs:4,eyes:2,spikes:0,segmented:true,lean:false},
+  splitling:{bw:0.9,bh:0.9,legs:3,eyes:2,spikes:0,segmented:false,lean:false},
+  cloaked:{bw:0.85,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  juggernaut:{bw:1.4,bh:1.15,legs:5,eyes:2,spikes:4,segmented:false,lean:false},
+  boss:{bw:1.4,bh:1.2,legs:5,eyes:3,spikes:5,segmented:false,lean:false},
+  glitch:{bw:0.8,bh:1.1,legs:3,eyes:2,spikes:0,segmented:false,lean:true},
+  cinder:{bw:1.15,bh:0.95,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  frostfang:{bw:0.8,bh:1.2,legs:3,eyes:2,spikes:1,segmented:false,lean:true},
+  burrower:{bw:1.35,bh:0.9,legs:6,eyes:2,spikes:0,segmented:false,lean:false},
+  drifter:{bw:0.9,bh:0.9,legs:2,eyes:3,spikes:0,segmented:false,lean:true},
+  leech:{bw:1.0,bh:1.0,legs:0,eyes:2,spikes:0,segmented:true,lean:false},
+  leechling:{bw:0.85,bh:0.85,legs:0,eyes:2,spikes:0,segmented:false,lean:false},
+  wraith:{bw:0.9,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  specter:{bw:0.95,bh:1.2,legs:0,eyes:2,spikes:0,segmented:false,lean:false},
+  angler:{bw:1.1,bh:1.0,legs:4,eyes:1,spikes:1,segmented:false,lean:false},
+  broodling:{bw:1.3,bh:1.1,legs:6,eyes:3,spikes:3,segmented:true,lean:false},
+  broodletling:{bw:0.85,bh:0.85,legs:3,eyes:2,spikes:0,segmented:false,lean:false},
+  impostor:{bw:0.95,bh:1.15,legs:0,eyes:2,spikes:0,segmented:false,lean:false}
+};
+
+function lightenColor(hex,percent){
+  hex=hex.replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const num=parseInt(hex,16);
+  let r=(num>>16)+percent, g=((num>>8)&0x00FF)+percent, b=(num&0x0000FF)+percent;
+  r=Math.min(255,Math.max(0,r)); g=Math.min(255,Math.max(0,g)); b=Math.min(255,Math.max(0,b));
+  return "#"+(0x1000000+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+// Area-themed cosmetic add-ons layered on top of an alien's own type
+// color - the alien keeps its identity color, the area just dresses it
+// (snow cap in the arctic, lava cracks in the volcano, etc).
+function drawAreaThemeDecor(e,theme,s,bw,bh,t){
+  if(theme==="arctic"){
+    ctx.beginPath(); ctx.ellipse(0,-s*0.95*bh,s*0.55*bw,s*0.28,0,Math.PI,0,true);
+    ctx.fillStyle="rgba(255,255,255,0.9)"; ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.5)";
+    for(let i=0;i<3;i++){ const a=t*2+i*2; ctx.beginPath(); ctx.arc(Math.cos(a)*s*0.9,-s*0.3+Math.sin(a)*s*0.3,1.4,0,Math.PI*2); ctx.fill(); }
+  }else if(theme==="volcano"){
+    const glow=0.5+0.5*Math.sin(t*4+e.x*0.08);
+    ctx.save(); ctx.globalCompositeOperation="lighter";
+    ctx.fillStyle=`rgba(255,${110+Math.floor(60*glow)},20,${0.16+0.1*glow})`;
+    ctx.beginPath(); ctx.ellipse(0,s*0.1*bh,s*1.05*bw,s*1.05*bh,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    const cracks=[[[-s*0.42,-s*0.55],[-s*0.18,-s*0.15],[-s*0.32,s*0.35]],[[s*0.4,-s*0.5],[s*0.15,-s*0.05],[s*0.3,s*0.4]],[[-s*0.05,-s*0.75],[s*0.05,-s*0.3],[-s*0.1,s*0.15]],[[s*0.05,s*0.05],[-s*0.05,s*0.35],[s*0.1,s*0.7]]];
+    ctx.lineWidth=Math.max(1.2,s*0.09); ctx.shadowBlur=6+glow*8; ctx.shadowColor="rgba(255,140,30,0.9)";
+    ctx.strokeStyle=`rgba(255,${190+Math.floor(50*glow)},${60+Math.floor(60*glow)},${0.75+0.2*glow})`;
+    for(const c of cracks){ ctx.beginPath(); ctx.moveTo(c[0][0],c[0][1]); for(let i=1;i<c.length;i++) ctx.lineTo(c[i][0],c[i][1]); ctx.stroke(); }
+    ctx.shadowBlur=0;
+  }else if(theme==="desert"){
+    ctx.fillStyle="rgba(20,15,10,0.7)"; ctx.fillRect(-s*0.45*bw,-s*0.22*bh,s*0.9*bw,s*0.16);
+    ctx.fillStyle="rgba(255,220,150,0.5)";
+    ctx.beginPath(); ctx.moveTo(-s*0.5*bw,s*0.7*bh); ctx.lineTo(0,s*1.15*bh); ctx.lineTo(s*0.5*bw,s*0.7*bh); ctx.fill();
+  }else if(theme==="space"){
+    ctx.fillStyle="rgba(255,255,255,0.8)";
+    for(let i=0;i<2;i++){ const a=t*3+i*3.1+e.x*0.05; ctx.beginPath(); ctx.arc(Math.sin(a)*s*1.1,-s*0.6+Math.cos(a)*s*0.4,1.3,0,Math.PI*2); ctx.fill(); }
+  }else if(theme==="swamp"){
+    ctx.strokeStyle="rgba(60,150,20,0.8)"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-s*0.5*bw,0); ctx.quadraticCurveTo(0,s*0.35,s*0.5*bw,-s*0.05); ctx.stroke();
+  }else if(theme==="cyberpunk"){
+    ctx.fillStyle="rgba(255,47,208,0.55)"; ctx.fillRect(-s*0.32*bw,-s*0.2*bh,s*0.64*bw,s*0.09);
+  }else if(theme==="graveyard"){
+    ctx.fillStyle="rgba(180,190,200,0.25)";
+    ctx.beginPath(); ctx.moveTo(-s*0.5*bw,-s*0.2*bh); ctx.lineTo(0,-s*1.05*bh); ctx.lineTo(s*0.5*bw,-s*0.2*bh); ctx.lineTo(0,s*0.15*bh); ctx.fill();
+  }else if(theme==="underwater"){
+    ctx.fillStyle="rgba(150,220,255,0.5)";
+    for(let i=0;i<2;i++){ const yy=s*0.6-((t*30+i*20)%(s*1.8)); ctx.beginPath(); ctx.arc(s*0.5*bw,yy,1.6,0,Math.PI*2); ctx.fill(); }
+  }else if(theme==="hive"){
+    ctx.strokeStyle="rgba(255,17,85,0.5)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-s*0.3*bw,-s*0.05); ctx.lineTo(0,-s*0.35); ctx.lineTo(s*0.3*bw,-s*0.05); ctx.stroke();
+  }else if(theme==="hacker"){
+    ctx.fillStyle="rgba(57,255,20,0.55)"; ctx.fillRect(-s*0.3*bw,-s*0.18*bh,s*0.6*bw,s*0.06);
+  }
+}
+
 function drawAlienBodyFlashy(e){
-  const shape=(ENEMY_TYPES[e.type]&&ENEMY_TYPES[e.type].shape)||"blob";
+  const shapeDef=TYPE_SHAPE[e.type]||TYPE_SHAPE.normal;
+  const base=ENEMY_TYPES[e.type]||{};
+  const isBig=(e.type==="boss"||!!base.heavy);
   const s=e.size;
-  const t=performance.now()/1000+ (e.bobSeed||0);
+  const t=performance.now()/1000+(e.bobSeed||0);
   const bob=Math.sin(t*3)*s*0.08*flashyMul();
+  const cloakA=e.cloaked?0.25:1;
+
   ctx.save();
   ctx.translate(e.x,e.y+bob);
-  if(e.cloaked) ctx.globalAlpha=0.25;
+  ctx.globalAlpha=cloakA;
 
   const bodyColor=e.slowTimer>0?"#5fd4ff":e.color;
-  ctx.shadowBlur=(discoBallOn?26:12)*flashyMul();
-  ctx.shadowColor=discoBallOn?`hsl(${(performance.now()/5+e.bobSeed*40)%360},100%,60%)`:bodyColor;
+  const bw=shapeDef.bw*(isBig?1.15:1);
+  const bh=shapeDef.bh;
 
-  // Main body - a soft blob, squashed/stretched per shape
+  // ground shadow
   ctx.beginPath();
-  const stretch = shape==="wisp"?0.7 : shape==="burrower"?1.25 : shape==="drifter"?0.8 : 1;
-  ctx.ellipse(0,0,s*stretch,s,0,0,Math.PI*2);
-  ctx.fillStyle=bodyColor;
+  ctx.ellipse(0,s*1.15,s*0.7*bw,s*0.22,0,0,Math.PI*2);
+  ctx.fillStyle="rgba(0,0,0,0.35)";
+  ctx.fill();
+
+  // legs
+  ctx.strokeStyle=bodyColor;
+  ctx.lineWidth=Math.max(1.4,s*0.14);
+  ctx.globalAlpha=cloakA*0.75;
+  for(let i=0;i<shapeDef.legs;i++){
+    const lx=-s*0.55*bw+i*((s*1.1*bw)/((shapeDef.legs-1)||1));
+    const wig=Math.sin(t*(shapeDef.lean?11:7)+i*1.6+e.x*0.1)*s*(shapeDef.lean?0.35:0.22);
+    ctx.beginPath();
+    ctx.moveTo(lx,s*0.5*bh);
+    ctx.quadraticCurveTo(lx+wig,s*0.85*bh,lx+wig*0.6,s*1.15*bh);
+    ctx.stroke();
+  }
+  ctx.globalAlpha=cloakA;
+
+  if(shapeDef.segmented){
+    for(const side of [-1,1]){
+      ctx.beginPath();
+      ctx.arc(side*s*0.85,s*0.15,s*0.35,0,Math.PI*2);
+      ctx.fillStyle=bodyColor;
+      ctx.globalAlpha=cloakA*0.85;
+      ctx.fill();
+      ctx.globalAlpha=cloakA;
+    }
+  }
+
+  // gradient-shaded body silhouette
+  const glowColor=discoBallOn?`hsl(${(performance.now()/5+(e.bobSeed||0)*40)%360},100%,60%)`:bodyColor;
+  const grad=ctx.createRadialGradient(-s*0.3*bw,-s*0.5*bh,s*0.1,0,0,s*1.2*Math.max(bw,bh));
+  grad.addColorStop(0,lightenColor(bodyColor,70));
+  grad.addColorStop(0.55,bodyColor);
+  grad.addColorStop(1,lightenColor(bodyColor,-70));
+  ctx.beginPath();
+  ctx.moveTo(0,-s*bh);
+  ctx.bezierCurveTo(s*0.95*bw,-s*0.85*bh, s*1.05*bw,s*0.25*bh, s*0.55*bw,s*0.85*bh);
+  ctx.bezierCurveTo(s*0.2*bw,s*1.1*bh, -s*0.2*bw,s*1.1*bh, -s*0.55*bw,s*0.85*bh);
+  ctx.bezierCurveTo(-s*1.05*bw,s*0.25*bh, -s*0.95*bw,-s*0.85*bh, 0,-s*bh);
+  ctx.closePath();
+  ctx.fillStyle=grad;
+  ctx.shadowBlur=(discoBallOn?26:15)*flashyMul();
+  ctx.shadowColor=glowColor;
   ctx.fill();
   ctx.shadowBlur=0;
 
-  // Simple limbs/legs for grounded, heavier types
-  if(shape==="brute" || shape==="burrower" || e.type==="tank" || e.type==="juggernaut"){
-    ctx.strokeStyle=bodyColor; ctx.lineWidth=Math.max(2,s*0.18);
-    for(const side of [-1,1]){
-      ctx.beginPath();
-      ctx.moveTo(side*s*0.5,s*0.5);
-      ctx.lineTo(side*s*0.9,s*1.3);
-      ctx.stroke();
-    }
+  // rim shading for roundness
+  ctx.beginPath(); ctx.ellipse(0,s*0.4*bh,s*0.5*bw,s*0.4*bh,0,0,Math.PI*2);
+  ctx.fillStyle="rgba(0,0,0,0.18)"; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-s*0.3*bw,-s*0.55*bh,s*0.35*bw,s*0.22*bh,-0.4,0,Math.PI*2);
+  ctx.fillStyle="rgba(255,255,255,0.2)"; ctx.fill();
+
+  // armor plating
+  if(base.armored){
+    ctx.strokeStyle="rgba(0,0,0,0.4)"; ctx.lineWidth=Math.max(1.5,s*0.08);
+    for(let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(i*s*0.4*bw,-s*0.6*bh); ctx.lineTo(i*s*0.4*bw,s*0.7*bh); ctx.stroke(); }
   }
-  // Antennae for glitch / wraith / drifter (airy/tech types)
-  if(shape==="wisp" || shape==="wraith" || shape==="drifter"){
-    ctx.strokeStyle=bodyColor; ctx.lineWidth=Math.max(1,s*0.1);
-    for(const side of [-1,1]){
-      ctx.beginPath();
-      ctx.moveTo(side*s*0.3,-s*0.8);
-      ctx.lineTo(side*s*0.6,-s*1.4);
-      ctx.stroke();
-    }
-  }
-  // Fin/tail for the angler + leech (aquatic-ish)
-  if(shape==="angler" || shape==="leech"){
+
+  // spikes / crown
+  if(shapeDef.spikes>0){
     ctx.fillStyle=bodyColor;
-    ctx.beginPath();
-    ctx.moveTo(-s*0.2,s*0.9); ctx.lineTo(0,s*1.6); ctx.lineTo(s*0.2,s*0.9);
-    ctx.closePath(); ctx.fill();
-  }
-  // Icy jagged fangs
-  if(shape==="fang"){
-    ctx.fillStyle="#ffffff";
-    for(const side of [-1,1]){
+    const n=shapeDef.spikes;
+    for(let i=0;i<n;i++){
+      const frac=(i/(n-1||1))-0.5;
+      const ix=frac*s*1.5*bw;
       ctx.beginPath();
-      ctx.moveTo(side*s*0.15,s*0.2);
-      ctx.lineTo(side*s*0.35,s*0.9);
-      ctx.lineTo(0,s*0.35);
-      ctx.closePath(); ctx.fill();
+      ctx.moveTo(ix,-s*0.75*bh);
+      ctx.lineTo(ix-s*0.12,-s*(1.15+0.2*(n>3?1:0))*bh);
+      ctx.lineTo(ix+s*0.12,-s*(1.15+0.2*(n>3?1:0))*bh);
+      ctx.closePath();
+      ctx.fill();
     }
   }
-  // Armor plating ring for armored types
-  const base=ENEMY_TYPES[e.type];
-  if(base && base.armored){
-    ctx.strokeStyle="rgba(255,255,255,.55)"; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(0,0,s*0.72,0,Math.PI*2); ctx.stroke();
+
+  // antennae (skipped on shielded, which reads as mechanical instead)
+  if(e.type!=="shielded"){
+    ctx.strokeStyle=bodyColor; ctx.lineWidth=Math.max(1,s*0.09);
+    ctx.beginPath(); ctx.moveTo(-s*0.28*bw,-s*0.82*bh); ctx.quadraticCurveTo(-s*0.5*bw,-s*1.5*bh,-s*0.16*bw,-s*1.62*bh); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s*0.28*bw,-s*0.82*bh); ctx.quadraticCurveTo(s*0.5*bw,-s*1.5*bh,s*0.16*bw,-s*1.62*bh); ctx.stroke();
+    ctx.fillStyle=bodyColor;
+    ctx.beginPath(); ctx.arc(-s*0.16*bw,-s*1.62*bh,s*0.11,0,Math.PI*2); ctx.arc(s*0.16*bw,-s*1.62*bh,s*0.11,0,Math.PI*2); ctx.fill();
   }
-  // Eye(s)
-  ctx.fillStyle="#000";
-  if(e.type==="stunner" || e.type==="boss" || shape==="angler"){
-    ctx.beginPath(); ctx.arc(0,-s*0.15,s*0.28,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(s*0.06,-s*0.2,s*0.1,0,Math.PI*2); ctx.fill();
-  }else{
-    for(const side of [-1,1]){
-      ctx.fillStyle="#000";
-      ctx.beginPath(); ctx.arc(side*s*0.3,-s*0.1,s*0.16,0,Math.PI*2); ctx.fill();
-    }
+
+  // eyes - 1/2/3 variants depending on type
+  const eyeY=-s*0.12*bh, eyeW=s*0.28, eyeH=s*0.38;
+  if(shapeDef.eyes===1){
+    ctx.fillStyle="#001318";
+    ctx.beginPath(); ctx.arc(0,eyeY,eyeW*0.9,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=bodyColor; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,0.8)";
+    ctx.beginPath(); ctx.arc(-eyeW*0.25,eyeY-eyeH*0.2,eyeW*0.25,0,Math.PI*2); ctx.fill();
+  }else if(shapeDef.eyes>0){
+    const xs=shapeDef.eyes===3?[-s*0.32*bw,0,s*0.32*bw]:[-s*0.3*bw,s*0.3*bw];
+    ctx.fillStyle="#000";
+    ctx.beginPath();
+    for(const ex of xs) ctx.ellipse(ex,eyeY,eyeW*(shapeDef.eyes===3?0.7:1),eyeH*(shapeDef.eyes===3?0.7:1),ex<0?-0.3:(ex>0?0.3:0),0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.85)";
+    ctx.beginPath();
+    for(const ex of xs) ctx.arc(ex-eyeW*0.2,eyeY-eyeH*0.25,eyeW*0.22,0,Math.PI*2);
+    ctx.fill();
   }
+
+  // speed streaks trailing lean/fast types
+  if(shapeDef.lean){
+    ctx.strokeStyle=bodyColor; ctx.globalAlpha=cloakA*0.4; ctx.lineWidth=2;
+    for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(-s*1.1-i*s*0.4,-s*0.3+i*s*0.25); ctx.lineTo(-s*0.7-i*s*0.4,-s*0.3+i*s*0.25); ctx.stroke(); }
+    ctx.globalAlpha=cloakA;
+  }
+
+  drawAreaThemeDecor(e,getCurrentArea().theme,s,bw,bh,t);
 
   // Impostor: crewmate silhouette + visor, drawn over the base body
   if(e.type==="impostor"){
@@ -3529,7 +3675,7 @@ function drawAlienBodyFlashy(e){
   }
 
   // Splitling / tiny variants: a little sparkle to read as "young"
-  if(base && base.tiny && flashyMul()>0.2){
+  if(base.tiny && flashyMul()>0.2){
     ctx.fillStyle="rgba(255,255,255,.6)";
     ctx.beginPath(); ctx.arc(s*0.4,s*0.4,s*0.12,0,Math.PI*2); ctx.fill();
   }
