@@ -116,7 +116,9 @@ button:disabled{opacity:.4;cursor:default;}
   display:none;
   width:100%;
   height:100%;
-  position:relative;
+  position:absolute;
+  inset:0;
+  overflow:hidden;
   align-items:center;
   justify-content:center;
   background:#000;
@@ -768,6 +770,50 @@ canvas{
   word-break:break-word;
 }
 .crate-reveal{ text-align:center; padding:10px 0; }
+.wheel-wrap{
+  position:relative;
+  width:220px;
+  height:220px;
+  margin:14px auto 16px;
+}
+.wheel-pointer{
+  position:absolute;
+  top:-14px;
+  left:50%;
+  transform:translateX(-50%);
+  width:0;height:0;
+  border-left:14px solid transparent;
+  border-right:14px solid transparent;
+  border-top:22px solid #fff;
+  filter:drop-shadow(0 0 6px rgba(0,0,0,.7));
+  z-index:2;
+}
+.wheel-disc{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  border:4px solid #222;
+  box-shadow:0 0 30px rgba(255,106,43,.5);
+  transition:transform 3s cubic-bezier(.12,.67,.2,1);
+}
+.wheel-hub{
+  position:absolute;
+  top:50%;left:50%;
+  width:26px;height:26px;
+  margin:-13px 0 0 -13px;
+  border-radius:50%;
+  background:#111;
+  border:3px solid #fff;
+  box-shadow:0 0 10px rgba(0,0,0,.6);
+  z-index:2;
+}
+.wheel-legend{
+  font-family:Arial;
+  font-size:.72rem;
+  color:#ccc;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
 .crate-reveal-title{
   font-size:1.3rem;
   letter-spacing:2px;
@@ -800,6 +846,15 @@ canvas{
   text-align:center; background:rgba(0,0,0,.6); border:2px solid var(--red); color:var(--green); border-radius:8px; margin-bottom:14px;
 }
 #admin-code-error{ color:var(--red); font-family:Arial; font-size:.85rem; min-height:18px; margin-bottom:10px; }
+.admin-box .admin-box-actions{ display:flex; gap:10px; }
+.admin-box .admin-box-actions button{
+  flex:1;
+  min-width:0;
+  padding:.6em .5em;
+  font-size:.85rem;
+  letter-spacing:1px;
+  white-space:nowrap;
+}
 .admin-panel{
   position:fixed; right:14px; bottom:56px; z-index:5500; width:300px; max-height:74vh; overflow-y:auto; padding:18px;
   background:linear-gradient(135deg,rgba(20,10,25,.95),rgba(0,0,0,.95)); border:2px solid var(--red); border-radius:16px;
@@ -820,14 +875,40 @@ canvas{
 .discord-link:hover{ opacity:1; text-shadow:0 0 8px #8fa8ff; }
 .discord-link svg{ width:18px; height:18px; fill:#8fa8ff; }
 #end-credits-screen{
-  position:fixed; inset:0; z-index:9000; display:none; flex-direction:column; align-items:center; justify-content:center;
-  background:#000; text-align:center; overflow-y:auto; padding:60px 20px;
+  position:fixed; inset:0; z-index:9000; display:none;
+  background:#000; overflow:hidden; text-align:center;
+}
+#end-credits-scroll{
+  position:absolute; left:0; right:0; top:0; padding:0 20px;
+  animation:ecScroll 24s linear forwards;
+}
+@keyframes ecScroll{
+  from{ transform:translateY(100vh); }
+  to{ transform:translateY(-115%); }
 }
 #end-credits-screen .ec-line{ font-family:Arial; font-size:1.1rem; color:#cfe9cf; margin:6px 0; }
 #end-credits-screen .ec-role{ font-family:'Orbitron'; color:var(--green); font-size:1rem; letter-spacing:2px; margin-top:28px; }
 #end-credits-screen .ec-alien{ font-size:9rem; margin:50px 0 10px; filter:drop-shadow(0 0 40px var(--green)); }
 #end-credits-screen .ec-tm{ font-size:1.6rem; vertical-align:super; }
-#end-credits-screen button{ margin-top:40px; }
+#end-credits-close-btn{
+  position:fixed; right:30px; bottom:30px; z-index:9001;
+}
+#tower-reward-screen{
+  position:fixed; inset:0; z-index:9100; display:none;
+  align-items:center; justify-content:center; text-align:center;
+  background:radial-gradient(circle,rgba(30,20,0,.95),rgba(0,0,0,.98));
+}
+#tower-reward-screen .tr-inner{ animation:towerRewardPop 1s ease-out; }
+@keyframes towerRewardPop{
+  0%{ transform:scale(.5); opacity:0; }
+  60%{ transform:scale(1.08); opacity:1; }
+  100%{ transform:scale(1); opacity:1; }
+}
+#tower-reward-icon{
+  width:120px; height:120px; border-radius:50%; margin:0 auto 20px;
+  border:4px solid #fff; display:flex; align-items:center; justify-content:center;
+  font-size:3rem; background:rgba(255,255,255,.05);
+}
 .revive-btn{ border-color:var(--gold)!important; color:var(--gold)!important; box-shadow:0 0 20px rgba(255,215,0,.5)!important; }
 .click-ring{
   position:fixed;
@@ -1032,6 +1113,7 @@ canvas{
     </div>
     <div style="display:flex;gap:10px;margin-top:10px;">
       <button id="btn-floss" onclick="flossSelectedTower()" style="padding:.6em;flex:1;font-size:.85rem;color:var(--cyan);border-color:var(--cyan);">FLOSS</button>
+      <button id="btn-move" onclick="moveSelectedTower()" style="padding:.6em;flex:1;font-size:.85rem;color:var(--gold);border-color:var(--gold);">MOVE</button>
     </div>
   </div>
 
@@ -1067,27 +1149,39 @@ canvas{
  </div>
 </div>
 
+<div id="tower-reward-screen">
+  <div class="tr-inner">
+    <div id="tower-reward-icon">&#128126;</div>
+    <div style="font-family:'Orbitron';font-size:1.5rem;letter-spacing:3px;color:var(--gold);text-shadow:0 0 20px var(--gold);">NEW TOWER ACQUIRED</div>
+    <div id="tower-reward-name" style="font-family:'Orbitron';font-size:1.3rem;margin-top:14px;"></div>
+    <div id="tower-reward-desc" style="font-family:Arial;color:#ccc;max-width:420px;margin:14px auto 0;font-size:.9rem;line-height:1.5;"></div>
+    <button onclick="closeTowerReward()" style="margin-top:26px;border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">CONTINUE</button>
+  </div>
+</div>
+
 <div id="end-credits-screen">
-  <div class="ec-alien">&#128126;<span class="ec-tm">™</span></div>
-  <div class="ec-line" style="font-family:'Orbitron';font-size:2rem;color:var(--green);letter-spacing:4px;">ALIEN TOWER DEFENSE</div>
-  <div class="ec-role">GAME DESIGN</div>
-  <div class="ec-line">Isaac</div>
-  <div class="ec-role">PROGRAMMING</div>
-  <div class="ec-line">Isaac</div>
-  <div class="ec-role">ART &amp; VISUAL EFFECTS</div>
-  <div class="ec-line">Isaac</div>
-  <div class="ec-role">MUSIC &amp; SOUND DESIGN</div>
-  <div class="ec-line">Isaac</div>
-  <div class="ec-role">WRITING</div>
-  <div class="ec-line">Isaac</div>
-  <div class="ec-role">QUALITY ASSURANCE</div>
-  <div class="ec-line">Isaac (he did not test it very much)</div>
-  <div class="ec-role">SPECIAL THANKS</div>
-  <div class="ec-line">My little brother, for the impostor idea</div>
-  <div class="ec-line">You, for playing this</div>
-  <div class="ec-role">EXECUTIVE PRODUCER</div>
-  <div class="ec-line">Also Isaac</div>
-  <button onclick="closeEndCredits()">CLOSE</button>
+  <div id="end-credits-scroll">
+    <div class="ec-alien">&#128126;<span class="ec-tm">™</span></div>
+    <div class="ec-line" style="font-family:'Orbitron';font-size:2rem;color:var(--green);letter-spacing:4px;">ALIEN TOWER DEFENSE</div>
+    <div class="ec-role">GAME DESIGN</div>
+    <div class="ec-line">Isaac</div>
+    <div class="ec-role">PROGRAMMING</div>
+    <div class="ec-line">Isaac</div>
+    <div class="ec-role">ART &amp; VISUAL EFFECTS</div>
+    <div class="ec-line">Isaac</div>
+    <div class="ec-role">MUSIC &amp; SOUND DESIGN</div>
+    <div class="ec-line">Isaac</div>
+    <div class="ec-role">WRITING</div>
+    <div class="ec-line">Isaac</div>
+    <div class="ec-role">QUALITY ASSURANCE</div>
+    <div class="ec-line">Isaac (he did not test it very much)</div>
+    <div class="ec-role">SPECIAL THANKS</div>
+    <div class="ec-line">My little brother, for the impostor idea</div>
+    <div class="ec-line">You, for playing this</div>
+    <div class="ec-role">EXECUTIVE PRODUCER</div>
+    <div class="ec-line">Also Isaac</div>
+  </div>
+  <button id="end-credits-close-btn" onclick="closeEndCredits()">CLOSE</button>
 </div>
 
 <a class="discord-link" href="https://www.youtube.com/watch?v=QDia3e12czc" target="_blank" rel="noopener">
@@ -1104,9 +1198,9 @@ canvas{
     <h2>RESTRICTED ACCESS</h2>
     <input type="password" id="admin-code-input" maxlength="8" placeholder="ENTER CODE" inputmode="numeric" onkeydown="if(event.key==='Enter')submitAdminCode();">
     <div id="admin-code-error"></div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="submitAdminCode()" style="flex:1;">UNLOCK</button>
-      <button onclick="closeAdminCodeModal()" style="flex:1;color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+    <div class="admin-box-actions">
+      <button onclick="submitAdminCode()">UNLOCK</button>
+      <button onclick="closeAdminCodeModal()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
     </div>
   </div>
 </div>
@@ -2621,6 +2715,15 @@ function doOpenCrateBulk(idx,count){
     showAlertModal("Not enough Summoning Tickets.");
     return;
   }
+
+  if(count===1){
+    const res=openCrate(idx);
+    if(!res.success){ playSound("denied"); showAlertModal(res.message||"Could not open crate."); return; }
+    playSound("crateSpin");
+    showCrateWheel(res);
+    return;
+  }
+
   const results=[];
   for(let i=0;i<count;i++){
     if((metaData.summonTickets||0)<crate.cost) break;
@@ -2666,6 +2769,59 @@ function doOpenCrateBulk(idx,count){
 }
 window.doOpenCrateBulk=doOpenCrateBulk;
 
+// Spinning roulette wheel for single-crate opens: a colored wheel spins
+// several full turns and eases to a stop with the pointer landing on
+// the rarity that was already rolled by openCrate() - the spin is a
+// reveal animation, not a second random draw. Once it settles, morphs
+// into the reward card and auto-returns to a refreshed Summoning screen.
+function showCrateWheel(res){
+  const segAngle=360/RARITY_ORDER.length;
+  const idx=Math.max(0,RARITY_ORDER.indexOf(res.rarity));
+  const gradientStops=RARITY_ORDER.map((r,i)=>`${RARITY_COLOR[r]} ${i*segAngle}deg ${(i+1)*segAngle}deg`).join(",");
+
+  const content=document.getElementById("summoning-content");
+  content.innerHTML=`
+    <div class="crate-reveal">
+      <div class="crate-reveal-title">SPINNING...</div>
+      <div class="wheel-wrap">
+        <div class="wheel-pointer"></div>
+        <div class="wheel-disc" id="crate-wheel-disc" style="background:conic-gradient(${gradientStops});"></div>
+        <div class="wheel-hub"></div>
+      </div>
+      <div class="wheel-legend">
+        ${RARITY_ORDER.map(r=>`<span style="color:${RARITY_COLOR[r]}">&#9679; ${r==="godly"?"???":r}</span>`).join(" &nbsp; ")}
+      </div>
+    </div>`;
+
+  const disc=document.getElementById("crate-wheel-disc");
+  const extraSpins=5;
+  const finalRotation=extraSpins*360+((360-(idx*segAngle+segAngle/2))%360);
+  disc.style.transform="rotate(0deg)";
+  void disc.offsetWidth; // force layout so the browser registers the 0deg start before we animate
+  requestAnimationFrame(()=>{ disc.style.transform=`rotate(${finalRotation}deg)`; });
+
+  const onDone=()=>{
+    disc.removeEventListener("transitionend",onDone);
+    const rarSfx = res.rarity==="godly" ? "winGodly" : (idx>=3 ? "winRare" : "winCommon");
+    playSound(rarSfx);
+    const box=document.getElementById("summoning-content");
+    box.innerHTML=`
+      <div class="crate-reveal">
+        <div class="crate-reveal-title">CRATE OPENED</div>
+        <div class="crate-reveal-item" style="--rc:${RARITY_COLOR[res.rarity]}">
+          <b style="color:${RARITY_COLOR[res.rarity]}">${res.won.name}</b>
+          <span style="color:${RARITY_COLOR[res.rarity]};font-size:.75rem;">${res.rarity==="godly"?"???":res.rarity.toUpperCase()}</span>
+          <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(res.won,1)}</div>
+        </div>
+        <div style="margin-top:10px;font-family:Arial;font-size:.75rem;color:#888;">Returning to Summoning...</div>
+      </div>`;
+    updateMenuUI();
+    setTimeout(()=>{ if(document.getElementById("summoning-overlay").style.display!=="none") openSummoning(); },1600);
+  };
+  disc.addEventListener("transitionend",onDone);
+}
+window.showCrateWheel=showCrateWheel;
+
 function spinSecretTurret(){
   if((metaData.summonTickets||0)<25){ playSound("denied"); showAlertModal("Not enough tickets (need 25)."); return; }
   metaData.summonTickets-=25;
@@ -2689,7 +2845,16 @@ window.spinSecretTurret=spinSecretTurret;
 // End Credits
 // ---------------------------------------------------------------------
 function openEndCredits(){
-  document.getElementById("end-credits-screen").style.display="flex";
+  const screen=document.getElementById("end-credits-screen");
+  const scroll=document.getElementById("end-credits-scroll");
+  // Reset then restart the CSS scroll animation every time the credits
+  // are opened (display:none removes it from the render tree, so
+  // re-showing it below naturally replays the "forwards" keyframe from
+  // the start - this just makes that explicit and safe to call twice).
+  scroll.style.animation="none";
+  screen.style.display="flex";
+  void scroll.offsetHeight; // force reflow before re-enabling the animation
+  scroll.style.animation="";
   playSound("victory");
 }
 function closeEndCredits(){
@@ -2697,6 +2862,35 @@ function closeEndCredits(){
 }
 window.openEndCredits=openEndCredits;
 window.closeEndCredits=closeEndCredits;
+
+// ---------------------------------------------------------------------
+// Tower reward screen - shown when clearing an area drops its unique tower
+// ---------------------------------------------------------------------
+let towerRewardOnClose=null;
+function showTowerRewardScreen(towerId,onClose){
+  const stat=TOWER_STATS[towerId];
+  if(!stat){ if(onClose) onClose(); return; }
+  towerRewardOnClose=onClose||null;
+  const icon=document.getElementById("tower-reward-icon");
+  icon.style.borderColor=stat.color;
+  icon.style.color=stat.color;
+  icon.style.boxShadow=`0 0 30px ${stat.color}`;
+  icon.innerText="\u{1F47E}";
+  const nameEl=document.getElementById("tower-reward-name");
+  nameEl.innerText=stat.name;
+  nameEl.style.color=stat.color;
+  document.getElementById("tower-reward-desc").innerText=stat.desc;
+  document.getElementById("tower-reward-screen").style.display="flex";
+  playSound("winGodly");
+}
+function closeTowerReward(){
+  document.getElementById("tower-reward-screen").style.display="none";
+  const cb=towerRewardOnClose;
+  towerRewardOnClose=null;
+  if(cb) cb();
+}
+window.showTowerRewardScreen=showTowerRewardScreen;
+window.closeTowerReward=closeTowerReward;
 // ---------------------------------------------------------------------
 // CORE GAME ENGINE
 // ---------------------------------------------------------------------
@@ -2735,6 +2929,7 @@ let reviveUsedThisRun=false;
 let godArmorOn=false, oneHitModeOn=false, tinyAliensOn=false, discoBallOn=false;
 let flossWallPlaced=false;
 let pendingFlossTarget=null;
+let moveModeTower=null;
 
 canvas.addEventListener("mousemove",e=>{ const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; });
 
@@ -2794,7 +2989,25 @@ function renderShopCards(){
   }
 }
 
+// Mobile bug fix: each .screen (main-menu, bestiary, etc) scrolls
+// independently via overflow-y:auto. If the lobby was scrolled down and
+// the player then starts a run (or returns to the lobby), some mobile
+// browsers carry that scroll offset over to whichever screen becomes
+// visible next, or leave the page's own viewport shifted - hiding the
+// HUD's top row (credits/wave/area/core shields) with no way to scroll
+// back up since body itself is overflow:hidden. Force everything back
+// to a clean top-of-page state on every screen transition.
+function resetScreenScroll(){
+  document.querySelectorAll(".screen").forEach(el=>{ el.scrollTop=0; });
+  const gc=document.getElementById("game-container");
+  if(gc) gc.scrollTop=0;
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
+  window.scrollTo(0,0);
+}
+
 function startGame(){
+  resetScreenScroll();
   document.getElementById("main-menu").style.display="none";
   document.getElementById("game-container").style.display="flex";
   document.getElementById("game-over-screen").style.display="none";
@@ -2805,7 +3018,7 @@ function startGame(){
   enemies=[]; projectiles=[]; particles=[];
   discoveredTypes=new Set();
   enemiesLeft=0; spawnTimer=0;
-  selectedShopItem=null; selectedTower=null;
+  selectedShopItem=null; selectedTower=null; moveModeTower=null;
   flossWallPlaced=false; reviveUsedThisRun=false;
   isPaused=false;
   setGameSpeed(1);
@@ -2847,6 +3060,7 @@ function endGame(status){
   AudioEngine.stopMusic();
   playSound(status==="VICTORY"?"victory":"defeat");
   const previousBest=metaData.bestWave ?? 0;
+  const previousUnlockedTowers=[...(metaData.unlockedAreaTowers||[])];
   lastDeathWave=wave;
   lastDeathWasBoss=enemies.some(e=>e.isBoss);
   if(lastDeathWasBoss){
@@ -2882,7 +3096,15 @@ function endGame(status){
 
   apiPost("saveGameResult", { waveReached: wave, killsThisGame }).then(data=>{
     if(data) metaData=data;
-    showOverlay();
+    // If clearing this run's areas dropped a new area-exclusive tower,
+    // show the tower-reward screen first, then chain into the normal
+    // victory/game-over overlay once the player dismisses it.
+    const newTowers=(metaData.unlockedAreaTowers||[]).filter(id=>!previousUnlockedTowers.includes(id));
+    if(newTowers.length>0){
+      showTowerRewardScreen(newTowers[0], showOverlay);
+    }else{
+      showOverlay();
+    }
   }).catch(()=>showOverlay());
 }
 
@@ -2896,6 +3118,7 @@ function requestRevive(){
   metaData.biomass-=cost;
   saveToStorage(metaData);
   reviveUsedThisRun=true;
+  resetScreenScroll();
   document.getElementById("game-over-screen").style.display="none";
   document.getElementById("game-container").style.display="flex";
   playSound("revive");
@@ -2936,6 +3159,7 @@ function restartFromGameOver(){
   startGame();
 }
 function returnToLobbyFromGameOver(){
+  resetScreenScroll();
   document.getElementById("game-over-screen").style.display="none";
   document.getElementById("winner-screen").style.display="none";
   document.getElementById("game-container").style.display="none";
@@ -2989,6 +3213,28 @@ function buildTower(x,y,type){
 let pendingPlacement=null, lastTapTime=0, lastTapPos={x:-999,y:-999};
 
 function handlePointerDown(x,y,isTouch){
+  if(moveModeTower){
+    const mt=moveModeTower;
+    if(!towers.includes(mt)){ moveModeTower=null; }
+    else if(Math.hypot(mt.x-x,mt.y-y)<25){
+      moveModeTower=null; // tapped the tower itself - cancel the move
+    }else if(isValidPlacement(x,y)){
+      const cost=getTowerMoveCost(mt);
+      if(cost===null || gold<cost){ playSound("denied"); }
+      else{
+        gold-=cost;
+        mt.x=x; mt.y=y;
+        mt.moveCount=(mt.moveCount||0)+1;
+        playSound("build");
+        updateHUD();
+        if(selectedTower===mt) updateUpgradePanel();
+      }
+      moveModeTower=null;
+    }else{
+      playSound("denied");
+    }
+    return;
+  }
   if(selectedShopItem){
     const stat=TOWER_STATS[selectedShopItem];
     if(selectedShopItem==="flosswall" && flossWallPlaced){ selectedShopItem=null; return; }
@@ -3017,10 +3263,18 @@ function handlePointerDown(x,y,isTouch){
     }
     return;
   }
+  const prevSelected=selectedTower;
   selectedTower=null;
   document.getElementById("upgrade-panel").style.display="none";
   for(const t of towers){
-    if(Math.hypot(t.x-x,t.y-y)<25){ selectedTower=t; updateUpgradePanel(); break; }
+    if(Math.hypot(t.x-x,t.y-y)<25){
+      if(prevSelected && prevSelected!==t && prevSelected.isFlossling && t.isFlossling && prevSelected.parentType===t.parentType){
+        fuseFlosslings(prevSelected,t);
+        updateHUD();
+        return;
+      }
+      selectedTower=t; updateUpgradePanel(); break;
+    }
   }
 }
 canvas.addEventListener("mousedown",e=>{ const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,false); });
@@ -3043,19 +3297,48 @@ function updateUpgradePanel(){
   const btnUpg=document.getElementById("btn-upg");
   const btnSell=document.getElementById("btn-sell");
   const btnFloss=document.getElementById("btn-floss");
+  const btnMove=document.getElementById("btn-move");
   if(t.isWall){
     btnUpg.innerText="CANNOT UPGRADE"; btnUpg.disabled=true;
     btnSell.disabled=true; btnSell.innerText="PERMANENT";
     btnFloss.disabled=true;
+    btnMove.disabled=true; btnMove.innerText="CANNOT MOVE";
     return;
   }
   btnSell.disabled=false; btnSell.innerText="SELL";
-  btnFloss.disabled=!!(t.isFlossling||t.flossed);
+  if(t.isFlossling){
+    btnFloss.disabled=true; btnFloss.innerText="TAP ANOTHER TO FUSE";
+  }else{
+    btnFloss.disabled=!!t.flossed; btnFloss.innerText="FLOSS";
+  }
+  const moveCost=getTowerMoveCost(t);
+  if(moveCost===null){ btnMove.disabled=true; btnMove.innerText="CANNOT MOVE"; }
+  else{ btnMove.disabled=(gold<moveCost); btnMove.innerText=`MOVE (${moveCost})`; }
   const upgCost=Math.floor(TOWER_STATS[t.type].cost*0.75*t.level);
   if(t.oneTime){ btnUpg.innerText=t.used?"CONSUMED":"ONE-TIME USE"; btnUpg.disabled=true; }
   else if(t.level>=3){ btnUpg.innerText="MAX LEVEL"; btnUpg.disabled=true; }
   else{ btnUpg.innerText=`UPGRADE (${upgCost})`; btnUpg.disabled=gold<upgCost; }
 }
+
+// Moving a placed tower costs 1/4 of its original purchase price the
+// first time, 1/2 the second time, and can't be moved again after that.
+function getTowerMoveCost(t){
+  const base=TOWER_STATS[t.type].cost;
+  const mc=t.moveCount||0;
+  if(mc===0) return Math.floor(base*0.25);
+  if(mc===1) return Math.floor(base*0.5);
+  return null;
+}
+
+function moveSelectedTower(){
+  if(!selectedTower || selectedTower.isWall) return;
+  const cost=getTowerMoveCost(selectedTower);
+  if(cost===null){ playSound("denied"); return; }
+  if(gold<cost){ playSound("denied"); return; }
+  moveModeTower=selectedTower;
+  playSound("click");
+}
+window.moveSelectedTower=moveSelectedTower;
 
 function upgradeTower(){
   if(!selectedTower || selectedTower.oneTime || selectedTower.level>=3 || selectedTower.isWall) return;
