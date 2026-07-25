@@ -412,16 +412,25 @@ canvas{
 .settings-row{
   display:flex;
   align-items:center;
-  gap:12px;
+  flex-wrap:wrap;
+  gap:8px 12px;
   margin-bottom:16px;
   font-family:Arial;
   font-size:.9rem;
+  width:100%;
 }
 .settings-row:last-child{margin-bottom:0;}
 .settings-row label{
   flex:0 0 110px;
   text-align:left;
   color:#ccc;
+}
+.settings-row label[style*="flex:none"]{
+  flex:0 1 100% !important;
+  max-width:100%;
+  white-space:normal;
+  word-break:break-word;
+  flex-wrap:wrap;
 }
 .settings-row input[type="range"]{
   flex:1;
@@ -956,6 +965,63 @@ canvas{
   font-family:Arial;font-size:.72rem;color:#9fd8a0;
   background:rgba(0,0,0,.4);border-radius:8px;padding:8px;
 }
+.summon-back-btn{
+  position:absolute;
+  left:16px;
+  top:16px;
+  padding:.4em .8em;
+  font-size:.85rem;
+  min-height:32px;
+  box-shadow:none;
+  border-color:#888;
+  color:#ccc;
+}
+.summon-section-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:16px;
+  margin-top:10px;
+}
+.summon-section-card{
+  padding:22px 14px;
+  border:2px solid #444;
+  border-radius:14px;
+  cursor:pointer;
+  text-align:center;
+  transition:.2s;
+  background:rgba(0,0,0,.3);
+}
+.summon-section-card:hover{ transform:translateY(-3px); }
+.summon-section-card .ssc-icon{ font-size:2.2rem; margin-bottom:8px; }
+.summon-section-card .ssc-title{ font-family:'Orbitron'; font-size:1rem; letter-spacing:1px; }
+.armory-group-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  padding:6px 2px;
+  margin-top:8px;
+}
+.armory-group-header .agh-arrow{ transition:transform .2s; display:inline-block; }
+.armory-group-header.collapsed .agh-arrow{ transform:rotate(-90deg); }
+.armory-group-body{ overflow:hidden; }
+.armory-group-body.collapsed{ display:none; }
+.ach-card, .quest-card{
+  padding:12px 14px;
+  margin-bottom:10px;
+  border:2px solid #333;
+  border-radius:10px;
+  background:rgba(0,0,0,.35);
+  text-align:left;
+  font-family:Arial;
+}
+.ach-card.done, .quest-card.done{ border-color:var(--green); background:rgba(57,255,20,.08); }
+.ach-title, .quest-title{ font-family:'Orbitron'; font-size:1rem; color:#fff; }
+.ach-desc, .quest-desc{ font-size:.82rem; color:#bbb; margin-top:4px; }
+.ach-reward, .quest-reward{ font-size:.8rem; color:var(--gold); margin-top:6px; }
+.ach-progress-bar, .quest-progress-bar{ height:8px; border-radius:4px; background:#222; margin-top:8px; overflow:hidden; }
+.ach-progress-fill, .quest-progress-fill{ height:100%; background:var(--green); }
+#craft-tab-cards.active,#craft-tab-crates.active,#craft-tab-armor.active{ background:#9fd8a0; color:#000; }
 </style>
 </head>
 <body>
@@ -1016,6 +1082,9 @@ canvas{
     <button onclick="toggleSettings()" style="border-color:var(--purple);color:var(--purple);box-shadow:0 0 20px rgba(176,38,255,.5);">SETTINGS</button>
     <button onclick="openBestiary()" style="border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">BESTIARY</button>
     <button onclick="openSummoning()" style="border-color:#ff6a2b;color:#ff6a2b;box-shadow:0 0 20px rgba(255,106,43,.5);">SUMMONING</button>
+    <button onclick="openCrafting()" style="border-color:#9fd8a0;color:#9fd8a0;box-shadow:0 0 20px rgba(159,216,160,.5);">CRAFTING</button>
+    <button onclick="openAchievements()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">ACHIEVEMENTS</button>
+    <button onclick="openQuests()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">QUESTS</button>
     <button id="btn-update-app" onclick="forceUpdateApp()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">CHECK FOR UPDATES</button>
   </div>
 
@@ -1047,6 +1116,12 @@ canvas{
         Flashy Mode (unchecked = retro Space Invaders art)
       </label>
     </div>
+    <div class="settings-row" style="justify-content:center;">
+      <label for="autoreturn-toggle" style="flex:none;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="autoreturn-toggle" onchange="updateSetting('autoReturnSummon', this.checked)">
+        Auto-Return After Summoning
+      </label>
+    </div>
   </div>
 
   <div class="armory-panel" id="armory-panel" style="display:none;">
@@ -1072,6 +1147,41 @@ canvas{
   </div>
 
   <button onclick="closeBestiary()" style="flex-shrink:0;margin:34px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE BESTIARY</button>
+</div>
+
+<div id="achievements-screen" class="screen" style="display:none;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">ACHIEVEMENTS</h1>
+  <div id="ach-progress" style="color:var(--gold);font-size:.9rem;letter-spacing:1px;margin-bottom:20px;"></div>
+  <div style="max-width:760px;width:100%;" id="ach-list"></div>
+  <button onclick="closeAchievements()" style="flex-shrink:0;margin:20px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE</button>
+</div>
+
+<div id="quests-screen" class="screen" style="display:none;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">QUESTS</h1>
+  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:.95rem;line-height:1.5;margin-bottom:16px;">
+    Three easy Daily Quests reset every day. One tough Weekly Quest resets every week and pays out far more.
+  </div>
+  <div style="max-width:640px;width:100%;">
+    <div class="shop-title" style="color:var(--cyan);margin-bottom:10px;">DAILY QUESTS</div>
+    <div id="daily-quest-list"></div>
+    <div class="shop-title" style="color:var(--gold);margin:24px 0 10px;">WEEKLY QUEST</div>
+    <div id="weekly-quest-list"></div>
+  </div>
+  <button onclick="closeQuests()" style="flex-shrink:0;margin:24px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE</button>
+</div>
+
+<div class="summoning-overlay" id="crafting-overlay" onclick="if(event.target===this) closeCrafting();">
+  <div class="summoning-box">
+    <h2 style="color:#9fd8a0;text-shadow:0 0 12px #9fd8a0;">CRAFTING</h2>
+    <div style="font-family:Arial;font-size:.82rem;color:#ccc;text-align:left;margin-bottom:12px;" id="craft-materials-line"></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;">
+      <button id="craft-tab-cards" onclick="setCraftTab('cards')" style="padding:.5em 1em;font-size:.85rem;">CARDS</button>
+      <button id="craft-tab-crates" onclick="setCraftTab('crates')" style="padding:.5em 1em;font-size:.85rem;">CRATES</button>
+      <button id="craft-tab-armor" onclick="setCraftTab('armor')" style="padding:.5em 1em;font-size:.85rem;">ARMOR</button>
+    </div>
+    <div id="crafting-content" style="text-align:left;"></div>
+    <button class="summoning-close-btn" onclick="closeCrafting()">CLOSE</button>
+  </div>
 </div>
 
 <div id="game-container">
@@ -1782,7 +1892,7 @@ function apiPost(fn, body){
 }
 
 function defaultSettings(){
-  return { musicVolume:50, sfxVolume:60, muted:false, lobbyTheme:"menu", flashyMode:true };
+  return { musicVolume:50, sfxVolume:60, muted:false, lobbyTheme:"menu", flashyMode:true, autoReturnSummon:false };
 }
 
 function defaultLocalState(){
@@ -1800,7 +1910,14 @@ function defaultLocalState(){
     areasEverCleared:0,
     unlockedAreaTowers:[],
     powerups:{},
-    equippedPowerups:[]
+    equippedPowerups:[],
+    materials:{common:0,uncommon:0,rare:0,epic:0,legendary:0},
+    armors:{},
+    equippedArmor:[],
+    ownedSummonTowers:[],
+    stats:{totalKills:0,cratesOpened:0,armorCratesOpened:0,towerCratesOpened:0,bossesKilled:0,towersBuilt:0,runsPlayed:0,biomassEarnedTotal:0,materialsCollectedTotal:0},
+    achievementsClaimed:[],
+    quests:null
   };
 }
 
@@ -1846,6 +1963,13 @@ function onDataLoaded(data){
   if(metaData.powerups===undefined) metaData.powerups={};
   if(metaData.equippedPowerups===undefined) metaData.equippedPowerups=[];
   if(metaData.unlockedAreaTowers===undefined) metaData.unlockedAreaTowers=[];
+  if(metaData.materials===undefined) metaData.materials={common:0,uncommon:0,rare:0,epic:0,legendary:0};
+  if(metaData.armors===undefined) metaData.armors={};
+  if(metaData.equippedArmor===undefined) metaData.equippedArmor=[];
+  if(metaData.ownedSummonTowers===undefined) metaData.ownedSummonTowers=[];
+  if(metaData.stats===undefined) metaData.stats={totalKills:0,cratesOpened:0,armorCratesOpened:0,towerCratesOpened:0,bossesKilled:0,towersBuilt:0,runsPlayed:0,biomassEarnedTotal:0,materialsCollectedTotal:0};
+  if(metaData.achievementsClaimed===undefined) metaData.achievementsClaimed=[];
+  if(metaData.settings.autoReturnSummon===undefined) metaData.settings.autoReturnSummon=false;
   document.getElementById("loader").style.display="none";
   document.getElementById("meta-stats").style.display="block";
   document.getElementById("armory-panel").style.display="block";
@@ -1853,6 +1977,7 @@ function onDataLoaded(data){
   renderArmory();
   applySettingsToUI();
   applyLobbyBackground(metaData.settings.lobbyTheme||"menu");
+  ensureQuestsFresh();
   if(!isPlaying) AudioEngine.playMusic(metaData.settings.lobbyTheme||"menu");
 }
 
@@ -1862,6 +1987,7 @@ function applySettingsToUI(){
   const sfxSlider=document.getElementById("sfx-vol-slider");
   const muteToggle=document.getElementById("mute-toggle");
   const flashyToggle=document.getElementById("flashy-toggle");
+  const autoReturnToggle=document.getElementById("autoreturn-toggle");
   const lobbySelect=document.getElementById("lobby-theme-select");
   if(musicSlider){
     musicSlider.value=s.musicVolume;
@@ -1873,6 +1999,7 @@ function applySettingsToUI(){
   }
   if(muteToggle) muteToggle.checked=!!s.muted;
   if(flashyToggle) flashyToggle.checked=!!s.flashyMode;
+  if(autoReturnToggle) autoReturnToggle.checked=!!s.autoReturnSummon;
   if(lobbySelect && lobbySelect.options.length===0){
     populateLobbyThemeSelect();
   }
@@ -1949,6 +2076,9 @@ function updateSetting(key,value){
   }else if(key==="flashyMode"){
     metaData.settings.flashyMode=!!value;
     applyFlashyMode(!!value);
+    playSound("click");
+  }else if(key==="autoReturnSummon"){
+    metaData.settings.autoReturnSummon=!!value;
     playSound("click");
   }else{
     const v=Math.max(0,Math.min(100,parseInt(value,10)||0));
@@ -2395,6 +2525,133 @@ function openCrate(crateIdx){
   return {success:true,won,rarity};
 }
 // ---------------------------------------------------------------------
+// MATERIALS - dropped occasionally from kills, used to craft cards,
+// crates and armor in the Crafting screen.
+// ---------------------------------------------------------------------
+const MATERIAL_TIERS=["common","uncommon","rare","epic","legendary"];
+const MATERIAL_COLOR={common:"#9fd8a0",uncommon:"#39ff14",rare:"#00f0ff",epic:"#b026ff",legendary:"#ffd700"};
+const MATERIAL_NAME={common:"Chitin Shard",uncommon:"Alloy Core",rare:"Plasma Crystal",epic:"Void Residue",legendary:"Genesis Cell"};
+
+function rollMaterialDrop(){
+  // Higher waves skew toward rarer materials.
+  const tier=Math.min(4,Math.floor((Math.max(1,wave)-1)/12));
+  const r=Math.random();
+  let mat="common";
+  if(tier>=4){ if(r<0.05) mat="legendary"; else if(r<0.2) mat="epic"; else if(r<0.45) mat="rare"; else if(r<0.75) mat="uncommon"; else mat="common"; }
+  else if(tier>=3){ if(r<0.02) mat="legendary"; else if(r<0.12) mat="epic"; else if(r<0.35) mat="rare"; else if(r<0.65) mat="uncommon"; else mat="common"; }
+  else if(tier>=2){ if(r<0.05) mat="epic"; else if(r<0.2) mat="rare"; else if(r<0.5) mat="uncommon"; else mat="common"; }
+  else if(tier>=1){ if(r<0.08) mat="rare"; else if(r<0.35) mat="uncommon"; else mat="common"; }
+  else{ mat=(r<0.2)?"uncommon":"common"; }
+  return mat;
+}
+
+function grantMaterial(mat,amount){
+  metaData.materials=metaData.materials||{common:0,uncommon:0,rare:0,epic:0,legendary:0};
+  metaData.materials[mat]=(metaData.materials[mat]||0)+amount;
+  metaData.stats=metaData.stats||{};
+  metaData.stats.materialsCollectedTotal=(metaData.stats.materialsCollectedTotal||0)+amount;
+}
+
+// ---------------------------------------------------------------------
+// ARMOR - equippable items that buff towers, separate from cards.
+// 10 armor pieces, each with 3 fusable levels.
+// ---------------------------------------------------------------------
+const ARMOR_DEFS=[
+  {id:"plate",   name:"Reactive Plating",  rarity:"common",    desc:"+X% tower damage",          values:[8,16,28]},
+  {id:"visor",   name:"Targeting Visor",   rarity:"common",    desc:"+X% tower range",           values:[8,16,28]},
+  {id:"servo",   name:"Servo Actuator",    rarity:"uncommon",  desc:"+X% fire rate",              values:[6,14,24]},
+  {id:"coil",    name:"Capacitor Coil",    rarity:"uncommon",  desc:"-X% cooldown on special attacks", values:[6,14,24]},
+  {id:"shell",   name:"Ablative Shell",    rarity:"rare",      desc:"Towers take X% less stun duration", values:[15,30,50]},
+  {id:"core",    name:"Overdrive Core",    rarity:"rare",      desc:"+X% splash/AoE radius",      values:[10,20,35]},
+  {id:"barb",    name:"Barbed Housing",    rarity:"epic",      desc:"+X% chance to deal double damage", values:[8,16,26]},
+  {id:"sink",    name:"Heat Sink Array",   rarity:"epic",      desc:"+X% damage vs armored aliens", values:[10,20,32]},
+  {id:"prism",   name:"Prism Lattice",     rarity:"legendary", desc:"+X% credits from tower kills", values:[10,20,35]},
+  {id:"crown",   name:"Sovereign Crown",   rarity:"godly",     desc:"+X% damage to bosses only",  values:[15,30,50]}
+];
+function armorDescForLevel(def,level){
+  if(!def) return "";
+  const idx=Math.max(0,Math.min((def.values.length||1)-1,(parseInt(level,10)||1)-1));
+  return def.desc.replace("X",def.values[idx]);
+}
+const ARMOR_CRATES=[
+  {id:1,name:"Common Armor Crate",cost:6,odds:{common:55,uncommon:28,rare:12,epic:4,legendary:0.9,godly:0.1}},
+  {id:2,name:"Rare Armor Crate",cost:18,odds:{common:30,uncommon:32,rare:24,epic:10,legendary:3.5,godly:0.5}},
+  {id:3,name:"Legendary Armor Crate",cost:45,odds:{common:10,uncommon:20,rare:28,epic:25,legendary:15,godly:2}}
+];
+function openArmorCrate(idx){
+  const crate=ARMOR_CRATES[idx];
+  if(!crate) return {success:false,message:"Unknown crate."};
+  if((metaData.summonTickets||0)<crate.cost) return {success:false,message:"Not enough Summoning Tickets."};
+  metaData.summonTickets-=crate.cost;
+  const rarity=rollRarity(crate.odds);
+  const pool=ARMOR_DEFS.filter(a=>a.rarity===rarity);
+  const won=pool[Math.floor(Math.random()*pool.length)] || ARMOR_DEFS[0];
+  const key=won.id+"_1";
+  metaData.armors=metaData.armors||{};
+  metaData.armors[key]=(metaData.armors[key]||0)+1;
+  metaData.stats.armorCratesOpened=(metaData.stats.armorCratesOpened||0)+1;
+  saveToStorage(metaData);
+  return {success:true,won,rarity};
+}
+function craftArmor(armorId,level){
+  metaData.armors=metaData.armors||{};
+  const key=armorId+"_"+level;
+  const have=metaData.armors[key]||0;
+  const def=ARMOR_DEFS.find(a=>a.id===armorId);
+  if(!def || def.rarity==="godly") return {success:false,message:"Godly armor cannot be crafted."};
+  if(have<2) return {success:false,message:"Need 2 copies of level "+level+" to fuse."};
+  if(level>=3) return {success:false,message:"Already max level."};
+  const successChance=Math.max(0.15, 0.75-level*0.2-(RARITY_ORDER.indexOf(def.rarity)*0.08));
+  metaData.armors[key]=have-2;
+  if(Math.random()<successChance){
+    const nextKey=armorId+"_"+(level+1);
+    metaData.armors[nextKey]=(metaData.armors[nextKey]||0)+1;
+    saveToStorage(metaData);
+    return {success:true,message:def.name+" fused to Level "+(level+1)+"!"};
+  }
+  saveToStorage(metaData);
+  return {success:false,message:"Fusion failed - armor lost."};
+}
+const MAX_ARMOR_SLOTS=3;
+
+// ---------------------------------------------------------------------
+// SUMMON-ONLY TOWERS - 10 unique towers only obtainable via the
+// Summoning > Towers section. Cannot be fused/leveled through summoning.
+// ---------------------------------------------------------------------
+const SUMMON_TOWER_IDS=["biospire","cryospike","solarray","quantumcell","plaguepod","stormcaller","obsidianfist","coralsentry","embercore","aetherlance"];
+const SUMMON_TOWER_DEFS={
+  biospire:   { name:"Biospire",       desc:"[Summon] Grows tendrils that lash multiple aliens.", cost:800, range:170, damage:26, fireRate:16, color:"#7CFC00" },
+  cryospike: { name:"Cryospike",      desc:"[Summon] Impales and deep-freezes a single target.", cost:850, range:230, damage:60, fireRate:60, color:"#7fd8ff" },
+  solarray:  { name:"Solarray",       desc:"[Summon] Focused sunbeam, ramps up the longer it's aimed.", cost:900, range:280, damage:18, fireRate:6, color:"#ffdd55" },
+  quantumcell:{name:"Quantum Cell",   desc:"[Summon] Randomly teleports damage to any alien on the field.", cost:1000, range:9999, damage:24, fireRate:35, color:"#66e0ff" },
+  plaguepod: { name:"Plague Pod",     desc:"[Summon] Bursts spores that spread infection between aliens.", cost:900, range:150, damage:10, fireRate:30, color:"#a0ff40", poisonDps:6, poisonDuration:200 },
+  stormcaller:{name:"Stormcaller",    desc:"[Summon] Calls lightning strikes across its whole range.", cost:1100, range:220, damage:32, fireRate:40, color:"#ffe97f" },
+  obsidianfist:{name:"Obsidian Fist", desc:"[Summon] Slow, devastating melee smash with splash.", cost:1200, range:110, damage:140, fireRate:80, color:"#4a2b6b", splash:80 },
+  coralsentry:{name:"Coral Sentry",   desc:"[Summon] Passive turret that slowly heals nearby towers' cooldowns.", cost:950, range:200, damage:14, fireRate:25, color:"#ff8fb1" },
+  embercore: { name:"Ember Core",     desc:"[Summon] Smolders enemies with a growing burn.", cost:1050, range:160, damage:12, fireRate:12, color:"#ff5a1f" },
+  aetherlance:{name:"Aether Lance",   desc:"[Summon] Pierces the entire lane in a straight line.", cost:1400, range:9999, damage:95, fireRate:75, color:"#d9b3ff" }
+};
+for(const id of SUMMON_TOWER_IDS){
+  TOWER_STATS[id]=Object.assign({unlockCost:0,summonOnly:true},SUMMON_TOWER_DEFS[id]);
+  towerImages[id]=new Image();
+}
+const TOWER_CRATE={ name:"Tower Beacon", cost:12 };
+function summonTower(){
+  if((metaData.summonTickets||0)<TOWER_CRATE.cost) return {success:false,message:"Not enough Summoning Tickets."};
+  const remaining=SUMMON_TOWER_IDS.filter(id=>!(metaData.ownedSummonTowers||[]).includes(id));
+  if(remaining.length===0) return {success:false,message:"You already own every summon-only tower!"};
+  metaData.summonTickets-=TOWER_CRATE.cost;
+  const wonId=remaining[Math.floor(Math.random()*remaining.length)];
+  metaData.ownedSummonTowers=metaData.ownedSummonTowers||[];
+  metaData.ownedSummonTowers.push(wonId);
+  metaData.ownedTowers=metaData.ownedTowers||[];
+  if(!metaData.ownedTowers.includes(wonId)) metaData.ownedTowers.push(wonId);
+  metaData.stats.towerCratesOpened=(metaData.stats.towerCratesOpened||0)+1;
+  saveToStorage(metaData);
+  return {success:true,wonId};
+}
+
+// ---------------------------------------------------------------------
 // Bestiary - grouped by the sector each creature is found in
 // ---------------------------------------------------------------------
 function openBestiary(){
@@ -2531,17 +2788,19 @@ document.addEventListener("click",e=>{
 // ---------------------------------------------------------------------
 // Armory
 // ---------------------------------------------------------------------
+let armoryCollapseState={};
 function renderArmory(){
   const list=document.getElementById("armory-list");
   list.innerHTML="";
   const slotsInfo=document.getElementById("armory-slots-info");
   slotsInfo.innerText=`Equip Slots: ${metaData.equippedTowers.length} / ${metaData.maxSlots} (max ${MAX_SLOTS_CLIENT})  \u00b7  Summoning Tickets: ${metaData.summonTickets||0}`;
 
-  const groups={cheap:[],mid:[],expensive:[],areaLocked:[]};
+  const groups={cheap:[],mid:[],expensive:[],areaLocked:[],summonOnly:[]};
   for(const id in TOWER_STATS){
     const s=TOWER_STATS[id];
     if(s.admin||s.isWall) continue;
-    if(s.areaLocked) groups.areaLocked.push(id);
+    if(s.summonOnly) groups.summonOnly.push(id);
+    else if(s.areaLocked) groups.areaLocked.push(id);
     else if(s.unlockCost<1000) groups.cheap.push(id);
     else if(s.unlockCost<2000) groups.mid.push(id);
     else groups.expensive.push(id);
@@ -2550,10 +2809,21 @@ function renderArmory(){
   function renderGroup(label,ids){
     if(ids.length===0) return;
     const h=document.createElement("div");
-    h.className="admin-cat-label";
-    h.style.color="#9fd8a0";
-    h.innerText=label;
+    h.className="armory-group-header";
+    const groupKey="armory-collapse-"+label.replace(/\s+/g,"-");
+    const isCollapsed=armoryCollapseState[groupKey];
+    if(isCollapsed) h.classList.add("collapsed");
+    h.innerHTML=`<span class="admin-cat-label" style="color:#9fd8a0;margin:0;">${label}</span><span class="agh-arrow" style="color:#9fd8a0;">&#9662;</span>`;
+    const body=document.createElement("div");
+    body.className="armory-group-body"+(isCollapsed?" collapsed":"");
+    h.onclick=()=>{
+      armoryCollapseState[groupKey]=!armoryCollapseState[groupKey];
+      h.classList.toggle("collapsed");
+      body.classList.toggle("collapsed");
+      playSound("click");
+    };
     list.appendChild(h);
+    list.appendChild(body);
     ids.forEach(id=>{
       const stat=TOWER_STATS[id];
       const owned=metaData.ownedTowers.includes(id);
@@ -2568,11 +2838,14 @@ function renderArmory(){
             <div class="a-name">&#128274; LOCKED</div>
             <div class="a-desc">Drops from clearing ${AREAS[stat.areaIndex].name} (${Math.round(AREA_TOWER_DROP_RATE*100)}% chance).</div>
           </div>`;
-        list.appendChild(card);
+        body.appendChild(card);
         return;
       }
       let actionHtml;
-      if(!owned){
+      if(!owned && stat.summonOnly){
+        card.style.filter="brightness(0.5) grayscale(0.4)";
+        actionHtml=`<span style="font-family:Arial;font-size:.72rem;color:#888;">Summoning only</span>`;
+      }else if(!owned){
         actionHtml=`<button class="armory-btn" onclick="armoryBuyTower('${id}')">BUY (${stat.unlockCost} Bio)</button>`;
       }else{
         actionHtml=`<button class="armory-btn${equipped?' unequip':''}" onclick="armoryToggleEquip('${id}')">${equipped?'UNEQUIP':'EQUIP'}</button>`;
@@ -2583,13 +2856,14 @@ function renderArmory(){
           <div class="a-desc">${stat.desc}</div>
         </div>
         ${actionHtml}`;
-      list.appendChild(card);
+      body.appendChild(card);
     });
   }
   renderGroup("Starter / Cheap",groups.cheap);
   renderGroup("Mid-Tier",groups.mid);
   renderGroup("Expensive",groups.expensive);
   renderGroup("Area-Unlock Towers",groups.areaLocked);
+  renderGroup("Summon-Only Towers",groups.summonOnly);
 
   const slotRow=document.createElement("div");
   slotRow.className="armory-slot-row";
@@ -2601,12 +2875,78 @@ function renderArmory(){
   }
   list.appendChild(slotRow);
 
+  renderArmorLoadoutGroup(list);
+
+  const matLine=document.createElement("div");
+  matLine.style.cssText="font-family:Arial;font-size:.78rem;color:#9fd8a0;text-align:center;margin-top:14px;";
+  const mats=metaData.materials||{};
+  matLine.innerHTML="Materials: "+MATERIAL_TIERS.map(m=>`<span style="color:${MATERIAL_COLOR[m]}">${mats[m]||0} ${MATERIAL_NAME[m]}</span>`).join(" &middot; ");
+  list.appendChild(matLine);
+
+  const craftBtn=document.createElement("button");
+  craftBtn.style.cssText="width:100%;margin-top:10px;border-color:#9fd8a0;color:#9fd8a0;box-shadow:0 0 20px rgba(159,216,160,.5);";
+  craftBtn.innerText="CRAFTING";
+  craftBtn.onclick=openCrafting;
+  list.appendChild(craftBtn);
+
   const summonBtn=document.createElement("button");
-  summonBtn.style.cssText="width:100%;margin-top:14px;border-color:#ff6a2b;color:#ff6a2b;box-shadow:0 0 20px rgba(255,106,43,.5);";
+  summonBtn.style.cssText="width:100%;margin-top:10px;border-color:#ff6a2b;color:#ff6a2b;box-shadow:0 0 20px rgba(255,106,43,.5);";
   summonBtn.innerText="SUMMONING";
   summonBtn.onclick=openSummoning;
   list.appendChild(summonBtn);
 }
+
+function renderArmorLoadoutGroup(list){
+  const owned=Object.keys(metaData.armors||{}).filter(k=>metaData.armors[k]>0);
+  const h=document.createElement("div");
+  h.className="armory-group-header";
+  const groupKey="armory-collapse-Armor-Loadout";
+  const isCollapsed=armoryCollapseState[groupKey];
+  if(isCollapsed) h.classList.add("collapsed");
+  h.innerHTML=`<span class="admin-cat-label" style="color:var(--purple);margin:0;">Armor Loadout (${(metaData.equippedArmor||[]).length}/${MAX_ARMOR_SLOTS})</span><span class="agh-arrow" style="color:var(--purple);">&#9662;</span>`;
+  const body=document.createElement("div");
+  body.className="armory-group-body"+(isCollapsed?" collapsed":"");
+  h.onclick=()=>{
+    armoryCollapseState[groupKey]=!armoryCollapseState[groupKey];
+    h.classList.toggle("collapsed");
+    body.classList.toggle("collapsed");
+    playSound("click");
+  };
+  list.appendChild(h);
+  list.appendChild(body);
+  if(owned.length===0){
+    body.innerHTML=`<div style="font-family:Arial;font-size:.8rem;color:#888;padding:6px 0;">No armor yet - summon some in the Armor section of Summoning.</div>`;
+    return;
+  }
+  owned.forEach(key=>{
+    const [id,lvl]=key.split("_");
+    const def=ARMOR_DEFS.find(a=>a.id===id);
+    if(!def) return;
+    const equipped=(metaData.equippedArmor||[]).includes(key);
+    const card=document.createElement("div");
+    card.className="armory-card"+(equipped?" equipped":"");
+    card.innerHTML=`
+      <div class="a-info">
+        <div class="a-name" style="color:${RARITY_COLOR[def.rarity]}">${def.name} Lvl ${lvl}</div>
+        <div class="a-desc">${armorDescForLevel(def,lvl)}</div>
+      </div>
+      <button class="armory-btn${equipped?' unequip':''}" onclick="armoryToggleEquipArmor('${key}')">${equipped?'UNEQUIP':'EQUIP'}</button>`;
+    body.appendChild(card);
+  });
+}
+function armoryToggleEquipArmor(key){
+  metaData.equippedArmor=metaData.equippedArmor||[];
+  const idx=metaData.equippedArmor.indexOf(key);
+  if(idx!==-1){ metaData.equippedArmor.splice(idx,1); }
+  else{
+    if(metaData.equippedArmor.length>=MAX_ARMOR_SLOTS){ playSound("denied"); showAlertModal("No free armor slots - unequip a piece first."); return; }
+    metaData.equippedArmor.push(key);
+  }
+  saveToStorage(metaData);
+  renderArmory();
+  playSound("click");
+}
+window.armoryToggleEquipArmor=armoryToggleEquipArmor;
 
 function armoryBuyTower(id){
   apiPost("buyTower", { towerId: id }).then(res=>{
@@ -2641,13 +2981,62 @@ window.armoryBuyTower=armoryBuyTower;
 window.armoryToggleEquip=armoryToggleEquip;
 window.armoryBuySlot=armoryBuySlot;
 
+
 // ---------------------------------------------------------------------
-// SUMMONING SCREEN (crates + crafting + secret turret spin)
+// SUMMONING (hub + 3 sub-sections: Cards, Armor, Towers)
 // ---------------------------------------------------------------------
+let summonSection="hub";
+
 function openSummoning(){
+  summonSection="hub";
+  renderSummoningHub();
+  document.getElementById("summoning-overlay").style.display="flex";
+}
+window.openSummoning=openSummoning;
+
+function closeSummoning(){
+  document.getElementById("summoning-overlay").style.display="none";
+}
+window.closeSummoning=closeSummoning;
+
+function renderSummoningHub(){
+  summonSection="hub";
   const body=`
-    <div style="font-family:Arial;color:#ccc;margin-bottom:14px;text-align:left;overflow-wrap:break-word;">Summoning Tickets: <b style="color:var(--gold)">${metaData.summonTickets||0}</b><br>
+    <div style="font-family:Arial;color:#ccc;margin-bottom:16px;">Summoning Tickets: <b style="color:var(--gold)">${metaData.summonTickets||0}</b><br>
     Earned by clearing areas (Area 1 clear = 1 ticket, Area 2 = 2, etc).</div>
+    <div class="summon-section-grid">
+      <div class="summon-section-card" style="border-color:#ff6a2b;" onclick="openSummoningSection('cards')">
+        <div class="ssc-icon">&#127183;</div>
+        <div class="ssc-title" style="color:#ff6a2b;">CARDS</div>
+      </div>
+      <div class="summon-section-card" style="border-color:var(--purple);" onclick="openSummoningSection('armor')">
+        <div class="ssc-icon">&#128737;&#65039;</div>
+        <div class="ssc-title" style="color:var(--purple);">ARMOR</div>
+      </div>
+      <div class="summon-section-card" style="border-color:var(--cyan);" onclick="openSummoningSection('towers')">
+        <div class="ssc-icon">&#128126;</div>
+        <div class="ssc-title" style="color:var(--cyan);">TOWERS</div>
+      </div>
+    </div>`;
+  document.getElementById("summoning-content").innerHTML=body;
+}
+
+function summonBackButton(){
+  return `<button class="summon-back-btn" onclick="renderSummoningHub()">&#8592; BACK</button>`;
+}
+
+function openSummoningSection(section){
+  summonSection=section;
+  if(section==="cards") renderCardsSection();
+  else if(section==="armor") renderArmorSection();
+  else if(section==="towers") renderTowersSection();
+}
+window.openSummoningSection=openSummoningSection;
+
+function renderCardsSection(){
+  const body=`
+    ${summonBackButton()}
+    <div style="height:8px;"></div>
     ${CRATES.map((c,i)=>`
       <div style="border:2px solid #ff6a2b55;border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;overflow-wrap:break-word;">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
@@ -2660,19 +3049,48 @@ function openSummoning(){
           ${RARITY_ORDER.map(r=>`<div>${r==="godly"?"GODLY":r.toUpperCase()}: ${r==="godly"?"???":(c.odds[r]||0)+"%"}</div>`).join("")}
         </div>
       </div>`).join("")}
-    <div style="margin-top:10px;font-family:Arial;font-size:.8rem;color:#888;text-align:left;overflow-wrap:break-word;">Crafting: fuse two of the same level+type card into one higher level (cannot craft Godly cards). Cards you own are listed below - tap a pair to fuse.</div>
-    <div id="crafting-inventory" style="margin-top:10px;text-align:left;font-family:Arial;font-size:.78rem;overflow-wrap:break-word;"></div>
     <button style="width:100%;margin-top:10px;border-color:#ff00ff;color:#ff00ff;" onclick="spinSecretTurret()">SECRET TURRET SPIN (0.1% chance) \u2014 25 tickets</button>`;
   document.getElementById("summoning-content").innerHTML=body;
-  document.getElementById("summoning-overlay").style.display="flex";
-  renderCraftingInventory();
 }
-window.openSummoning=openSummoning;
 
-function closeSummoning(){
-  document.getElementById("summoning-overlay").style.display="none";
+function renderArmorSection(){
+  const body=`
+    ${summonBackButton()}
+    <div style="height:8px;"></div>
+    ${ARMOR_CRATES.map((c,i)=>`
+      <div style="border:2px solid var(--purple);border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;overflow-wrap:break-word;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+          <span style="flex:1 1 140px;min-width:0;"><b style="color:var(--purple);">${c.name}</b> \u2014 ${c.cost} tickets</span>
+          <button class="crate-odds-toggle" style="flex:0 0 auto;" onclick="toggleArmorCrateOdds(${i},event)">ODDS &#9662;</button>
+          <button style="flex:0 0 auto;padding:.4em 1em;font-size:.8rem;min-height:32px;" onclick="doOpenArmorCrate(${i})">OPEN</button>
+        </div>
+        <div class="crate-odds-popup" id="armor-crate-odds-${i}">
+          ${RARITY_ORDER.map(r=>`<div>${r==="godly"?"GODLY":r.toUpperCase()}: ${r==="godly"?"???":(c.odds[r]||0)+"%"}</div>`).join("")}
+        </div>
+      </div>`).join("")}
+    <div style="font-family:Arial;font-size:.78rem;color:#888;">Fusing duplicate armor into higher levels happens in CRAFTING, back in the lobby.</div>`;
+  document.getElementById("summoning-content").innerHTML=body;
 }
-window.closeSummoning=closeSummoning;
+
+function renderTowersSection(){
+  const remaining=SUMMON_TOWER_IDS.filter(id=>!(metaData.ownedSummonTowers||[]).includes(id));
+  const body=`
+    ${summonBackButton()}
+    <div style="height:8px;"></div>
+    <div style="font-family:Arial;color:#ccc;margin-bottom:14px;text-align:left;">Summon a random tower from the pool below for ${TOWER_CRATE.cost} tickets. These towers cannot be fused or leveled through summoning - only 1 of each exists.</div>
+    <div style="text-align:left;margin-bottom:14px;">
+      ${SUMMON_TOWER_IDS.map(id=>{
+        const stat=TOWER_STATS[id];
+        const owned=(metaData.ownedSummonTowers||[]).includes(id);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #222;gap:10px;">
+          <span style="color:${owned?stat.color:'#666'};">${owned?stat.name:'???'}</span>
+          <span style="color:${owned?'var(--green)':'#888'};font-size:.75rem;">${owned?'OWNED':'LOCKED'}</span>
+        </div>`;
+      }).join("")}
+    </div>
+    <button style="width:100%;" onclick="doSummonTower()" ${remaining.length===0?"disabled":""}>${remaining.length===0?"ALL TOWERS OWNED":"SUMMON TOWER ("+TOWER_CRATE.cost+" tickets)"}</button>`;
+  document.getElementById("summoning-content").innerHTML=body;
+}
 
 function toggleCrateOdds(i,evt){
   if(evt) evt.stopPropagation();
@@ -2680,32 +3098,25 @@ function toggleCrateOdds(i,evt){
   if(el) el.style.display=(el.style.display==="block")?"none":"block";
 }
 window.toggleCrateOdds=toggleCrateOdds;
-
-function renderCraftingInventory(){
-  const el=document.getElementById("crafting-inventory");
-  if(!el) return;
-  const pu=metaData.powerups||{};
-  const rows=Object.keys(pu).filter(k=>pu[k]>0).map(k=>{
-    const [id,lvl]=k.split("_");
-    const def=POWERUP_DEFS.find(p=>p.id===id);
-    if(!def) return "";
-    const canFuse=pu[k]>=2 && def.rarity!=="godly" && parseInt(lvl,10)<3;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #222;gap:10px;">
-      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${lvl} X${pu[k]}<br><span style="color:#999;font-size:.72rem;">${powerupDescForLevel(def,lvl)}</span></span>
-      ${canFuse?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" onclick="doCraft('${id}',${lvl})">FUSE</button>`:""}
-    </div>`;
-  }).join("");
-  el.innerHTML=rows||`<div style="color:#666;">No cards yet - open a crate!</div>`;
+function toggleArmorCrateOdds(i,evt){
+  if(evt) evt.stopPropagation();
+  const el=document.getElementById("armor-crate-odds-"+i);
+  if(el) el.style.display=(el.style.display==="block")?"none":"block";
 }
-window.renderCraftingInventory=renderCraftingInventory;
+window.toggleArmorCrateOdds=toggleArmorCrateOdds;
 
-function doCraft(id,level){
-  const res=craftCards(id,level);
-  playSound(res.success?"upgrade":"denied");
-  showAlertModal(res.message);
-  renderCraftingInventory();
+function summonReturnFooter(backFn){
+  // Manual return control shown after a reveal. Auto-return only fires
+  // if the player has enabled it in Settings; otherwise this button
+  // (and only this button) sends them back.
+  const auto=!!(metaData.settings && metaData.settings.autoReturnSummon);
+  if(auto){
+    setTimeout(()=>{ if(document.getElementById("summoning-overlay").style.display!=="none") backFn(); },1700);
+    return `<div style="margin-top:10px;font-family:Arial;font-size:.75rem;color:#888;">Auto-returning...</div>`;
+  }
+  window.__summonReturnFn=backFn;
+  return `<button style="width:100%;margin-top:14px;" onclick="window.__summonReturnFn && window.__summonReturnFn()">RETURN</button>`;
 }
-window.doCraft=doCraft;
 
 function doOpenCrateBulk(idx,count){
   const crate=CRATES[idx];
@@ -2715,26 +3126,25 @@ function doOpenCrateBulk(idx,count){
     showAlertModal("Not enough Summoning Tickets.");
     return;
   }
-
   if(count===1){
     const res=openCrate(idx);
     if(!res.success){ playSound("denied"); showAlertModal(res.message||"Could not open crate."); return; }
+    metaData.stats.cratesOpened=(metaData.stats.cratesOpened||0)+1;
+    questNotifyProgress("crate",1);
     playSound("crateSpin");
     showCrateWheel(res);
     return;
   }
-
   const results=[];
   for(let i=0;i<count;i++){
     if((metaData.summonTickets||0)<crate.cost) break;
     const res=openCrate(idx);
     if(!res.success) break;
+    metaData.stats.cratesOpened=(metaData.stats.cratesOpened||0)+1;
+    questNotifyProgress("crate",1);
     results.push(res);
   }
   playSound("crateSpin");
-
-  // Tally duplicate wins (common when opening x10) into one card each,
-  // tracking the highest rarity actually pulled for the sting/sfx choice.
   const tally={};
   let bestRarity="common";
   for(const r of results){
@@ -2744,7 +3154,6 @@ function doOpenCrateBulk(idx,count){
     if(RARITY_ORDER.indexOf(r.rarity)>RARITY_ORDER.indexOf(bestRarity)) bestRarity=r.rarity;
   }
   const items=Object.values(tally);
-
   setTimeout(()=>{
     const rarSfx = bestRarity==="godly" ? "winGodly" : (RARITY_ORDER.indexOf(bestRarity)>=3 ? "winRare" : "winCommon");
     playSound(rarSfx);
@@ -2759,26 +3168,17 @@ function doOpenCrateBulk(idx,count){
             ${it.count>1?` x${it.count}`:""}
             <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(it.def,1)}</div>
           </div>`).join("")}
-        <div style="margin-top:10px;font-family:Arial;font-size:.75rem;color:#888;">Returning to Summoning...</div>
+        ${summonReturnFooter(renderCardsSection)}
       </div>`;
     updateMenuUI();
-    // Auto-close the reveal and reload the (now-refreshed) Summoning screen
-    // without needing an OK button - the ticket count/inventory update live.
-    setTimeout(()=>{ if(document.getElementById("summoning-overlay").style.display!=="none") openSummoning(); },1500+items.length*250);
   },350);
 }
 window.doOpenCrateBulk=doOpenCrateBulk;
 
-// Spinning roulette wheel for single-crate opens: a colored wheel spins
-// several full turns and eases to a stop with the pointer landing on
-// the rarity that was already rolled by openCrate() - the spin is a
-// reveal animation, not a second random draw. Once it settles, morphs
-// into the reward card and auto-returns to a refreshed Summoning screen.
 function showCrateWheel(res){
   const segAngle=360/RARITY_ORDER.length;
   const idx=Math.max(0,RARITY_ORDER.indexOf(res.rarity));
   const gradientStops=RARITY_ORDER.map((r,i)=>`${RARITY_COLOR[r]} ${i*segAngle}deg ${(i+1)*segAngle}deg`).join(",");
-
   const content=document.getElementById("summoning-content");
   content.innerHTML=`
     <div class="crate-reveal">
@@ -2792,14 +3192,12 @@ function showCrateWheel(res){
         ${RARITY_ORDER.map(r=>`<span style="color:${RARITY_COLOR[r]}">&#9679; ${r==="godly"?"???":r}</span>`).join(" &nbsp; ")}
       </div>
     </div>`;
-
   const disc=document.getElementById("crate-wheel-disc");
   const extraSpins=5;
   const finalRotation=extraSpins*360+((360-(idx*segAngle+segAngle/2))%360);
   disc.style.transform="rotate(0deg)";
-  void disc.offsetWidth; // force layout so the browser registers the 0deg start before we animate
+  void disc.offsetWidth;
   requestAnimationFrame(()=>{ disc.style.transform=`rotate(${finalRotation}deg)`; });
-
   const onDone=()=>{
     disc.removeEventListener("transitionend",onDone);
     const rarSfx = res.rarity==="godly" ? "winGodly" : (idx>=3 ? "winRare" : "winCommon");
@@ -2813,14 +3211,53 @@ function showCrateWheel(res){
           <span style="color:${RARITY_COLOR[res.rarity]};font-size:.75rem;">${res.rarity==="godly"?"???":res.rarity.toUpperCase()}</span>
           <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(res.won,1)}</div>
         </div>
-        <div style="margin-top:10px;font-family:Arial;font-size:.75rem;color:#888;">Returning to Summoning...</div>
+        ${summonReturnFooter(renderCardsSection)}
       </div>`;
     updateMenuUI();
-    setTimeout(()=>{ if(document.getElementById("summoning-overlay").style.display!=="none") openSummoning(); },1600);
   };
   disc.addEventListener("transitionend",onDone);
 }
 window.showCrateWheel=showCrateWheel;
+
+function doOpenArmorCrate(idx){
+  const crate=ARMOR_CRATES[idx];
+  if(!crate) return;
+  const res=openArmorCrate(idx);
+  if(!res.success){ playSound("denied"); showAlertModal(res.message||"Could not open crate."); return; }
+  playSound(res.rarity==="godly"?"winGodly":(RARITY_ORDER.indexOf(res.rarity)>=3?"winRare":"winCommon"));
+  const content=document.getElementById("summoning-content");
+  content.innerHTML=`
+    <div class="crate-reveal">
+      <div class="crate-reveal-title">ARMOR CRATE OPENED</div>
+      <div class="crate-reveal-item" style="--rc:${RARITY_COLOR[res.rarity]}">
+        <b style="color:${RARITY_COLOR[res.rarity]}">${res.won.name}</b>
+        <span style="color:${RARITY_COLOR[res.rarity]};font-size:.75rem;">${res.rarity==="godly"?"???":res.rarity.toUpperCase()}</span>
+        <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${armorDescForLevel(res.won,1)}</div>
+      </div>
+      ${summonReturnFooter(renderArmorSection)}
+    </div>`;
+  updateMenuUI();
+}
+window.doOpenArmorCrate=doOpenArmorCrate;
+
+function doSummonTower(){
+  const res=summonTower();
+  if(!res.success){ playSound("denied"); showAlertModal(res.message||"Could not summon a tower."); return; }
+  const stat=TOWER_STATS[res.wonId];
+  playSound("winGodly");
+  const content=document.getElementById("summoning-content");
+  content.innerHTML=`
+    <div class="crate-reveal">
+      <div class="crate-reveal-title">TOWER SUMMONED</div>
+      <div class="crate-reveal-item" style="--rc:${stat.color}">
+        <b style="color:${stat.color}">${stat.name}</b>
+        <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${stat.desc}</div>
+      </div>
+      ${summonReturnFooter(renderTowersSection)}
+    </div>`;
+  updateMenuUI();
+}
+window.doSummonTower=doSummonTower;
 
 function spinSecretTurret(){
   if((metaData.summonTickets||0)<25){ playSound("denied"); showAlertModal("Not enough tickets (need 25)."); return; }
@@ -2840,6 +3277,381 @@ function spinSecretTurret(){
   },400);
 }
 window.spinSecretTurret=spinSecretTurret;
+
+// ---------------------------------------------------------------------
+// CRAFTING - separate from Summoning. Uses Materials (dropped from
+// kills) to fuse card/armor levels and to craft crate openings without
+// spending Summoning Tickets.
+// ---------------------------------------------------------------------
+let craftTab="cards";
+const CARD_FUSE_MATERIAL_COST={1:{common:5},2:{uncommon:5,rare:2}};
+const ARMOR_FUSE_MATERIAL_COST={1:{common:6},2:{uncommon:6,rare:3}};
+const CRATE_MATERIAL_COST={0:{common:15},1:{uncommon:10,rare:5},2:{rare:10,epic:5}};
+const ARMOR_CRATE_MATERIAL_COST={0:{common:18},1:{uncommon:12,rare:6},2:{rare:12,epic:6}};
+
+function hasMaterials(cost){
+  const mats=metaData.materials||{};
+  return Object.keys(cost).every(m=>(mats[m]||0)>=cost[m]);
+}
+function spendMaterials(cost){
+  metaData.materials=metaData.materials||{};
+  Object.keys(cost).forEach(m=>{ metaData.materials[m]=(metaData.materials[m]||0)-cost[m]; });
+}
+function materialCostText(cost){
+  return Object.keys(cost).map(m=>`${cost[m]} <span style="color:${MATERIAL_COLOR[m]}">${MATERIAL_NAME[m]}</span>`).join(" + ");
+}
+
+function openCrafting(){
+  craftTab="cards";
+  document.getElementById("crafting-overlay").style.display="flex";
+  renderCraftMaterialsLine();
+  setCraftTab("cards");
+}
+window.openCrafting=openCrafting;
+function closeCrafting(){
+  document.getElementById("crafting-overlay").style.display="none";
+  renderArmory();
+}
+window.closeCrafting=closeCrafting;
+
+function renderCraftMaterialsLine(){
+  const mats=metaData.materials||{};
+  document.getElementById("craft-materials-line").innerHTML="Materials: "+MATERIAL_TIERS.map(m=>`<span style="color:${MATERIAL_COLOR[m]}">${mats[m]||0} ${MATERIAL_NAME[m]}</span>`).join(" &middot; ");
+}
+
+function setCraftTab(tab){
+  craftTab=tab;
+  ["cards","crates","armor"].forEach(t=>{
+    const btn=document.getElementById("craft-tab-"+t);
+    if(btn) btn.classList.toggle("active",t===tab);
+  });
+  renderCraftMaterialsLine();
+  if(tab==="cards") renderCraftCardsTab();
+  else if(tab==="crates") renderCraftCratesTab();
+  else if(tab==="armor") renderCraftArmorTab();
+  playSound("click");
+}
+window.setCraftTab=setCraftTab;
+
+function renderCraftCardsTab(){
+  const pu=metaData.powerups||{};
+  const rows=Object.keys(pu).filter(k=>pu[k]>0).map(k=>{
+    const [id,lvl]=k.split("_");
+    const def=POWERUP_DEFS.find(p=>p.id===id);
+    if(!def) return "";
+    const level=parseInt(lvl,10);
+    const canFuseBase=pu[k]>=2 && def.rarity!=="godly" && level<3;
+    const cost=CARD_FUSE_MATERIAL_COST[level]||{};
+    const canAfford=hasMaterials(cost);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #222;gap:10px;flex-wrap:wrap;">
+      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${lvl} X${pu[k]}<br><span style="color:#999;font-size:.72rem;">${powerupDescForLevel(def,lvl)}</span>${canFuseBase?`<br><span style="color:#888;font-size:.7rem;">Cost: ${materialCostText(cost)}</span>`:""}</span>
+      ${canFuseBase?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" ${canAfford?"":"disabled"} onclick="doCraftCard('${id}',${lvl})">FUSE</button>`:""}
+    </div>`;
+  }).join("");
+  document.getElementById("crafting-content").innerHTML=rows||`<div style="color:#666;">No cards yet - summon some in Summoning &gt; Cards!</div>`;
+}
+function doCraftCard(id,level){
+  const cost=CARD_FUSE_MATERIAL_COST[level]||{};
+  if(!hasMaterials(cost)){ playSound("denied"); showAlertModal("Not enough materials."); return; }
+  spendMaterials(cost);
+  const res=craftCards(id,level);
+  playSound(res.success?"upgrade":"denied");
+  showAlertModal(res.message);
+  saveToStorage(metaData);
+  renderCraftMaterialsLine();
+  renderCraftCardsTab();
+}
+window.doCraftCard=doCraftCard;
+
+function renderCraftCratesTab(){
+  const rows=CRATES.map((c,i)=>{
+    const cost=CRATE_MATERIAL_COST[i]||{};
+    const canAfford=hasMaterials(cost);
+    return `<div style="border:2px solid #ff6a2b55;border-radius:10px;padding:12px;margin-bottom:10px;">
+      <b style="color:#ff6a2b;">${c.name}</b>
+      <div style="font-size:.75rem;color:#888;margin:4px 0;">Cost: ${materialCostText(cost)}</div>
+      <button style="width:100%;" ${canAfford?"":"disabled"} onclick="doCraftCrate(${i})">CRAFT &amp; OPEN</button>
+    </div>`;
+  }).join("");
+  document.getElementById("crafting-content").innerHTML=rows;
+}
+function doCraftCrate(idx){
+  const cost=CRATE_MATERIAL_COST[idx]||{};
+  if(!hasMaterials(cost)){ playSound("denied"); showAlertModal("Not enough materials."); return; }
+  spendMaterials(cost);
+  const rarity=rollRarity(CRATES[idx].odds);
+  const pool=POWERUP_DEFS.filter(p=>p.rarity===rarity);
+  const won=pool[Math.floor(Math.random()*pool.length)] || POWERUP_DEFS[0];
+  const key=won.id+"_1";
+  metaData.powerups=metaData.powerups||{};
+  metaData.powerups[key]=(metaData.powerups[key]||0)+1;
+  metaData.stats.cratesOpened=(metaData.stats.cratesOpened||0)+1;
+  questNotifyProgress("crate",1);
+  saveToStorage(metaData);
+  playSound(rarity==="godly"?"winGodly":(RARITY_ORDER.indexOf(rarity)>=3?"winRare":"winCommon"));
+  showAlertModal("Crafted a "+(rarity==="godly"?"???":rarity.toUpperCase())+" card: "+won.name+" - "+powerupDescForLevel(won,1));
+  renderCraftMaterialsLine();
+  renderCraftCratesTab();
+}
+window.doCraftCrate=doCraftCrate;
+
+function renderCraftArmorTab(){
+  const owned=Object.keys(metaData.armors||{}).filter(k=>metaData.armors[k]>0);
+  const fuseRows=owned.map(key=>{
+    const [id,lvl]=key.split("_");
+    const def=ARMOR_DEFS.find(a=>a.id===id);
+    if(!def) return "";
+    const level=parseInt(lvl,10);
+    const canFuseBase=metaData.armors[key]>=2 && def.rarity!=="godly" && level<3;
+    const cost=ARMOR_FUSE_MATERIAL_COST[level]||{};
+    const canAfford=hasMaterials(cost);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #222;gap:10px;flex-wrap:wrap;">
+      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${lvl} X${metaData.armors[key]}<br><span style="color:#999;font-size:.72rem;">${armorDescForLevel(def,lvl)}</span>${canFuseBase?`<br><span style="color:#888;font-size:.7rem;">Cost: ${materialCostText(cost)}</span>`:""}</span>
+      ${canFuseBase?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" ${canAfford?"":"disabled"} onclick="doCraftArmorFuse('${id}',${lvl})">FUSE</button>`:""}
+    </div>`;
+  }).join("");
+  const crateRows=ARMOR_CRATES.map((c,i)=>{
+    const cost=ARMOR_CRATE_MATERIAL_COST[i]||{};
+    const canAfford=hasMaterials(cost);
+    return `<div style="border:2px solid var(--purple);border-radius:10px;padding:12px;margin-bottom:10px;">
+      <b style="color:var(--purple);">${c.name}</b>
+      <div style="font-size:.75rem;color:#888;margin:4px 0;">Cost: ${materialCostText(cost)}</div>
+      <button style="width:100%;" ${canAfford?"":"disabled"} onclick="doCraftArmorCrate(${i})">CRAFT &amp; OPEN</button>
+    </div>`;
+  }).join("");
+  document.getElementById("crafting-content").innerHTML=
+    `<div style="color:#9fd8a0;font-size:.85rem;margin-bottom:8px;">Craft Armor Crates</div>${crateRows}
+     <div style="color:#9fd8a0;font-size:.85rem;margin:14px 0 8px;">Fuse Owned Armor</div>${fuseRows||'<div style="color:#666;">No armor yet - summon some in Summoning &gt; Armor!</div>'}`;
+}
+function doCraftArmorFuse(id,level){
+  const cost=ARMOR_FUSE_MATERIAL_COST[level]||{};
+  if(!hasMaterials(cost)){ playSound("denied"); showAlertModal("Not enough materials."); return; }
+  spendMaterials(cost);
+  const res=craftArmor(id,level);
+  playSound(res.success?"upgrade":"denied");
+  showAlertModal(res.message);
+  saveToStorage(metaData);
+  renderCraftMaterialsLine();
+  renderCraftArmorTab();
+}
+window.doCraftArmorFuse=doCraftArmorFuse;
+function doCraftArmorCrate(idx){
+  const cost=ARMOR_CRATE_MATERIAL_COST[idx]||{};
+  if(!hasMaterials(cost)){ playSound("denied"); showAlertModal("Not enough materials."); return; }
+  spendMaterials(cost);
+  const rarity=rollRarity(ARMOR_CRATES[idx].odds);
+  const pool=ARMOR_DEFS.filter(a=>a.rarity===rarity);
+  const won=pool[Math.floor(Math.random()*pool.length)] || ARMOR_DEFS[0];
+  const key=won.id+"_1";
+  metaData.armors=metaData.armors||{};
+  metaData.armors[key]=(metaData.armors[key]||0)+1;
+  metaData.stats.armorCratesOpened=(metaData.stats.armorCratesOpened||0)+1;
+  saveToStorage(metaData);
+  playSound(rarity==="godly"?"winGodly":(RARITY_ORDER.indexOf(rarity)>=3?"winRare":"winCommon"));
+  showAlertModal("Crafted a "+(rarity==="godly"?"???":rarity.toUpperCase())+" armor: "+won.name+" - "+armorDescForLevel(won,1));
+  renderCraftMaterialsLine();
+  renderCraftArmorTab();
+}
+window.doCraftArmorCrate=doCraftArmorCrate;
+
+// ---------------------------------------------------------------------
+// ACHIEVEMENTS - 50 total across 7 categories, harder tiers pay more.
+// ---------------------------------------------------------------------
+function buildAchievementCategory(key,label,targets,rewardFn,statFn,icon){
+  return targets.map((target,i)=>({
+    id:key+"_"+i,
+    label,
+    icon,
+    desc:label+" "+target,
+    target,
+    reward:rewardFn(target,i),
+    statFn
+  }));
+}
+const ACHIEVEMENTS=[
+  ...buildAchievementCategory("wave","Reach Wave",[5,10,15,20,25,30,40,50,60,80],
+    (t)=>({biomass:t*10}), ()=>metaData.bestWave||0, "&#9889;"),
+  ...buildAchievementCategory("kills","Harvest",[50,150,300,600,1000,2000,3500,5500,8000,12000],
+    (t)=>({biomass:Math.round(t*0.6)}), ()=>(metaData.stats&&metaData.stats.totalKills)||0, "&#128126;"),
+  ...buildAchievementCategory("areas","Clear",[1,2,3,4,5,6,7,8,9,10],
+    (t)=>({tickets:t*2}), ()=>metaData.areasEverCleared||0, "&#127758;"),
+  ...buildAchievementCategory("crates","Open",[1,5,15,30,60],
+    (t)=>({biomass:t*15}), ()=>((metaData.stats&&metaData.stats.cratesOpened)||0)+((metaData.stats&&metaData.stats.armorCratesOpened)||0)+((metaData.stats&&metaData.stats.towerCratesOpened)||0), "&#127183;"),
+  ...buildAchievementCategory("bosses","Defeat",[1,3,6,10,15],
+    (t)=>({tickets:t*3}), ()=>(metaData.stats&&metaData.stats.bossesKilled)||0, "&#128128;"),
+  ...buildAchievementCategory("towers","Own",[3,6,10,15,20],
+    (t)=>({biomass:t*25}), ()=>(metaData.ownedTowers||[]).length, "&#127981;"),
+  ...buildAchievementCategory("materials","Collect",[10,50,150,400,1000],
+    (t)=>({biomass:Math.round(t*1.2)}), ()=>(metaData.stats&&metaData.stats.materialsCollectedTotal)||0, "&#128142;")
+];
+// Category-specific desc suffixes for readability.
+const ACH_SUFFIX={wave:"waves reached","kills":"aliens harvested",areas:"areas cleared",crates:"crates opened",bosses:"bosses defeated",towers:"towers owned",materials:"materials collected"};
+ACHIEVEMENTS.forEach(a=>{
+  const cat=a.id.split("_")[0];
+  a.desc=a.label+" "+a.target+" ("+ACH_SUFFIX[cat]+")";
+});
+
+function openAchievements(){
+  document.getElementById("main-menu").style.display="none";
+  document.getElementById("achievements-screen").style.display="flex";
+  renderAchievements();
+}
+window.openAchievements=openAchievements;
+function closeAchievements(){
+  document.getElementById("achievements-screen").style.display="none";
+  document.getElementById("main-menu").style.display="flex";
+}
+window.closeAchievements=closeAchievements;
+
+function rewardText(reward){
+  const parts=[];
+  if(reward.biomass) parts.push(`<span style="color:var(--gold)">${reward.biomass} Biomass</span>`);
+  if(reward.tickets) parts.push(`<span style="color:#ff6a2b">${reward.tickets} Summoning Tickets</span>`);
+  return parts.join(" + ");
+}
+
+function renderAchievements(){
+  const claimed=metaData.achievementsClaimed||[];
+  let doneCount=0;
+  const html=ACHIEVEMENTS.map(a=>{
+    const progress=a.statFn();
+    const complete=progress>=a.target;
+    const isClaimed=claimed.includes(a.id);
+    if(complete) doneCount++;
+    const pct=Math.min(100,Math.round((progress/a.target)*100));
+    return `<div class="ach-card${isClaimed?' done':''}">
+      <div class="ach-title">${a.icon} ${a.desc}</div>
+      <div class="ach-progress-bar"><div class="ach-progress-fill" style="width:${pct}%;"></div></div>
+      <div style="font-family:Arial;font-size:.72rem;color:#999;margin-top:4px;">${Math.min(progress,a.target)} / ${a.target}</div>
+      <div class="ach-reward">Reward: ${rewardText(a.reward)}</div>
+      ${isClaimed?'<div style="color:var(--green);font-size:.78rem;margin-top:6px;">&#10003; CLAIMED</div>':
+        (complete?`<button style="margin-top:8px;padding:.4em .9em;font-size:.8rem;min-height:32px;" onclick="claimAchievement('${a.id}')">CLAIM</button>`:'')}
+    </div>`;
+  }).join("");
+  document.getElementById("ach-list").innerHTML=html;
+  document.getElementById("ach-progress").innerText=`${doneCount} / ${ACHIEVEMENTS.length} achievements unlocked`;
+}
+function claimAchievement(id){
+  const a=ACHIEVEMENTS.find(x=>x.id===id);
+  if(!a) return;
+  metaData.achievementsClaimed=metaData.achievementsClaimed||[];
+  if(metaData.achievementsClaimed.includes(id)) return;
+  if(a.statFn()<a.target){ playSound("denied"); return; }
+  metaData.achievementsClaimed.push(id);
+  if(a.reward.biomass) metaData.biomass=(metaData.biomass||0)+a.reward.biomass;
+  if(a.reward.tickets) metaData.summonTickets=(metaData.summonTickets||0)+a.reward.tickets;
+  saveToStorage(metaData);
+  playSound("winRare");
+  updateMenuUI();
+  renderAchievements();
+}
+window.claimAchievement=claimAchievement;
+
+// ---------------------------------------------------------------------
+// QUESTS - 3 easy daily quests + 1 hard weekly quest, fixed rewards.
+// ---------------------------------------------------------------------
+const DAILY_QUEST_POOL=[
+  {type:"kill",target:40,desc:"Kill 40 aliens",reward:{biomass:40}},
+  {type:"wave",target:5,desc:"Clear 5 waves in one run",reward:{biomass:50}},
+  {type:"build",target:5,desc:"Build 5 towers in one run",reward:{biomass:35}},
+  {type:"crate",target:1,desc:"Open 1 crate (any kind)",reward:{tickets:1}},
+  {type:"credits",target:300,desc:"Earn 300 credits from kills",reward:{biomass:45}},
+  {type:"boss",target:1,desc:"Defeat 1 boss",reward:{biomass:60}}
+];
+const WEEKLY_QUEST_POOL=[
+  {type:"wave",target:30,desc:"Reach wave 30 in a single run",reward:{biomass:300,tickets:5}},
+  {type:"kill",target:400,desc:"Kill 400 aliens this week",reward:{biomass:350,tickets:5}},
+  {type:"boss",target:3,desc:"Defeat 3 bosses this week",reward:{biomass:320,tickets:6}}
+];
+
+function todayKey(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function weekKey(){
+  const d=new Date();
+  const onejan=new Date(d.getFullYear(),0,1);
+  const week=Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);
+  return d.getFullYear()+"-W"+week;
+}
+function pickRandomDistinct(pool,count){
+  const copy=[...pool];
+  const picked=[];
+  for(let i=0;i<count && copy.length>0;i++){
+    const idx=Math.floor(Math.random()*copy.length);
+    picked.push(copy.splice(idx,1)[0]);
+  }
+  return picked;
+}
+function ensureQuestsFresh(){
+  const tKey=todayKey(), wKey=weekKey();
+  if(!metaData.quests) metaData.quests={};
+  if(metaData.quests.dayKey!==tKey){
+    metaData.quests.dayKey=tKey;
+    metaData.quests.daily=pickRandomDistinct(DAILY_QUEST_POOL,3).map(q=>({...q,progress:0,claimed:false}));
+  }
+  if(metaData.quests.weekKey!==wKey){
+    metaData.quests.weekKey=wKey;
+    metaData.quests.weekly=pickRandomDistinct(WEEKLY_QUEST_POOL,1).map(q=>({...q,progress:0,claimed:false}));
+  }
+  saveToStorage(metaData);
+}
+function questNotifyProgress(type,amount){
+  if(!metaData.quests) return;
+  const peakTypes=["wave"];
+  const isPeak=peakTypes.includes(type);
+  [metaData.quests.daily||[],metaData.quests.weekly||[]].forEach(list=>{
+    list.forEach(q=>{
+      if(q.type!==type || q.claimed) return;
+      q.progress=isPeak?Math.max(q.progress,amount):Math.min(q.target,q.progress+amount);
+    });
+  });
+  saveToStorage(metaData);
+}
+
+function openQuests(){
+  ensureQuestsFresh();
+  document.getElementById("main-menu").style.display="none";
+  document.getElementById("quests-screen").style.display="flex";
+  renderQuests();
+}
+window.openQuests=openQuests;
+function closeQuests(){
+  document.getElementById("quests-screen").style.display="none";
+  document.getElementById("main-menu").style.display="flex";
+}
+window.closeQuests=closeQuests;
+
+function questCardHtml(q,idx,kind){
+  const complete=q.progress>=q.target;
+  return `<div class="quest-card${q.claimed?' done':''}">
+    <div class="quest-title">${q.desc}</div>
+    <div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${Math.min(100,Math.round(q.progress/q.target*100))}%;"></div></div>
+    <div style="font-family:Arial;font-size:.72rem;color:#999;margin-top:4px;">${Math.min(q.progress,q.target)} / ${q.target}</div>
+    <div class="quest-reward">Reward: ${rewardText(q.reward)}</div>
+    ${q.claimed?'<div style="color:var(--green);font-size:.78rem;margin-top:6px;">&#10003; CLAIMED</div>':
+      (complete?`<button style="margin-top:8px;padding:.4em .9em;font-size:.8rem;min-height:32px;" onclick="claimQuest('${kind}',${idx})">CLAIM</button>`:'')}
+  </div>`;
+}
+function renderQuests(){
+  const daily=(metaData.quests&&metaData.quests.daily)||[];
+  const weekly=(metaData.quests&&metaData.quests.weekly)||[];
+  document.getElementById("daily-quest-list").innerHTML=daily.map((q,i)=>questCardHtml(q,i,"daily")).join("")||"<div style='color:#888;'>No daily quests.</div>";
+  document.getElementById("weekly-quest-list").innerHTML=weekly.map((q,i)=>questCardHtml(q,i,"weekly")).join("")||"<div style='color:#888;'>No weekly quest.</div>";
+}
+function claimQuest(kind,idx){
+  const list=kind==="daily"?metaData.quests.daily:metaData.quests.weekly;
+  const q=list[idx];
+  if(!q || q.claimed || q.progress<q.target) return;
+  q.claimed=true;
+  if(q.reward.biomass) metaData.biomass=(metaData.biomass||0)+q.reward.biomass;
+  if(q.reward.tickets) metaData.summonTickets=(metaData.summonTickets||0)+q.reward.tickets;
+  saveToStorage(metaData);
+  playSound("winRare");
+  updateMenuUI();
+  renderQuests();
+}
+window.claimQuest=claimQuest;
 
 // ---------------------------------------------------------------------
 // End Credits
@@ -3193,17 +4005,39 @@ function selectShopItem(type){
 }
 window.selectShopItem=selectShopItem;
 
+function getArmorBonuses(){
+  const bonus={dmg:0,range:0,fire:0};
+  (metaData.equippedArmor||[]).forEach(key=>{
+    const [id,lvl]=key.split("_");
+    const def=ARMOR_DEFS.find(a=>a.id===id);
+    if(!def) return;
+    const idx=Math.max(0,Math.min(def.values.length-1,(parseInt(lvl,10)||1)-1));
+    const v=def.values[idx];
+    if(id==="plate") bonus.dmg+=v;
+    else if(id==="visor") bonus.range+=v;
+    else if(id==="servo") bonus.fire+=v;
+  });
+  return bonus;
+}
 function buildTower(x,y,type){
   const s=TOWER_STATS[type];
   gold-=s.cost;
+  const ab=getArmorBonuses();
   const t={
-    x,y,type,name:s.name,range:s.range,damage:s.damage,fireRate:s.fireRate,color:s.color,
+    x,y,type,name:s.name,
+    range:s.range*(1+ab.range/100),
+    damage:s.damage*(1+ab.dmg/100),
+    fireRate:Math.max(1,Math.round(s.fireRate*(1-ab.fire/100))),
+    color:s.color,
     cooldown:0,level:1,dmgDealt:0,angle:0,stunTimer:0,target:null,
     oneTime:!!s.oneTime,used:false,isWall:!!s.isWall,wallHp:s.wallHp||0,wallMaxHp:s.wallHp||0,
     flossed:false,isFlossling:false,armored:godArmorOn
   };
   towers.push(t);
   if(type==="flosswall") flossWallPlaced=true;
+  metaData.stats=metaData.stats||{};
+  metaData.stats.towersBuilt=(metaData.stats.towersBuilt||0)+1;
+  questNotifyProgress("build",1);
   updateHUD();
   renderShopCards();
 }
@@ -3418,6 +4252,7 @@ function callNextWave(){
   enemiesLeft=5+(wave*3);
   spawnTimer=0;
   if(wave%10===0) spawnBoss(); else playSound("waveStart");
+  questNotifyProgress("wave",wave);
   updateHUD();
 }
 window.callNextWave=callNextWave;
@@ -3468,8 +4303,17 @@ function killEnemy(e){
   gold+=e.reward; killsThisGame++;
   enemies.splice(index,1);
   playSound("enemyDeath");
+  metaData.stats=metaData.stats||{};
+  metaData.stats.totalKills=(metaData.stats.totalKills||0)+1;
+  questNotifyProgress("kill",1);
+  questNotifyProgress("credits",e.reward);
   if(Math.random()<0.05){
     particles.push({goldDrop:true,x:e.x,y:e.y,collected:false,life:600,size:8});
+  }
+  if(Math.random()<0.08){
+    const mat=rollMaterialDrop();
+    grantMaterial(mat,1);
+    particles.push({materialDrop:true,mat,x:e.x,y:e.y,life:600,size:8});
   }
   const parentBase=ENEMY_TYPES[e.type];
   if(parentBase && parentBase.splitsInto){
@@ -3491,6 +4335,8 @@ function killEnemy(e){
   updateHUD();
   if(e.isBoss){
     playSound("bossDown");
+    metaData.stats.bossesKilled=(metaData.stats.bossesKilled||0)+1;
+    questNotifyProgress("boss",1);
     if(e.isFinalBoss) endGame("VICTORY");
   }
 }
@@ -4038,6 +4884,12 @@ function draw(){
     if(p.goldDrop){
       ctx.save(); ctx.translate(p.x,p.y+Math.sin(performance.now()/200)*3);
       ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(0,0,p.size,0,Math.PI*2); ctx.fill();
+      ctx.restore(); continue;
+    }
+    if(p.materialDrop){
+      ctx.save(); ctx.translate(p.x,p.y+Math.sin(performance.now()/220)*3);
+      ctx.fillStyle=MATERIAL_COLOR[p.mat]||"#9fd8a0";
+      ctx.beginPath(); ctx.moveTo(0,-p.size); ctx.lineTo(p.size,0); ctx.lineTo(0,p.size); ctx.lineTo(-p.size,0); ctx.closePath(); ctx.fill();
       ctx.restore(); continue;
     }
     ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
