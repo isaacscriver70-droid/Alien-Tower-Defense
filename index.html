@@ -573,7 +573,7 @@ canvas{
 .ui-modal-overlay{
   position:fixed;
   inset:0;
-  z-index:500;
+  z-index:2500;
   display:none;
   align-items:center;
   justify-content:center;
@@ -724,6 +724,70 @@ canvas{
   text-align:center;
 }
 .admin-box h2{ margin:0 0 16px 0; color:var(--red); letter-spacing:3px; font-size:1.3rem; text-shadow:0 0 12px var(--red); }
+.summoning-overlay{
+  position:fixed;
+  inset:0;
+  z-index:2000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.75);
+  backdrop-filter:blur(4px);
+  padding:20px;
+}
+.summoning-box{
+  width:620px;
+  max-width:94vw;
+  max-height:88vh;
+  overflow-y:auto;
+  padding:26px 28px;
+  background:linear-gradient(135deg,rgba(40,20,10,.95),rgba(0,0,0,.95));
+  border:2px solid #ff6a2b;
+  border-radius:16px;
+  box-shadow:0 0 40px rgba(255,106,43,.5);
+  text-align:center;
+}
+.summoning-box h2{
+  margin:0 0 16px 0;
+  color:#ff6a2b;
+  letter-spacing:3px;
+  font-size:1.4rem;
+  text-shadow:0 0 12px #ff6a2b;
+}
+.summoning-close-btn{
+  margin-top:16px;
+  border-color:#888!important;
+  color:#ccc!important;
+  box-shadow:none!important;
+}
+.crate-reveal{ text-align:center; padding:10px 0; }
+.crate-reveal-title{
+  font-size:1.3rem;
+  letter-spacing:2px;
+  color:#ffd700;
+  text-shadow:0 0 14px #ffd700;
+  margin-bottom:16px;
+  animation:crateRevealPopTitle .4s ease-out;
+}
+.crate-reveal-item{
+  border:2px solid var(--rc,#39ff14);
+  background:rgba(255,255,255,.04);
+  border-radius:10px;
+  padding:10px 14px;
+  margin:0 auto 10px;
+  max-width:420px;
+  box-shadow:0 0 18px color-mix(in srgb, var(--rc,#39ff14) 45%, transparent);
+  opacity:0;
+  animation:crateRevealPopItem .45s ease-out forwards;
+}
+@keyframes crateRevealPopTitle{
+  from{ transform:scale(.6); opacity:0; }
+  to{ transform:scale(1); opacity:1; }
+}
+@keyframes crateRevealPopItem{
+  from{ transform:scale(.7) translateY(10px); opacity:0; }
+  to{ transform:scale(1) translateY(0); opacity:1; }
+}
 #admin-code-input{
   width:100%; box-sizing:border-box; padding:12px; font-family:'Orbitron'; font-size:1.1rem; letter-spacing:4px;
   text-align:center; background:rgba(0,0,0,.6); border:2px solid var(--red); color:var(--green); border-radius:8px; margin-bottom:14px;
@@ -779,11 +843,11 @@ canvas{
 }
 #drop-rate-popup{
   display:none;
-  position:absolute;
-  bottom:110%;
-  left:50%;
-  transform:translateX(-50%);
+  position:fixed;
   width:260px;
+  max-width:90vw;
+  max-height:70vh;
+  overflow-y:auto;
   padding:12px;
   background:var(--panel);
   border:2px solid var(--gold);
@@ -824,6 +888,14 @@ canvas{
   </div>
 </div>
 
+<div class="summoning-overlay" id="summoning-overlay" onclick="if(event.target===this) closeSummoning();">
+  <div class="summoning-box">
+    <h2>SUMMONING</h2>
+    <div id="summoning-content"></div>
+    <button class="summoning-close-btn" onclick="closeSummoning()">CLOSE</button>
+  </div>
+</div>
+
 <div id="main-menu" class="screen">
   <h1>ALIEN TOWER DEFENSE</h1>
 
@@ -838,7 +910,16 @@ canvas{
 
   <div class="menu-actions">
     <div id="drop-rate-dropdown">
-      <button onclick="startGame()">Deploy Defenses</button>
+      <div style="display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="startGame()">Deploy Defenses</button>
+        <select id="mode-select" onchange="setDifficultyMode(this.value)" style="background:rgba(0,0,0,.5);color:var(--green);border:2px solid var(--green);border-radius:10px;padding:.6em 1em;font-family:'Orbitron';font-weight:bold;min-height:44px;">
+          <option value="easy">Easy</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+          <option value="extreme">EXTREME MODE</option>
+          <option value="expert">EXPERT MODE!</option>
+        </select>
+      </div>
       <button class="crate-odds-toggle" style="display:block;margin:6px auto 0;" onclick="toggleDropRatePopup(event)">Area drop rates &#9662;</button>
       <div id="drop-rate-popup"></div>
     </div>
@@ -872,20 +953,11 @@ canvas{
       <label for="lobby-theme-select">Lobby Theme</label>
       <select id="lobby-theme-select" onchange="updateSetting('lobbyTheme', this.value)"></select>
     </div>
-    <div class="settings-row">
-      <label for="flashy-slider">Flashy FX</label>
-      <input type="range" id="flashy-slider" min="0" max="100" value="100" oninput="updateSetting('flashyLevel', this.value)">
-      <span id="flashy-val">100</span>
-    </div>
-    <div class="settings-row">
-      <label for="mode-select">Difficulty</label>
-      <select id="mode-select" onchange="setDifficultyMode(this.value)">
-        <option value="easy">Easy</option>
-        <option value="normal" selected>Normal</option>
-        <option value="hard">Hard</option>
-        <option value="extreme">EXTREME MODE</option>
-        <option value="expert">EXPERT MODE!</option>
-      </select>
+    <div class="settings-row" style="justify-content:center;">
+      <label for="flashy-toggle" style="flex:none;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="flashy-toggle" checked onchange="updateSetting('flashyMode', this.checked)">
+        Flashy Mode (unchecked = retro Space Invaders art)
+      </label>
     </div>
   </div>
 
@@ -1609,7 +1681,7 @@ function apiPost(fn, body){
 }
 
 function defaultSettings(){
-  return { musicVolume:50, sfxVolume:60, muted:false, lobbyTheme:"menu", flashyLevel:100 };
+  return { musicVolume:50, sfxVolume:60, muted:false, lobbyTheme:"menu", flashyMode:true };
 }
 
 function defaultLocalState(){
@@ -1665,7 +1737,10 @@ function onDataLoaded(data){
   metaData=data || metaData;
   if(!metaData.settings) metaData.settings=defaultSettings();
   if(metaData.settings.lobbyTheme===undefined) metaData.settings.lobbyTheme="menu";
-  if(metaData.settings.flashyLevel===undefined) metaData.settings.flashyLevel=100;
+  if(metaData.settings.flashyMode===undefined){
+    // migrate old 0-100 flashyLevel saves: half or more counted as "on"
+    metaData.settings.flashyMode = (metaData.settings.flashyLevel===undefined) ? true : metaData.settings.flashyLevel>=50;
+  }
   if(metaData.summonTickets===undefined) metaData.summonTickets=0;
   if(metaData.powerups===undefined) metaData.powerups={};
   if(metaData.equippedPowerups===undefined) metaData.equippedPowerups=[];
@@ -1685,7 +1760,7 @@ function applySettingsToUI(){
   const musicSlider=document.getElementById("music-vol-slider");
   const sfxSlider=document.getElementById("sfx-vol-slider");
   const muteToggle=document.getElementById("mute-toggle");
-  const flashySlider=document.getElementById("flashy-slider");
+  const flashyToggle=document.getElementById("flashy-toggle");
   const lobbySelect=document.getElementById("lobby-theme-select");
   if(musicSlider){
     musicSlider.value=s.musicVolume;
@@ -1696,10 +1771,7 @@ function applySettingsToUI(){
     document.getElementById("sfx-vol-val").innerText=s.sfxVolume;
   }
   if(muteToggle) muteToggle.checked=!!s.muted;
-  if(flashySlider){
-    flashySlider.value=s.flashyLevel;
-    document.getElementById("flashy-val").innerText=s.flashyLevel;
-  }
+  if(flashyToggle) flashyToggle.checked=!!s.flashyMode;
   if(lobbySelect && lobbySelect.options.length===0){
     populateLobbyThemeSelect();
   }
@@ -1707,16 +1779,19 @@ function applySettingsToUI(){
   AudioEngine.setMusicVolume(s.musicVolume/100);
   AudioEngine.setSfxVolume(s.sfxVolume/100);
   AudioEngine.setMuted(!!s.muted);
-  applyFlashyLevel(s.flashyLevel);
+  applyFlashyMode(s.flashyMode);
 }
 
-// Flashy mode: scales down screen shake / particle counts / alien glow globally.
-// 100 = full flashy, 0 = minimal effects (accessibility / performance).
-let flashyLevel=100;
-function applyFlashyLevel(v){
-  flashyLevel=Math.max(0,Math.min(100,parseInt(v,10)||0));
+// Flashy mode is now an on/off switch (Settings panel). ON keeps the
+// detailed alien/turret art plus full glow/particle counts. OFF switches
+// rendering to a flat retro "Space Invaders" pixel-sprite style (see
+// drawAlienBodyRetro / drawTowerBarrelRetro) and dims the leftover
+// glow-scaling call sites that still use flashyMul() for particle counts.
+let flashyMode=true;
+function applyFlashyMode(v){
+  flashyMode=!!v;
 }
-function flashyMul(){ return flashyLevel/100; }
+function flashyMul(){ return flashyMode?1:0.35; }
 
 // Lobby background: recolor the menu/bestiary screens using an area's palette,
 // or a neutral green theme for the default menu / a custom slot.
@@ -1770,11 +1845,10 @@ function updateSetting(key,value){
     applyLobbyBackground(value);
     if(!isPlaying) AudioEngine.playMusic(value);
     playSound("click");
-  }else if(key==="flashyLevel"){
-    const v=Math.max(0,Math.min(100,parseInt(value,10)||0));
-    metaData.settings.flashyLevel=v;
-    document.getElementById("flashy-val").innerText=v;
-    applyFlashyLevel(v);
+  }else if(key==="flashyMode"){
+    metaData.settings.flashyMode=!!value;
+    applyFlashyMode(!!value);
+    playSound("click");
   }else{
     const v=Math.max(0,Math.min(100,parseInt(value,10)||0));
     metaData.settings[key]=v;
@@ -1910,6 +1984,144 @@ const towerImages={};
 for(const type in TOWER_STATS){ towerImages[type]=new Image(); }
 
 // ---------------------------------------------------------------------
+// Per-type turret barrel art. Called already-translated to the tower's
+// position and already-rotated to face its target (see the draw loop).
+// Every shape scales its glow via flashyMul() so the existing Flashy FX
+// slider (0-100, settings panel) makes them punchier or flatter.
+// ---------------------------------------------------------------------
+// Classic arcade player-cannon bitmap, reused for every tower type when
+// Flashy Mode is off - flat, uniform, retro, no per-type glow/detail.
+const CANNON_BITMAP=[
+  [0,0,0,1,0,0,0],
+  [0,0,1,1,1,0,0],
+  [0,0,1,1,1,0,0],
+  [1,1,1,1,1,1,1]
+];
+
+function drawTowerBarrel(t){
+  if(!flashyMode){ drawPixelSprite(CANNON_BITMAP,30,t.color); return; }
+  const c=t.color, fm=flashyMul(), now=performance.now();
+  function glow(amt){ ctx.shadowBlur=amt*fm; ctx.shadowColor=c; }
+  switch(t.type){
+    case "acid":
+      ctx.fillStyle=c; ctx.fillRect(0,-6,18,4); ctx.fillRect(0,2,18,4);
+      glow(8); ctx.beginPath(); ctx.arc(18,-4,2.5,0,Math.PI*2); ctx.arc(18,4,2.5,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      break;
+    case "super":
+      glow(18); ctx.fillStyle=c; ctx.beginPath(); ctx.arc(6,0,9,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle=c; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(6,0,13,now/300,now/300+4); ctx.stroke();
+      break;
+    case "freeze":
+      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(16,0); ctx.lineTo(6,-9); ctx.lineTo(-4,0); ctx.lineTo(6,9); ctx.closePath(); ctx.fill();
+      glow(10); ctx.strokeStyle=c; ctx.lineWidth=1.5;
+      for(let i=0;i<4;i++){ const a=i*Math.PI/2; ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(6+Math.cos(a)*11,Math.sin(a)*11); ctx.stroke(); }
+      ctx.shadowBlur=0;
+      break;
+    case "sniper":
+      ctx.fillStyle=c; ctx.fillRect(0,-2,32,4);
+      ctx.beginPath(); ctx.arc(12,0,4,0,Math.PI*2); ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle="#222"; ctx.fillRect(2,-6,6,3); ctx.fillRect(2,3,6,3);
+      break;
+    case "tesla":
+      ctx.strokeStyle=c; ctx.lineWidth=2; glow(12);
+      for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(4+i*4,0,4-i*0.7,0,Math.PI*2); ctx.stroke(); }
+      ctx.shadowBlur=0;
+      break;
+    case "missile":
+      ctx.fillStyle="#333"; ctx.fillRect(-2,-9,12,18);
+      ctx.fillStyle=c; ctx.beginPath(); ctx.arc(4,-9,3,0,Math.PI*2); ctx.arc(4,9,3,0,Math.PI*2); ctx.fill();
+      break;
+    case "railgun":
+      ctx.strokeStyle=c; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(28,-6); ctx.moveTo(0,6); ctx.lineTo(28,6); ctx.stroke();
+      if(Math.random()<0.5*fm){ ctx.strokeStyle="#fff"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(10,-6); ctx.lineTo(14,6); ctx.lineTo(20,-4); ctx.stroke(); }
+      break;
+    case "flame":
+      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(-4,-8); ctx.lineTo(16,0); ctx.lineTo(-4,8); ctx.closePath();
+      glow(10); ctx.fill(); ctx.shadowBlur=0;
+      break;
+    case "vortex":
+      ctx.strokeStyle=c; ctx.lineWidth=1.5;
+      for(let r=0;r<3;r++){ ctx.globalAlpha=0.7-r*0.2; ctx.beginPath(); ctx.arc(0,0,5+r*4,now/200+r,now/200+r+4); ctx.stroke(); }
+      ctx.globalAlpha=1;
+      break;
+    case "poison":
+      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(-3,-8); ctx.lineTo(10,-3); ctx.lineTo(10,3); ctx.lineTo(-3,8); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(10,0,3,0,Math.PI*2); ctx.fill();
+      break;
+    case "emp":
+      ctx.strokeStyle=c; ctx.lineWidth=2; glow(10);
+      for(let r=0;r<2;r++){ ctx.beginPath(); ctx.arc(0,0,6+r*6,0,Math.PI*2); ctx.globalAlpha=0.7-r*0.3; ctx.stroke(); }
+      ctx.globalAlpha=1; ctx.shadowBlur=0; ctx.fillStyle=c; ctx.fillRect(-3,-3,6,6);
+      break;
+    case "hijack":
+      ctx.fillStyle=c; ctx.beginPath(); ctx.ellipse(2,0,11,7,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(2,0,3.5,0,Math.PI*2); ctx.fillStyle="#000"; ctx.fill();
+      break;
+    case "blackhole":
+      glow(14);
+      for(let r=0;r<3;r++){ ctx.beginPath(); ctx.arc(0,0,5+r*4.5,0,Math.PI*2); ctx.strokeStyle=c; ctx.lineWidth=2; ctx.globalAlpha=0.55-r*0.15; ctx.stroke(); }
+      ctx.globalAlpha=1; ctx.shadowBlur=0; ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fillStyle="#000"; ctx.fill();
+      break;
+    case "hacktower":
+      ctx.fillStyle=c; ctx.fillRect(-6,-6,16,12);
+      ctx.fillStyle="#000";
+      for(let i=0;i<2;i++) for(let j=0;j<2;j++) ctx.fillRect(-4+i*8,-4+j*8,3,3);
+      break;
+    case "magmacannon":
+      ctx.fillStyle="#332015"; ctx.fillRect(0,-7,22,14);
+      glow(12); ctx.fillStyle=c; ctx.beginPath(); ctx.arc(22,0,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      break;
+    case "frostlance":
+      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(30,0); ctx.lineTo(6,-4); ctx.lineTo(6,4); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha=0.5; ctx.fillRect(-2,-2,10,4); ctx.globalAlpha=1;
+      break;
+    case "sandreaper":
+      ctx.strokeStyle=c; ctx.lineWidth=2.5;
+      for(let i=0;i<3;i++){ const a=now/100+i*(Math.PI*2/3); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*14,Math.sin(a)*14); ctx.stroke(); }
+      break;
+    case "voidray":
+      glow(14); ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(22,0); ctx.lineTo(0,6); ctx.closePath(); ctx.fill(); ctx.shadowBlur=0;
+      break;
+    case "swampmaw":
+      ctx.fillStyle=c;
+      ctx.beginPath(); ctx.moveTo(-2,-9); ctx.lineTo(14,-2); ctx.lineTo(-2,0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-2,9); ctx.lineTo(14,2); ctx.lineTo(-2,0); ctx.closePath(); ctx.fill();
+      break;
+    case "neonblade":
+      ctx.strokeStyle=c; ctx.lineWidth=2; glow(10);
+      for(let i=0;i<4;i++){ const a=i*Math.PI/2+now/150; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*13,Math.sin(a)*13); ctx.stroke(); }
+      ctx.shadowBlur=0;
+      break;
+    case "phantomtrap":
+      ctx.strokeStyle=c; ctx.lineWidth=2; ctx.globalAlpha=0.7+0.3*Math.sin(now/200);
+      ctx.beginPath(); ctx.arc(6,0,10,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+      break;
+    case "krakenharpoon":
+      ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(30,0); ctx.lineTo(10,-6); ctx.lineTo(14,0); ctx.lineTo(10,6); ctx.closePath(); ctx.fill();
+      ctx.fillRect(-2,-3,12,6);
+      break;
+    case "hivespike":
+      ctx.fillStyle=c;
+      for(let i=0;i<3;i++){ const a=-0.5+i*0.5; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*16,Math.sin(a)*16-4); ctx.lineTo(Math.cos(a)*16,Math.sin(a)*16+4); ctx.closePath(); ctx.fill(); }
+      break;
+    case "omega":{
+      const pulse=(Math.sin(now/150)+1)/2;
+      ctx.beginPath(); ctx.arc(0,0,14+pulse*6,0,Math.PI*2);
+      ctx.strokeStyle=`hsl(${(now/8)%360},100%,65%)`; ctx.lineWidth=4;
+      glow(20); ctx.stroke(); ctx.shadowBlur=0;
+      break;}
+    case "secretop":
+      glow(16); ctx.fillStyle=c;
+      ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(10,0); ctx.lineTo(0,10); ctx.lineTo(-10,0); ctx.closePath(); ctx.fill();
+      ctx.shadowBlur=0;
+      break;
+    default:
+      ctx.fillStyle=c; ctx.fillRect(0,-4,20,8);
+  }
+}
+
+// ---------------------------------------------------------------------
 // ENEMIES
 // ---------------------------------------------------------------------
 const ENEMY_TYPES={
@@ -2004,18 +2216,26 @@ function getCurrentArea(){ return AREAS[getAreaIndex()]; }
 // POWERUPS
 // ---------------------------------------------------------------------
 const POWERUP_DEFS=[
-  {id:"dmg",     name:"Overcharge",      rarity:"common",    desc:"+X% tower damage"},
-  {id:"range",   name:"Long Sight",      rarity:"common",    desc:"+X% tower range"},
-  {id:"fire",    name:"Quickfire",       rarity:"uncommon",  desc:"+X% fire rate"},
-  {id:"gold",    name:"Prospector",      rarity:"uncommon",  desc:"+X% credits earned"},
-  {id:"lives",   name:"Reinforced Core", rarity:"rare",      desc:"+X core shields at start"},
-  {id:"splash",  name:"Wide Blast",      rarity:"rare",      desc:"+X% splash radius"},
-  {id:"crit",    name:"Weak Point",      rarity:"epic",      desc:"X% chance to deal double damage"},
-  {id:"cooldown",name:"Overclock",       rarity:"epic",      desc:"-X% tower cooldowns"},
-  {id:"biomass", name:"Harvester",       rarity:"legendary", desc:"+X% biomass from kills"},
-  {id:"revive",  name:"Second Wind",     rarity:"legendary", desc:"First revive each run is X% cheaper"},
-  {id:"godslayer",name:"GODSLAYER",      rarity:"godly",     desc:"+X% damage to bosses only"}
+  {id:"dmg",     name:"Overcharge",      rarity:"common",    desc:"+X% tower damage",              values:[10,20,35]},
+  {id:"range",   name:"Long Sight",      rarity:"common",    desc:"+X% tower range",               values:[10,20,35]},
+  {id:"fire",    name:"Quickfire",       rarity:"uncommon",  desc:"+X% fire rate",                 values:[8,16,28]},
+  {id:"gold",    name:"Prospector",      rarity:"uncommon",  desc:"+X% credits earned",             values:[10,20,35]},
+  {id:"lives",   name:"Reinforced Core", rarity:"rare",      desc:"+X core shields at start",       values:[1,2,4]},
+  {id:"splash",  name:"Wide Blast",      rarity:"rare",      desc:"+X% splash radius",              values:[15,30,50]},
+  {id:"crit",    name:"Weak Point",      rarity:"epic",      desc:"X% chance to deal double damage",values:[10,18,30]},
+  {id:"cooldown",name:"Overclock",       rarity:"epic",      desc:"-X% tower cooldowns",             values:[10,18,30]},
+  {id:"biomass", name:"Harvester",       rarity:"legendary", desc:"+X% biomass from kills",         values:[15,30,50]},
+  {id:"revive",  name:"Second Wind",     rarity:"legendary", desc:"First revive each run is X% cheaper", values:[20,35,55]},
+  {id:"godslayer",name:"GODSLAYER",      rarity:"godly",     desc:"+X% damage to bosses only",       values:[15,30,50]}
 ];
+// Godly cards have no craftable levels beyond 1, so their values array is
+// only ever read at index 0 - level clamps below still guard that safely.
+function powerupDescForLevel(def,level){
+  if(!def) return "";
+  const idx=Math.max(0,Math.min((def.values.length||1)-1,(parseInt(level,10)||1)-1));
+  const v=def.values[idx];
+  return def.desc.replace("X",v);
+}
 const RARITY_ORDER=["common","uncommon","rare","epic","legendary","godly"];
 const RARITY_COLOR={common:"#9fd8a0",uncommon:"#39ff14",rare:"#00f0ff",epic:"#b026ff",legendary:"#ffd700",godly:"#ff0055"};
 
@@ -2186,6 +2406,19 @@ function toggleDropRatePopup(evt){
     </div>`;
   }).join("");
   pop.style.display="block";
+  // Position as a fixed-viewport element anchored under the toggle button,
+  // then clamp both axes so it can never render off-screen regardless of
+  // where the button ends up sitting after menu-actions wraps its row.
+  const btnRect=evt.currentTarget.getBoundingClientRect();
+  const popW=pop.offsetWidth||260;
+  const popH=pop.offsetHeight||160;
+  let left=btnRect.left+btnRect.width/2-popW/2;
+  left=Math.max(8,Math.min(left,window.innerWidth-popW-8));
+  let top=btnRect.top-popH-10;
+  if(top<8) top=btnRect.bottom+10; // not enough room above - drop it below instead
+  top=Math.max(8,Math.min(top,window.innerHeight-popH-8));
+  pop.style.left=left+"px";
+  pop.style.top=top+"px";
   playSound("click");
 }
 window.toggleDropRatePopup=toggleDropRatePopup;
@@ -2312,27 +2545,32 @@ window.armoryBuySlot=armoryBuySlot;
 // ---------------------------------------------------------------------
 function openSummoning(){
   const body=`
-    <div style="max-width:520px;">
-      <div style="font-family:Arial;color:#ccc;margin-bottom:14px;">Summoning Tickets: <b style="color:var(--gold)">${metaData.summonTickets||0}</b><br>
-      Earned by clearing areas (Area 1 clear = 1 ticket, Area 2 = 2, etc).</div>
-      ${CRATES.map((c,i)=>`
-        <div style="border:2px solid #ff6a2b55;border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;">
-          <b style="color:#ff6a2b;">${c.name}</b> \u2014 ${c.cost} tickets
-          <button style="float:right;padding:.4em 1em;font-size:.8rem;min-height:32px;" onclick="doOpenCrate(${i})">OPEN</button>
-          <button class="crate-odds-toggle" style="float:right;margin-right:8px;" onclick="toggleCrateOdds(${i},event)">ODDS &#9662;</button>
-          <div style="clear:both;"></div>
-          <div class="crate-odds-popup" id="crate-odds-${i}">
-            ${RARITY_ORDER.map(r=>`<div>${r==="godly"?"GODLY":r.toUpperCase()}: ${r==="godly"?"???":(c.odds[r]||0)+"%"}</div>`).join("")}
-          </div>
-        </div>`).join("")}
-      <div style="margin-top:10px;font-family:Arial;font-size:.8rem;color:#888;">Crafting: fuse two of the same level+type card into one higher level (cannot craft Godly cards). Cards you own are listed below - tap a pair to fuse.</div>
-      <div id="crafting-inventory" style="margin-top:10px;text-align:left;font-family:Arial;font-size:.78rem;"></div>
-      <button style="width:100%;margin-top:10px;border-color:#ff00ff;color:#ff00ff;" onclick="spinSecretTurret()">SECRET TURRET SPIN (0.1% chance) \u2014 25 tickets</button>
-    </div>`;
-  showModal(body,[{label:"CLOSE",onClick:()=>{}}]);
+    <div style="font-family:Arial;color:#ccc;margin-bottom:14px;text-align:left;">Summoning Tickets: <b style="color:var(--gold)">${metaData.summonTickets||0}</b><br>
+    Earned by clearing areas (Area 1 clear = 1 ticket, Area 2 = 2, etc).</div>
+    ${CRATES.map((c,i)=>`
+      <div style="border:2px solid #ff6a2b55;border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;">
+        <b style="color:#ff6a2b;">${c.name}</b> \u2014 ${c.cost} tickets
+        <button class="crate-odds-toggle" style="float:right;margin-left:8px;" onclick="toggleCrateOdds(${i},event)">ODDS &#9662;</button>
+        <button style="float:right;padding:.4em .8em;font-size:.75rem;min-height:32px;" onclick="doOpenCrateBulk(${i},10)">OPEN x10 (${c.cost*10})</button>
+        <button style="float:right;padding:.4em 1em;font-size:.8rem;min-height:32px;margin-right:8px;" onclick="doOpenCrateBulk(${i},1)">OPEN</button>
+        <div style="clear:both;"></div>
+        <div class="crate-odds-popup" id="crate-odds-${i}">
+          ${RARITY_ORDER.map(r=>`<div>${r==="godly"?"GODLY":r.toUpperCase()}: ${r==="godly"?"???":(c.odds[r]||0)+"%"}</div>`).join("")}
+        </div>
+      </div>`).join("")}
+    <div style="margin-top:10px;font-family:Arial;font-size:.8rem;color:#888;text-align:left;">Crafting: fuse two of the same level+type card into one higher level (cannot craft Godly cards). Cards you own are listed below - tap a pair to fuse.</div>
+    <div id="crafting-inventory" style="margin-top:10px;text-align:left;font-family:Arial;font-size:.78rem;"></div>
+    <button style="width:100%;margin-top:10px;border-color:#ff00ff;color:#ff00ff;" onclick="spinSecretTurret()">SECRET TURRET SPIN (0.1% chance) \u2014 25 tickets</button>`;
+  document.getElementById("summoning-content").innerHTML=body;
+  document.getElementById("summoning-overlay").style.display="flex";
   renderCraftingInventory();
 }
 window.openSummoning=openSummoning;
+
+function closeSummoning(){
+  document.getElementById("summoning-overlay").style.display="none";
+}
+window.closeSummoning=closeSummoning;
 
 function toggleCrateOdds(i,evt){
   if(evt) evt.stopPropagation();
@@ -2350,9 +2588,9 @@ function renderCraftingInventory(){
     const def=POWERUP_DEFS.find(p=>p.id===id);
     if(!def) return "";
     const canFuse=pu[k]>=2 && def.rarity!=="godly" && parseInt(lvl,10)<3;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #222;">
-      <span style="color:${RARITY_COLOR[def.rarity]}">${def.name} Lvl ${lvl} X${pu[k]}</span>
-      ${canFuse?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;" onclick="doCraft('${id}',${lvl})">FUSE</button>`:""}
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #222;gap:10px;">
+      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${lvl} X${pu[k]}<br><span style="color:#999;font-size:.72rem;">${powerupDescForLevel(def,lvl)}</span></span>
+      ${canFuse?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" onclick="doCraft('${id}',${lvl})">FUSE</button>`:""}
     </div>`;
   }).join("");
   el.innerHTML=rows||`<div style="color:#666;">No cards yet - open a crate!</div>`;
@@ -2367,20 +2605,58 @@ function doCraft(id,level){
 }
 window.doCraft=doCraft;
 
-function doOpenCrate(idx){
-  const res=openCrate(idx);
-  if(!res.success){ playSound("denied"); showAlertModal(res.message); return; }
+function doOpenCrateBulk(idx,count){
+  const crate=CRATES[idx];
+  if(!crate) return;
+  if((metaData.summonTickets||0)<crate.cost){
+    playSound("denied");
+    showAlertModal("Not enough Summoning Tickets.");
+    return;
+  }
+  const results=[];
+  for(let i=0;i<count;i++){
+    if((metaData.summonTickets||0)<crate.cost) break;
+    const res=openCrate(idx);
+    if(!res.success) break;
+    results.push(res);
+  }
   playSound("crateSpin");
+
+  // Tally duplicate wins (common when opening x10) into one card each,
+  // tracking the highest rarity actually pulled for the sting/sfx choice.
+  const tally={};
+  let bestRarity="common";
+  for(const r of results){
+    if(!tally[r.won.id]) tally[r.won.id]={def:r.won,count:0,rarity:r.rarity};
+    tally[r.won.id].count++;
+    if(RARITY_ORDER.indexOf(r.rarity)>RARITY_ORDER.indexOf(tally[r.won.id].rarity)) tally[r.won.id].rarity=r.rarity;
+    if(RARITY_ORDER.indexOf(r.rarity)>RARITY_ORDER.indexOf(bestRarity)) bestRarity=r.rarity;
+  }
+  const items=Object.values(tally);
+
   setTimeout(()=>{
-    const rarSfx = res.rarity==="godly" ? "winGodly" : (RARITY_ORDER.indexOf(res.rarity)>=3 ? "winRare" : "winCommon");
+    const rarSfx = bestRarity==="godly" ? "winGodly" : (RARITY_ORDER.indexOf(bestRarity)>=3 ? "winRare" : "winCommon");
     playSound(rarSfx);
-    const rarityDisplay = res.rarity==="godly" ? "???" : res.rarity.toUpperCase();
-    showAlertModal(`You won: ${res.won.name}\nRarity: ${rarityDisplay}\n${res.won.desc}`);
+    const content=document.getElementById("summoning-content");
+    content.innerHTML=`
+      <div class="crate-reveal">
+        <div class="crate-reveal-title">${results.length>1?results.length+" CRATES OPENED":"CRATE OPENED"}</div>
+        ${items.map((it,i)=>`
+          <div class="crate-reveal-item" style="--rc:${RARITY_COLOR[it.rarity]};animation-delay:${i*0.12}s">
+            <b style="color:${RARITY_COLOR[it.rarity]}">${it.def.name}</b>
+            <span style="color:${RARITY_COLOR[it.rarity]};font-size:.75rem;">${it.rarity==="godly"?"???":it.rarity.toUpperCase()}</span>
+            ${it.count>1?` x${it.count}`:""}
+            <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(it.def,1)}</div>
+          </div>`).join("")}
+        <div style="margin-top:10px;font-family:Arial;font-size:.75rem;color:#888;">Returning to Summoning...</div>
+      </div>`;
     updateMenuUI();
-    renderCraftingInventory();
+    // Auto-close the reveal and reload the (now-refreshed) Summoning screen
+    // without needing an OK button - the ticket count/inventory update live.
+    setTimeout(()=>{ if(document.getElementById("summoning-overlay").style.display!=="none") openSummoning(); },1500+items.length*250);
   },350);
 }
-window.doOpenCrate=doOpenCrate;
+window.doOpenCrateBulk=doOpenCrateBulk;
 
 function spinSecretTurret(){
   if((metaData.summonTickets||0)<25){ playSound("denied"); showAlertModal("Not enough tickets (need 25)."); return; }
@@ -3104,7 +3380,67 @@ function getWallSegment(){ return 2; }
 // that changes based on the area/type, and flashiness that scales
 // with the Flashy FX setting.
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// ALIEN RENDERING - dispatches between the detailed "flashy" art (blob
+// body + limbs/antennae/eyes, scales with Flashy Mode ON) and a flat
+// retro Space-Invaders pixel-sprite look (Flashy Mode OFF). Health bar
+// is shared so it always shows regardless of style.
+// ---------------------------------------------------------------------
 function drawAlienBody(e){
+  if(flashyMode) drawAlienBodyFlashy(e); else drawAlienBodyRetro(e);
+  const s=e.size;
+  ctx.fillStyle="#555"; ctx.fillRect(e.x-s,e.y-s-14,s*2,5);
+  ctx.fillStyle="#39ff14"; ctx.fillRect(e.x-s,e.y-s-14,(s*2)*(Math.max(0,e.hp)/e.maxHp),5);
+}
+
+// Two-frame classic arcade "invader" bitmaps (marching leg animation)
+// plus a simpler tiny-variant bitmap, drawn as chunky square blocks.
+const INVADER_FRAME_A=[
+  [0,0,1,0,0,1,0,0],
+  [0,0,0,1,1,0,0,0],
+  [0,1,1,1,1,1,1,0],
+  [1,1,0,1,1,0,1,1],
+  [1,1,1,1,1,1,1,1],
+  [1,0,1,0,0,1,0,1],
+  [0,1,0,0,0,0,1,0]
+];
+const INVADER_FRAME_B=[
+  [0,0,1,0,0,1,0,0],
+  [1,0,0,1,1,0,0,1],
+  [1,1,1,1,1,1,1,1],
+  [1,1,0,1,1,0,1,1],
+  [0,1,1,1,1,1,1,0],
+  [0,0,1,0,0,1,0,0],
+  [0,1,0,0,0,0,1,0]
+];
+
+function drawPixelSprite(bitmap,size,color){
+  const rows=bitmap.length, cols=bitmap[0].length;
+  const px=size/cols;
+  ctx.fillStyle=color;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      if(bitmap[r][c]) ctx.fillRect((c-cols/2)*px,(r-rows/2)*px,px+0.6,px+0.6);
+    }
+  }
+}
+
+function drawAlienBodyRetro(e){
+  const s=e.size;
+  ctx.save();
+  ctx.translate(e.x,e.y);
+  if(e.cloaked) ctx.globalAlpha=0.25;
+  const bodyColor=e.slowTimer>0?"#5fd4ff":e.color;
+  const frame=Math.floor(performance.now()/300)%2===0?INVADER_FRAME_A:INVADER_FRAME_B;
+  drawPixelSprite(frame,s*2.3,bodyColor);
+  if(e.type==="boss"){
+    ctx.strokeStyle=bodyColor; ctx.lineWidth=2;
+    ctx.strokeRect(-s*1.3,-s*1.3,s*2.6,s*2.6);
+  }
+  ctx.restore();
+}
+
+function drawAlienBodyFlashy(e){
   const shape=(ENEMY_TYPES[e.type]&&ENEMY_TYPES[e.type].shape)||"blob";
   const s=e.size;
   const t=performance.now()/1000+ (e.bobSeed||0);
@@ -3199,10 +3535,6 @@ function drawAlienBody(e){
   }
 
   ctx.restore();
-
-  // Health bar
-  ctx.fillStyle="#555"; ctx.fillRect(e.x-s,e.y-s-14,s*2,5);
-  ctx.fillStyle="#39ff14"; ctx.fillRect(e.x-s,e.y-s-14,(s*2)*(Math.max(0,e.hp)/e.maxHp),5);
 }
 
 function draw(){
@@ -3254,7 +3586,7 @@ function draw(){
     if(t.target){ t.angle=Math.atan2(t.target.y-t.y,t.target.x-t.x); }
     if(t.stunTimer>0){ ctx.beginPath(); ctx.arc(t.x,t.y,28,0,Math.PI*2); ctx.strokeStyle="rgba(255,0,85,.9)"; ctx.lineWidth=3; ctx.stroke(); }
     ctx.save(); ctx.translate(t.x,t.y); ctx.rotate(t.angle||0);
-    ctx.fillStyle=t.color; ctx.fillRect(0,-4,20,8);
+    drawTowerBarrel(t);
     ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2); ctx.fillStyle="#000"; ctx.fill();
     ctx.restore();
   }
