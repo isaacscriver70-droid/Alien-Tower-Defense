@@ -127,7 +127,7 @@ button:disabled{opacity:.4;cursor:default;}
   position:relative;
   flex-shrink:0;
 }
-canvas{
+#gameCanvas{
   display:block;
   width:100%;
   height:100%;
@@ -663,7 +663,51 @@ canvas{
 .beast-stats{font-size:.78rem;color:#9fd8a0;margin-top:6px;line-height:1.6;}
 .beast-desc{font-size:.82rem;color:#cfe9cf;margin-top:6px;line-height:1.4;}
 .beast-area-tag{display:inline-block;margin-top:6px;font-size:.68rem;letter-spacing:1px;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.08);color:#cfe9cf;text-transform:uppercase;}
-.bestiary-area-group{margin-bottom:28px;}
+.bestiary-area-group{margin-bottom:28px;position:relative;}
+.area-fx-layer{
+  position:absolute; inset:-10px -10px auto -10px; height:calc(100% + 20px);
+  overflow:hidden; pointer-events:none; z-index:0; border-radius:14px;
+}
+.area-fx-particle{ position:absolute; font-size:1rem; opacity:0; will-change:transform,opacity; }
+@keyframes fxFall{ 0%{ transform:translateY(-20px); opacity:0; } 10%{ opacity:.9; } 90%{ opacity:.7; } 100%{ transform:translateY(340px); opacity:0; } }
+@keyframes fxRise{ 0%{ transform:translateY(20px); opacity:0; } 10%{ opacity:.8; } 90%{ opacity:.6; } 100%{ transform:translateY(-340px); opacity:0; } }
+@keyframes fxDrift{ 0%{ transform:translateX(-30px); opacity:0; } 10%{ opacity:.7; } 90%{ opacity:.7; } 100%{ transform:translateX(340px); opacity:0; } }
+@keyframes fxTwinkle{ 0%,100%{ opacity:.15; } 50%{ opacity:.9; } }
+.bestiary-roster-grid, .bestiary-area-label, .area-skin-toggle, .area-skin-grid{ position:relative; z-index:1; }
+.beast-icon-canvas{ display:block; margin:0 auto; width:auto; height:auto; max-width:100%; }
+.pixel-art{ image-rendering:pixelated; }
+.area-skin-toggle{
+  display:block; margin-top:8px; background:none; border:1px solid #555; color:#9fd8a0;
+  font-size:.72rem; padding:.35em .7em; min-height:0; box-shadow:none;
+}
+.area-skin-grid{
+  display:none; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:10px; margin-top:10px;
+}
+.area-skin-grid.open{ display:grid; }
+.area-skin-card{ text-align:center; font-family:Arial; font-size:.68rem; color:#cfe9cf; }
+.boss-icon-canvas{ display:block; margin:0 auto; width:auto; height:auto; max-width:100%; }
+#boss-warning-banner{
+  position:absolute; top:90px; left:50%; transform:translateX(-50%) translateY(-20px);
+  z-index:55; padding:.6em 1.4em; border:2px solid var(--red); border-radius:10px;
+  background:rgba(20,0,5,.85); color:var(--red); font-family:'Orbitron'; letter-spacing:2px;
+  font-size:1rem; text-shadow:0 0 12px var(--red); box-shadow:0 0 25px rgba(255,0,85,.5);
+  opacity:0; pointer-events:none; transition:opacity .4s, transform .4s;
+}
+#boss-warning-banner.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+#discovery-overlay, #boss-intro-overlay{
+  position:absolute; inset:0; z-index:65; display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.82); backdrop-filter:blur(4px); text-align:center;
+}
+.discovery-inner, .boss-intro-inner{ animation:discoveryPop .55s ease-out; }
+@keyframes discoveryPop{ 0%{ transform:scale(.5); opacity:0; } 60%{ transform:scale(1.08); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
+.discovery-label{ font-family:'Orbitron'; letter-spacing:4px; color:var(--cyan); text-shadow:0 0 18px var(--cyan); font-size:1.3rem; margin-bottom:10px; }
+.discovery-name{ font-family:'Orbitron'; font-size:1.5rem; margin-top:10px; }
+.discovery-desc{ font-family:Arial; color:#ccc; max-width:420px; margin:10px auto 0; font-size:.9rem; }
+#discovery-canvas, #boss-intro-canvas{ display:block; margin:0 auto; width:auto; height:auto; filter:drop-shadow(0 0 20px currentColor); }
+.boss-intro-label{ font-family:'Orbitron'; letter-spacing:6px; color:var(--red); text-shadow:0 0 20px var(--red); font-size:2rem; animation:bossIntroFlash .5s infinite alternate; }
+@keyframes bossIntroFlash{ from{ opacity:.6; } to{ opacity:1; } }
+.boss-intro-name{ font-family:'Orbitron'; font-size:1.6rem; margin-top:14px; color:#fff; }
+
 .bestiary-area-label{font-family:'Orbitron';font-size:1rem;letter-spacing:2px;margin-bottom:10px;padding-left:4px;border-left:4px solid var(--gcolor,var(--green));}
 .boss-entry{
   border:2px solid #2a3a2a;
@@ -919,6 +963,7 @@ canvas{
   font-size:3rem; background:rgba(255,255,255,.05);
 }
 .revive-btn{ border-color:var(--gold)!important; color:var(--gold)!important; box-shadow:0 0 20px rgba(255,215,0,.5)!important; }
+#tower-reward-canvas{ display:block; width:auto; height:auto; }
 .click-ring{
   position:fixed;
   z-index:8000;
@@ -1256,12 +1301,31 @@ canvas{
       <button onclick="returnToLobbyFromGameOver()" style="color:var(--purple);border-color:var(--purple);">RETURN TO LOBBY</button>
     </div>
   </div>
+
+  <div id="boss-warning-banner"></div>
+
+  <div id="discovery-overlay">
+    <div class="discovery-inner">
+      <div class="discovery-label">NEW ALIEN DISCOVERED</div>
+      <canvas id="discovery-canvas" width="200" height="200"></canvas>
+      <div class="discovery-name" id="discovery-name"></div>
+      <div class="discovery-desc" id="discovery-desc"></div>
+    </div>
+  </div>
+
+  <div id="boss-intro-overlay">
+    <div class="boss-intro-inner">
+      <div class="boss-intro-label" id="boss-intro-label">WARNING</div>
+      <canvas id="boss-intro-canvas" width="220" height="220"></canvas>
+      <div class="boss-intro-name" id="boss-intro-name"></div>
+    </div>
+  </div>
  </div>
 </div>
 
 <div id="tower-reward-screen">
   <div class="tr-inner">
-    <div id="tower-reward-icon">&#128126;</div>
+    <div id="tower-reward-icon"><canvas id="tower-reward-canvas" width="90" height="90"></canvas></div>
     <div style="font-family:'Orbitron';font-size:1.5rem;letter-spacing:3px;color:var(--gold);text-shadow:0 0 20px var(--gold);">NEW TOWER ACQUIRED</div>
     <div id="tower-reward-name" style="font-family:'Orbitron';font-size:1.3rem;margin-top:14px;"></div>
     <div id="tower-reward-desc" style="font-family:Arial;color:#ccc;max-width:420px;margin:14px auto 0;font-size:.9rem;line-height:1.5;"></div>
@@ -1928,7 +1992,9 @@ function recordDiscovery(kind,key){
   if(!list.includes(key)){
     list.push(key);
     saveToStorage(metaData);
+    return true;
   }
+  return false;
 }
 
 let metaData=defaultLocalState();
@@ -2366,22 +2432,45 @@ const ENEMY_TYPES={
   cloaked:{name:"Cloaked Stalker",color:"#888888",size:13,hp:65,speed:1.9,reward:24,cloakInterval:90,cloakDuration:45},
   juggernaut:{name:"Juggernaut",color:"#aa0000",size:22,hp:400,speed:0.6,reward:60,armored:true,heavy:true},
   boss:{name:"Boss",color:"#00ff88",size:28,hp:850,speed:0.75,reward:200,stunRadius:250,stunDuration:90,stunInterval:75},
-  glitch:{name:"Glitch Wisp",color:"#39ff14",size:10,hp:20,speed:3.0,reward:16,cloakInterval:55,cloakDuration:25,shape:"wisp"},
-  cinder:{name:"Cinder Brute",color:"#ff6a00",size:17,hp:90,speed:1.2,reward:24,armored:true,shape:"brute"},
-  frostfang:{name:"Frostfang",color:"#aeeaff",size:12,hp:70,speed:3.0,reward:26,shape:"fang"},
-  burrower:{name:"Sand Burrower",color:"#ffcf6b",size:20,hp:220,speed:1.0,reward:40,armored:true,heavy:true,shape:"burrower"},
-  drifter:{name:"Void Drifter",color:"#c9d6ff",size:11,hp:140,speed:3.4,reward:42,shape:"drifter"},
-  leech:{name:"Bog Leech",color:"#8aff33",size:16,hp:260,speed:1.3,reward:50,splitsInto:"leechling",splitCount:3,shape:"leech"},
+  glitch:{name:"Glitch Wisp",color:"#39ff14",size:10,hp:20,speed:3.2,reward:14,cloakInterval:55,cloakDuration:25,shape:"wisp"},
+  daemon:{name:"Rogue Daemon",color:"#00ffcc",size:10,hp:20,speed:3.2,reward:14,shape:"wisp"},
+  trojan:{name:"Trojan Crawler",color:"#2fbf71",size:18,hp:130,speed:0.95,reward:32,armored:true,shape:"brute"},
+  cinder:{name:"Cinder Brute",color:"#ff6a00",size:18,hp:166,speed:0.95,reward:42,armored:true,shape:"brute"},
+  ashling:{name:"Ash Wisp",color:"#ffb347",size:10,hp:26,speed:3.2,reward:18,shape:"wisp"},
+  obsidianite:{name:"Obsidian Crab",color:"#5c3a21",size:18,hp:166,speed:0.95,reward:42,armored:true,shape:"brute"},
+  frostfang:{name:"Frostfang",color:"#aeeaff",size:10,hp:31,speed:3.2,reward:23,shape:"fang"},
+  icewraith:{name:"Ice Wraith",color:"#d6f7ff",size:13,hp:94,speed:1.9,reward:36,cloakInterval:70,cloakDuration:40,shape:"wraith"},
+  glacierback:{name:"Glacierback",color:"#8fd9ff",size:18,hp:203,speed:0.95,reward:52,armored:true,shape:"brute"},
+  burrower:{name:"Sand Burrower",color:"#ffcf6b",size:22,hp:773,speed:0.6,reward:127,armored:true,heavy:true,shape:"burrower"},
+  scarab:{name:"Sand Scarab",color:"#e0b34d",size:16,hp:120,speed:1.4,reward:43,shape:"burrower"},
+  mirage:{name:"Mirage Phantom",color:"#fff0c2",size:13,hp:110,speed:1.9,reward:43,cloakInterval:60,cloakDuration:50,shape:"wraith"},
+  drifter:{name:"Void Drifter",color:"#c9d6ff",size:10,hp:42,speed:3.2,reward:32,shape:"drifter"},
+  meteorhusk:{name:"Meteor Husk",color:"#8892b0",size:18,hp:276,speed:0.95,reward:73,armored:true,shape:"brute"},
+  nebulamoth:{name:"Nebula Moth",color:"#e0d6ff",size:13,hp:127,speed:1.9,reward:50,cloakInterval:65,cloakDuration:45,shape:"wraith"},
+  leech:{name:"Bog Leech",color:"#8aff33",size:16,hp:156,speed:1.4,reward:57,splitsInto:"leechling",splitCount:3,shape:"leech"},
   leechling:{name:"Leechling",color:"#c6ff99",size:8,hp:30,speed:2.4,reward:10,tiny:true,shape:"leech"},
-  wraith:{name:"Data Wraith",color:"#ff2fd0",size:14,hp:300,speed:1.8,reward:55,cloakInterval:80,cloakDuration:45,shape:"wraith"},
-  specter:{name:"Specter",color:"#b7ffcf",size:14,hp:360,speed:1.6,reward:62,cloakInterval:70,cloakDuration:55,shape:"wraith"},
-  angler:{name:"Angler Horror",color:"#33bbff",size:18,hp:430,speed:1.0,reward:70,stunRadius:180,stunDuration:70,stunInterval:95,shape:"angler"},
-  broodling:{name:"Brood Mother",color:"#ff1155",size:21,hp:600,speed:0.85,reward:90,heavy:true,splitsInto:"broodletling",splitCount:3,shape:"brute"},
+  sporeling:{name:"Spore Drone",color:"#c6ff66",size:10,hp:48,speed:3.2,reward:36,shape:"wisp"},
+  bogcrawler:{name:"Bog Crawler",color:"#557a1f",size:18,hp:312,speed:0.95,reward:83,armored:true,shape:"brute"},
+  wraith:{name:"Data Wraith",color:"#ff2fd0",size:14,hp:147,speed:1.5,reward:70,cloakInterval:80,cloakDuration:45,shape:"wraith"},
+  circuitbreaker:{name:"Circuit Breaker",color:"#ff77e6",size:14,hp:147,speed:1.5,reward:70,stunRadius:140,stunDuration:50,stunInterval:100},
+  hologram:{name:"Hologram Decoy",color:"#ff9ff0",size:13,hp:161,speed:1.9,reward:64,cloakInterval:50,cloakDuration:55,shape:"wraith"},
+  specter:{name:"Specter",color:"#b7ffcf",size:14,hp:163,speed:1.5,reward:78,cloakInterval:70,cloakDuration:55,shape:"wraith"},
+  ghoul:{name:"Ghoul",color:"#8fae8f",size:18,hp:385,speed:0.95,reward:104,armored:true,shape:"brute"},
+  banshee:{name:"Banshee",color:"#d9fff0",size:13,hp:178,speed:1.9,reward:71,cloakInterval:55,cloakDuration:50,shape:"wraith"},
+  angler:{name:"Angler Horror",color:"#33bbff",size:18,hp:421,speed:0.95,reward:114,armored:true,stunRadius:180,stunDuration:70,stunInterval:95,shape:"angler"},
+  jellydrifter:{name:"Jelly Drifter",color:"#7fe0ff",size:10,hp:65,speed:3.2,reward:50,shape:"drifter"},
+  deepcrawler:{name:"Deep Crawler",color:"#4fa8cc",size:13,hp:194,speed:1.9,reward:78,cloakInterval:70,cloakDuration:40,shape:"wraith"},
+  broodling:{name:"Brood Mother",color:"#ff1155",size:22,hp:1478,speed:0.6,reward:252,armored:true,heavy:true,splitsInto:"broodletling",splitCount:3,shape:"brute"},
   broodletling:{name:"Broodletling",color:"#ff6699",size:9,hp:45,speed:2.6,reward:14,tiny:true},
+  hivelarva:{name:"Hive Larva",color:"#ff6699",size:8,hp:42,speed:2.2,reward:23,tiny:true},
+  hiveguardian:{name:"Hive Guardian",color:"#c40d3f",size:18,hp:458,speed:0.95,reward:124,armored:true,shape:"brute"},
   impostor:{name:"The Impostor",color:"#c51111",size:16,hp:80,speed:2.0,reward:150,cloakInterval:200,cloakDuration:20,shape:"impostor"}
 };
 const BEAST_ORDER=["normal","runner","stunner","tank","shielded","splitter","splitling","cloaked","juggernaut",
-  "glitch","cinder","frostfang","burrower","drifter","leech","leechling","wraith","specter","angler","broodling","broodletling","impostor"];
+  "glitch","daemon","trojan","cinder","ashling","obsidianite","frostfang","icewraith","glacierback",
+  "burrower","scarab","mirage","drifter","meteorhusk","nebulamoth","leech","leechling","sporeling","bogcrawler",
+  "wraith","circuitbreaker","hologram","specter","ghoul","banshee","angler","jellydrifter","deepcrawler",
+  "broodling","broodletling","hivelarva","hiveguardian","impostor"];
 const BEAST_DESC={
   normal:"The baseline grunt. No tricks, no gimmicks - just numbers.",
   runner:"Fragile but fast. Outruns slow-firing towers if left unchecked.",
@@ -2393,20 +2482,52 @@ const BEAST_DESC={
   cloaked:"Flickers in and out of visibility.",
   juggernaut:"A crawling fortress. Glacially slow, but the toughest non-boss on the field.",
   glitch:"A flickering corrupted process from the Mainframe.",
+  daemon:"A rogue background process that slipped its sandbox.",
+  trojan:"Disguised as harmless code - hits like an armored brick.",
   cinder:"A molten brawler dredged up from the Magma Depths.",
+  ashling:"A skittering cinder that outruns most defenses.",
+  obsidianite:"A crab-like shell of cooled volcanic glass.",
   frostfang:"An arctic predator that closes distance fast.",
+  icewraith:"A translucent chill that fades in and out of sight.",
+  glacierback:"A lumbering wall of packed glacial ice.",
   burrower:"An armored digger from the Dune Sea.",
+  scarab:"A segmented sand-dweller with a tough shell.",
+  mirage:"A heat-shimmer illusion that's hard to pin down.",
   drifter:"A weightless Deep Space stray.",
+  meteorhusk:"A burnt-out meteorite fragment, still armored and dangerous.",
+  nebulamoth:"A drifting cloud of luminous space dust.",
   leech:"A swollen parasite from the Toxic Swamp.",
   leechling:"A small hungry offshoot of a Bog Leech.",
+  sporeling:"A quick puff of drifting toxic spores.",
+  bogcrawler:"A sludge-caked brute that wades through the muck.",
   wraith:"A rogue Neon City process that phases in and out.",
+  circuitbreaker:"Pulses an overload field that shorts out nearby towers.",
+  hologram:"A projected decoy that flickers between real and fake.",
   specter:"A restless spirit of the Haunted Grounds.",
+  ghoul:"A shambling grave-dweller, slow but durable.",
+  banshee:"A wailing spirit that vanishes when it senses danger.",
   angler:"A deep-sea lurker from the Abyss.",
+  jellydrifter:"A translucent drifter pulsing through the current.",
+  deepcrawler:"A pressure-adapted stalker of the ocean floor.",
   broodling:"A bloated Hive Core matriarch. Splits into three on death.",
   broodletling:"A skittering offshoot of a Brood Mother.",
+  hivelarva:"A tiny, freshly-hatched Hive Core grub.",
+  hiveguardian:"A hardened Hive Core sentinel guarding its brood.",
   impostor:"Sus. Definitely not one of us. Extremely rare, worth a huge bounty."
 };
-const AREA_SIGNATURE_TYPE=["glitch","cinder","frostfang","burrower","drifter","leech","wraith","specter","angler","broodling"];
+const AREA_EXCLUSIVE_TYPES=[
+  ["glitch","daemon","trojan"],
+  ["cinder","ashling","obsidianite"],
+  ["frostfang","icewraith","glacierback"],
+  ["burrower","scarab","mirage"],
+  ["drifter","meteorhusk","nebulamoth"],
+  ["leech","sporeling","bogcrawler"],
+  ["wraith","circuitbreaker","hologram"],
+  ["specter","ghoul","banshee"],
+  ["angler","jellydrifter","deepcrawler"],
+  ["broodling","hivelarva","hiveguardian"]
+];
+const AREA_SIGNATURE_TYPE=AREA_EXCLUSIVE_TYPES.map(trio=>trio[0]);
 const RECURRING_TYPES=["normal","runner","stunner","tank","shielded","splitter","splitling","cloaked","juggernaut"];
 
 // ---------------------------------------------------------------------
@@ -2530,7 +2651,7 @@ function openCrate(crateIdx){
 // ---------------------------------------------------------------------
 const MATERIAL_TIERS=["common","uncommon","rare","epic","legendary"];
 const MATERIAL_COLOR={common:"#9fd8a0",uncommon:"#39ff14",rare:"#00f0ff",epic:"#b026ff",legendary:"#ffd700"};
-const MATERIAL_NAME={common:"Uranium",uncommon:"Acid Lazuli",rare:"Void Shard",epic:"Void Crystal",legendary:"Nuclear Battery"};
+const MATERIAL_NAME={common:"Chitin Shard",uncommon:"Alloy Core",rare:"Plasma Crystal",epic:"Void Residue",legendary:"Genesis Cell"};
 
 function rollMaterialDrop(){
   // Higher waves skew toward rarer materials.
@@ -2652,39 +2773,150 @@ function summonTower(){
 }
 
 // ---------------------------------------------------------------------
+// Icon rendering - reuses the live gameplay alien-drawing functions to
+// render a small preview onto an arbitrary <canvas>, so the Bestiary,
+// reward screens, and discovery popups show the actual character model
+// instead of a placeholder emoji. Temporarily swaps the module-level
+// `ctx` so the shared draw functions "just work" on any canvas.
+// ---------------------------------------------------------------------
+function renderAlienIcon(canvasEl,type,opts){
+  opts=opts||{};
+  if(!canvasEl) return;
+  const w=canvasEl.width||canvasEl.clientWidth||96;
+  const h=canvasEl.height||canvasEl.clientHeight||96;
+  if(canvasEl.width!==w) canvasEl.width=w;
+  if(canvasEl.height!==h) canvasEl.height=h;
+  const octx=canvasEl.getContext("2d");
+  const savedCtx=ctx;
+  ctx=octx;
+  octx.clearRect(0,0,w,h);
+  const base=ENEMY_TYPES[type]||{};
+  const size=opts.size||Math.min(w,h)*0.28;
+  if(canvasEl._bobSeed===undefined) canvasEl._bobSeed=Math.random()*1000;
+  const fakeE={
+    type,size,
+    color:opts.color||base.color||"#39ff14",
+    x:w/2, y:h/2+size*0.15,
+    bobSeed:opts.bobSeed!==undefined?opts.bobSeed:canvasEl._bobSeed,
+    slowTimer:0, cloaked:false, hp:1, maxHp:1
+  };
+  const useFlashy=opts.flashy!==undefined?opts.flashy:flashyMode;
+  canvasEl.classList.toggle("pixel-art",!useFlashy);
+  if(useFlashy) drawAlienBodyFlashy(fakeE,opts.theme);
+  else drawAlienBodyRetro(fakeE);
+  ctx=savedCtx;
+}
+
+// Keeps every alien-icon canvas on screen gently animated (idle bob,
+// antenna sway, leg wiggle, retro marching-frame flip) instead of a
+// single frozen frame. Descriptors are recorded whenever an icon is
+// created; a lightweight interval redraws only the ones still attached
+// to the DOM (and, for collapsed dropdowns, only once they're visible).
+let bestiaryIconRegistry=[];
+let bestiaryAnimTimer=null;
+function registerBestiaryIcon(canvasEl,type,opts){
+  bestiaryIconRegistry.push({canvasEl,type,opts:opts||{}});
+}
+function startBestiaryAnimation(){
+  stopBestiaryAnimation();
+  bestiaryAnimTimer=setInterval(()=>{
+    bestiaryIconRegistry=bestiaryIconRegistry.filter(ic=>ic.canvasEl.isConnected);
+    for(const ic of bestiaryIconRegistry){
+      if(ic.canvasEl.offsetParent===null) continue; // hidden (e.g. inside a collapsed dropdown) - skip the redraw
+      renderAlienIcon(ic.canvasEl,ic.type,ic.opts);
+    }
+  },90);
+}
+function stopBestiaryAnimation(){
+  if(bestiaryAnimTimer){ clearInterval(bestiaryAnimTimer); bestiaryAnimTimer=null; }
+}
+
+// Per-theme looping CSS background FX layer (only shown in Flashy Mode).
+// Pure CSS particles - cheap, and loop seamlessly since each particle's
+// keyframe animation is set to `infinite` with a randomized negative
+// delay so the field looks already "in progress" on first paint.
+const AREA_FX={
+  hacker:    {anim:"fxFall",  color:"#39ff14", glyph:"1", count:14, dur:[4,8]},
+  volcano:   {anim:"fxRise",  color:"#ff6a00", glyph:"&#9679;", count:12, dur:[3,6]},
+  arctic:    {anim:"fxFall",  color:"#dff6ff", glyph:"&#10052;", count:16, dur:[5,10]},
+  desert:    {anim:"fxDrift", color:"#ffcf6b", glyph:"&#8901;", count:12, dur:[4,8]},
+  space:     {anim:"fxTwinkle",color:"#ffffff",glyph:"&#8226;", count:18, dur:[2,4]},
+  swamp:     {anim:"fxRise",  color:"#8aff33", glyph:"&#9675;", count:10, dur:[4,7]},
+  cyberpunk: {anim:"fxDrift", color:"#ff2fd0", glyph:"&#9608;", count:10, dur:[3,6]},
+  graveyard: {anim:"fxDrift", color:"#b7ffcf", glyph:"&#9729;", count:8,  dur:[6,10]},
+  underwater:{anim:"fxRise",  color:"#33bbff", glyph:"&#9675;", count:14, dur:[4,8]},
+  hive:      {anim:"fxTwinkle",color:"#ff1155",glyph:"&#9679;", count:12, dur:[2,5]}
+};
+function createAreaFxLayer(theme){
+  const fx=AREA_FX[theme];
+  const layer=document.createElement("div");
+  layer.className="area-fx-layer";
+  if(!fx) return layer;
+  for(let i=0;i<fx.count;i++){
+    const p=document.createElement("span");
+    p.className="area-fx-particle";
+    const dur=(fx.dur[0]+Math.random()*(fx.dur[1]-fx.dur[0])).toFixed(2);
+    p.style.left=(Math.random()*100)+"%";
+    p.style.top=(Math.random()*100)+"%";
+    p.style.color=fx.color;
+    p.style.animationName=fx.anim;
+    p.style.animationDuration=dur+"s";
+    p.style.animationDelay=(-Math.random()*dur)+"s";
+    p.innerHTML=fx.glyph;
+    layer.appendChild(p);
+  }
+  return layer;
+}
+
+// ---------------------------------------------------------------------
 // Bestiary - grouped by the sector each creature is found in
 // ---------------------------------------------------------------------
 function openBestiary(){
   document.getElementById("main-menu").style.display="none";
   document.getElementById("bestiary-screen").style.display="flex";
   buildBestiary();
+  startBestiaryAnimation();
 }
 function closeBestiary(){
   document.getElementById("bestiary-screen").style.display="none";
   document.getElementById("main-menu").style.display="flex";
+  stopBestiaryAnimation();
 }
 window.openBestiary=openBestiary;
 window.closeBestiary=closeBestiary;
 
-function beastCardHtml(type,unlocked,areaTag){
-  const base=ENEMY_TYPES[type];
-  if(unlocked){
-    return `<div class="beast-card unlocked" style="--bcolor:${base.color}">
-      <div style="height:80px;border-radius:8px;background:radial-gradient(circle,${base.color}33,#00000055);display:flex;align-items:center;justify-content:center;font-size:2rem;">&#128126;</div>
-      <div class="beast-name">${base.name}</div>
-      <div class="beast-stats">HP ${base.hp} &nbsp;&middot;&nbsp; SPD ${base.speed} &nbsp;&middot;&nbsp; BOUNTY ${base.reward}</div>
-      <div class="beast-desc">${BEAST_DESC[type]||""}</div>
-      ${areaTag?`<div class="beast-area-tag">${areaTag}</div>`:""}
-    </div>`;
+function createBeastCard(type,unlocked,areaTag,themeOverride){
+  const base=ENEMY_TYPES[type]||{};
+  const card=document.createElement("div");
+  if(!unlocked){
+    card.className="beast-card locked";
+    card.innerHTML=`
+      <div class="beast-locked-icon">?</div>
+      <div class="beast-name">REDACTED</div>
+      <div class="beast-stats">Encounter this class in the field to unlock its entry.</div>
+    `;
+    return card;
   }
-  return `<div class="beast-card locked">
-    <div class="beast-locked-icon">?</div>
-    <div class="beast-name">REDACTED</div>
-    <div class="beast-stats">Encounter this class in the field to unlock its entry.</div>
-  </div>`;
+  card.className="beast-card unlocked";
+  card.style.setProperty("--bcolor",base.color);
+  card.innerHTML=`
+    <div style="height:80px;border-radius:8px;background:radial-gradient(circle,${base.color}33,#00000055);display:flex;align-items:center;justify-content:center;">
+      <canvas class="beast-icon-canvas" width="72" height="72"></canvas>
+    </div>
+    <div class="beast-name">${base.name}</div>
+    <div class="beast-stats">HP ${base.hp} &nbsp;&middot;&nbsp; SPD ${base.speed} &nbsp;&middot;&nbsp; BOUNTY ${base.reward}</div>
+    <div class="beast-desc">${BEAST_DESC[type]||""}</div>
+    ${areaTag?`<div class="beast-area-tag">${areaTag}</div>`:""}
+  `;
+  const cv=card.querySelector(".beast-icon-canvas");
+  const iconOpts={theme:themeOverride,color:base.color};
+  renderAlienIcon(cv,type,iconOpts);
+  registerBestiaryIcon(cv,type,iconOpts);
+  return card;
 }
 
 function buildBestiary(){
+  bestiaryIconRegistry=[];
   const dTypes=metaData.discoveredTypes||[];
   const dBosses=metaData.discoveredBosses||[];
   document.getElementById("bestiary-progress").innerText=
@@ -2700,19 +2932,38 @@ function buildBestiary(){
   rosterEl.appendChild(recurringGroup);
   const recurringGrid=recurringGroup.querySelector("#bestiary-recurring");
   RECURRING_TYPES.forEach(type=>{
-    recurringGrid.insertAdjacentHTML("beforeend",beastCardHtml(type,dTypes.includes(type),null));
+    recurringGrid.appendChild(createBeastCard(type,dTypes.includes(type),null));
   });
 
   AREAS.forEach((area,i)=>{
-    const sigType=AREA_SIGNATURE_TYPE[i];
-    if(!sigType) return;
+    const trio=AREA_EXCLUSIVE_TYPES[i];
+    if(!trio) return;
     const group=document.createElement("div");
     group.className="bestiary-area-group";
-    group.innerHTML=`<div class="bestiary-area-label" style="--gcolor:${area.accent};color:${area.accent};">${String(i+1).padStart(2,'0')} &middot; ${area.name}</div>
-      <div class="bestiary-roster-grid"></div>`;
+    if(flashyMode) group.appendChild(createAreaFxLayer(area.theme));
+    group.insertAdjacentHTML("beforeend",
+      `<div class="bestiary-area-label" style="--gcolor:${area.accent};color:${area.accent};">${String(i+1).padStart(2,'0')} &middot; ${area.name}</div>
+       <div class="bestiary-roster-grid"></div>
+       <button class="area-skin-toggle" onclick="this.nextElementSibling.classList.toggle('open')">How aliens look here &#9662;</button>
+       <div class="area-skin-grid"></div>`);
     rosterEl.appendChild(group);
-    group.querySelector(".bestiary-roster-grid").insertAdjacentHTML("beforeend",
-      beastCardHtml(sigType,dTypes.includes(sigType),area.name));
+    const grid=group.querySelector(".bestiary-roster-grid");
+    trio.forEach(type=>{
+      grid.appendChild(createBeastCard(type,dTypes.includes(type),area.name));
+    });
+    // "How aliens look here" - recurring classes reskinned with this area's theme decor
+    const skinGrid=group.querySelector(".area-skin-grid");
+    RECURRING_TYPES.forEach(type=>{
+      const base=ENEMY_TYPES[type];
+      const wrap=document.createElement("div");
+      wrap.className="area-skin-card";
+      wrap.innerHTML=`<canvas class="beast-icon-canvas" width="54" height="54"></canvas><div>${base.name}</div>`;
+      const cv=wrap.querySelector("canvas");
+      const iconOpts={theme:area.theme,color:base.color,size:16};
+      renderAlienIcon(cv,type,iconOpts);
+      registerBestiaryIcon(cv,type,iconOpts);
+      skinGrid.appendChild(wrap);
+    });
   });
 
   const impostorGroup=document.createElement("div");
@@ -2720,8 +2971,8 @@ function buildBestiary(){
   impostorGroup.innerHTML=`<div class="bestiary-area-label" style="--gcolor:var(--red);color:var(--red);">??? &middot; ANYWHERE</div>
     <div class="bestiary-roster-grid"></div>`;
   rosterEl.appendChild(impostorGroup);
-  impostorGroup.querySelector(".bestiary-roster-grid").insertAdjacentHTML("beforeend",
-    beastCardHtml("impostor",dTypes.includes("impostor"),null));
+  impostorGroup.querySelector(".bestiary-roster-grid").appendChild(
+    createBeastCard("impostor",dTypes.includes("impostor"),null));
 
   const bossesEl=document.getElementById("bestiary-bosses");
   bossesEl.innerHTML="";
@@ -2736,16 +2987,25 @@ function buildBestiary(){
         <div class="boss-entry-title">${unlocked?area.boss.name:"??? \u2014 "+area.name}</div>
       </div>
       <div class="boss-entry-body"><div class="boss-entry-inner">
-        <div style="width:130px;height:130px;flex:0 0 130px;border-radius:10px;background:radial-gradient(circle,${unlocked?area.boss.color+'33':'#111'},#000);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">${unlocked?'&#128126;':'?'}</div>
+        <div style="width:130px;height:130px;flex:0 0 130px;border-radius:10px;background:radial-gradient(circle,${unlocked?area.boss.color+'33':'#111'},#000);display:flex;align-items:center;justify-content:center;">
+          ${unlocked?'<canvas class="boss-icon-canvas" width="110" height="110"></canvas>':'<span style="font-size:2.5rem;">?</span>'}
+        </div>
         <div>
           <div class="beast-stats">Sector: ${area.name} &middot; Waves ${i*10+1}\u2013${(i+1)*10}</div>
           <div class="beast-desc">${unlocked?"A unique boss-tier alien found at the end of "+area.name+".":"Reach wave "+(i*10+1)+" to encounter this boss."}</div>
         </div>
       </div></div>`;
     entry.querySelector(".boss-entry-head").addEventListener("click",()=>entry.classList.toggle("open"));
+    if(unlocked){
+      const cv=entry.querySelector(".boss-icon-canvas");
+      const iconOpts={theme:area.theme,color:area.boss.color,size:26};
+      renderAlienIcon(cv,"boss",iconOpts);
+      registerBestiaryIcon(cv,"boss",iconOpts);
+    }
     bossesEl.appendChild(entry);
   });
 }
+
 
 // ---------------------------------------------------------------------
 // Area drop-rate popup (next to Deploy Defenses)
@@ -3078,18 +3338,22 @@ function renderTowersSection(){
     ${summonBackButton()}
     <div style="height:8px;"></div>
     <div style="font-family:Arial;color:#ccc;margin-bottom:14px;text-align:left;">Summon a random tower from the pool below for ${TOWER_CRATE.cost} tickets. These towers cannot be fused or leveled through summoning - only 1 of each exists.</div>
-    <div style="text-align:left;margin-bottom:14px;">
-      ${SUMMON_TOWER_IDS.map(id=>{
-        const stat=TOWER_STATS[id];
-        const owned=(metaData.ownedSummonTowers||[]).includes(id);
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #222;gap:10px;">
-          <span style="color:${owned?stat.color:'#666'};">${owned?stat.name:'???'}</span>
-          <span style="color:${owned?'var(--green)':'#888'};font-size:.75rem;">${owned?'OWNED':'LOCKED'}</span>
-        </div>`;
-      }).join("")}
-    </div>
+    <div style="text-align:left;margin-bottom:14px;" id="summon-tower-list"></div>
     <button style="width:100%;" onclick="doSummonTower()" ${remaining.length===0?"disabled":""}>${remaining.length===0?"ALL TOWERS OWNED":"SUMMON TOWER ("+TOWER_CRATE.cost+" tickets)"}</button>`;
   document.getElementById("summoning-content").innerHTML=body;
+  const listEl=document.getElementById("summon-tower-list");
+  SUMMON_TOWER_IDS.forEach(id=>{
+    const stat=TOWER_STATS[id];
+    const owned=(metaData.ownedSummonTowers||[]).includes(id);
+    const row=document.createElement("div");
+    row.style.cssText="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid #222;gap:10px;";
+    row.innerHTML=`
+      <canvas class="beast-icon-canvas" width="34" height="34" style="flex:0 0 34px;"></canvas>
+      <span style="flex:1;color:${owned?stat.color:'#666'};">${owned?stat.name:'???'}</span>
+      <span style="color:${owned?'var(--green)':'#888'};font-size:.75rem;">${owned?'OWNED':'LOCKED'}</span>`;
+    renderAlienIcon(row.querySelector("canvas"),"normal",{color:owned?stat.color:"#444",size:11});
+    listEl.appendChild(row);
+  });
 }
 
 function toggleCrateOdds(i,evt){
@@ -3687,7 +3951,7 @@ function showTowerRewardScreen(towerId,onClose){
   icon.style.borderColor=stat.color;
   icon.style.color=stat.color;
   icon.style.boxShadow=`0 0 30px ${stat.color}`;
-  icon.innerText="\u{1F47E}";
+  renderAlienIcon(document.getElementById("tower-reward-canvas"),"normal",{color:stat.color,size:26});
   const nameEl=document.getElementById("tower-reward-name");
   nameEl.innerText=stat.name;
   nameEl.style.color=stat.color;
@@ -4229,6 +4493,48 @@ function getWaveMultiplier(){
   return { hp:(1+tier*0.22)*mode.hpMul, speed:(1+tier*0.05)*mode.speedMul };
 }
 
+function freezeForDiscovery(type){
+  gameFreeze=true;
+  const base=ENEMY_TYPES[type]||{};
+  const nameEl=document.getElementById("discovery-name");
+  nameEl.innerText=base.name||type;
+  nameEl.style.color=base.color||"#fff";
+  document.getElementById("discovery-desc").innerText=BEAST_DESC[type]||"";
+  renderAlienIcon(document.getElementById("discovery-canvas"),type,{color:base.color,size:46});
+  const overlay=document.getElementById("discovery-overlay");
+  overlay.style.color=base.color||"#39ff14";
+  overlay.style.display="flex";
+  playSound("typeReveal");
+  setTimeout(()=>{
+    overlay.style.display="none";
+    resumeLoopAfterFreeze();
+  },2200);
+}
+
+function showBossWarningBanner(){
+  const banner=document.getElementById("boss-warning-banner");
+  banner.innerText="\u26A0 BOSS INCOMING NEXT WAVE \u26A0";
+  banner.classList.add("show");
+  playSound("bossIncoming");
+  setTimeout(()=>{ banner.classList.remove("show"); },3200);
+}
+
+function freezeForBossIntro(bossName,color,theme){
+  gameFreeze=true;
+  document.getElementById("boss-intro-label").innerText="WARNING";
+  const nameEl=document.getElementById("boss-intro-name");
+  nameEl.innerText=bossName;
+  nameEl.style.color=color;
+  renderAlienIcon(document.getElementById("boss-intro-canvas"),"boss",{color,theme,size:52});
+  const overlay=document.getElementById("boss-intro-overlay");
+  overlay.style.color=color;
+  overlay.style.display="flex";
+  setTimeout(()=>{
+    overlay.style.display="none";
+    resumeLoopAfterFreeze();
+  },2600);
+}
+
 function spawnBoss(){
   const areaIndex=getAreaIndex();
   const areaBoss=AREAS[areaIndex].boss;
@@ -4244,6 +4550,7 @@ function spawnBoss(){
   });
   playSound("bossSpawn");
   recordDiscovery("boss",areaIndex);
+  freezeForBossIntro(areaBoss.name,areaBoss.color,AREAS[areaIndex].theme);
 }
 
 function callNextWave(){
@@ -4252,6 +4559,7 @@ function callNextWave(){
   enemiesLeft=5+(wave*3);
   spawnTimer=0;
   if(wave%10===0) spawnBoss(); else playSound("waveStart");
+  if(wave%10===9) showBossWarningBanner();
   questNotifyProgress("wave",wave);
   updateHUD();
 }
@@ -4259,9 +4567,9 @@ window.callNextWave=callNextWave;
 
 function pickEnemyType(){
   const idx=getAreaIndex();
-  const sig=AREA_SIGNATURE_TYPE[idx];
+  const trio=AREA_EXCLUSIVE_TYPES[idx];
   if(Math.random()<0.001) return "impostor";
-  if(sig && Math.random()<0.22) return sig;
+  if(trio && Math.random()<0.3) return trio[Math.floor(Math.random()*trio.length)];
   return pickGenericEnemyType();
 }
 function pickGenericEnemyType(){
@@ -4293,8 +4601,9 @@ function spawnEnemy(){
     stunRadius:base.stunRadius||0,stunDuration:base.stunDuration||0,stunned:0,
     cloakTimer:base.cloakInterval||0,cloaked:false,bobSeed:Math.random()*1000
   });
-  if(!discoveredTypes.has(type)){ discoveredTypes.add(type); playSound("typeReveal"); }
-  recordDiscovery("type",type);
+  if(!discoveredTypes.has(type)) discoveredTypes.add(type);
+  const isNewDiscovery=recordDiscovery("type",type);
+  if(isNewDiscovery) freezeForDiscovery(type);
 }
 
 function killEnemy(e){
@@ -4369,21 +4678,29 @@ function stunNearbyTowers(source){
 }
 
 let gameSpeed=1, speedAccumulator=0;
+let gameFreeze=false;
 function setGameSpeed(s){
   gameSpeed=s;
   document.querySelectorAll(".speed-btn[data-speed]").forEach(b=>b.classList.toggle("active",parseFloat(b.dataset.speed)===s));
 }
 window.setGameSpeed=setGameSpeed;
 
+function resumeLoopAfterFreeze(){
+  gameFreeze=false;
+  if(isPlaying && !isPaused){ draw(); gameLoopId=requestAnimationFrame(loop); }
+}
+
 function loop(){
-  if(!isPlaying || isPaused) return;
+  if(!isPlaying || isPaused || gameFreeze) return;
   speedAccumulator+=gameSpeed;
   let steps=0;
-  while(speedAccumulator>=1 && steps<6){ updateStep(); speedAccumulator-=1; steps++; if(!isPlaying) break; }
-  if(isPlaying && !isPaused){
+  while(speedAccumulator>=1 && steps<6){ updateStep(); speedAccumulator-=1; steps++; if(!isPlaying || gameFreeze) break; }
+  if(isPlaying && !isPaused && !gameFreeze){
     if(selectedTower) updateUpgradePanel();
     draw();
     gameLoopId=requestAnimationFrame(loop);
+  }else if(isPlaying && !isPaused && gameFreeze){
+    draw();
   }
 }
 
@@ -4602,7 +4919,27 @@ const TYPE_SHAPE={
   angler:{bw:1.1,bh:1.0,legs:4,eyes:1,spikes:1,segmented:false,lean:false},
   broodling:{bw:1.3,bh:1.1,legs:6,eyes:3,spikes:3,segmented:true,lean:false},
   broodletling:{bw:0.85,bh:0.85,legs:3,eyes:2,spikes:0,segmented:false,lean:false},
-  impostor:{bw:0.95,bh:1.15,legs:0,eyes:2,spikes:0,segmented:false,lean:false}
+  impostor:{bw:0.95,bh:1.15,legs:0,eyes:2,spikes:0,segmented:false,lean:false},
+  daemon:{bw:0.75,bh:1.25,legs:3,eyes:2,spikes:0,segmented:false,lean:true},
+  trojan:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  ashling:{bw:0.75,bh:1.25,legs:3,eyes:2,spikes:0,segmented:false,lean:true},
+  obsidianite:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  icewraith:{bw:0.85,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  glacierback:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  scarab:{bw:1.0,bh:1.0,legs:4,eyes:2,spikes:0,segmented:true,lean:false},
+  mirage:{bw:0.85,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  meteorhusk:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  nebulamoth:{bw:0.85,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  sporeling:{bw:0.75,bh:1.25,legs:3,eyes:2,spikes:0,segmented:false,lean:true},
+  bogcrawler:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  circuitbreaker:{bw:1.05,bh:1.0,legs:4,eyes:3,spikes:3,segmented:false,lean:false},
+  hologram:{bw:0.85,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  ghoul:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false},
+  banshee:{bw:0.85,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  jellydrifter:{bw:0.75,bh:1.25,legs:3,eyes:2,spikes:0,segmented:false,lean:true},
+  deepcrawler:{bw:0.85,bh:1.15,legs:2,eyes:2,spikes:0,segmented:false,lean:false},
+  hivelarva:{bw:0.85,bh:0.85,legs:3,eyes:2,spikes:0,segmented:false,lean:false},
+  hiveguardian:{bw:1.3,bh:1.05,legs:4,eyes:2,spikes:2,segmented:false,lean:false}
 };
 
 function lightenColor(hex,percent){
@@ -4660,7 +4997,7 @@ function drawAreaThemeDecor(e,theme,s,bw,bh,t){
   }
 }
 
-function drawAlienBodyFlashy(e){
+function drawAlienBodyFlashy(e,themeOverride){
   const shapeDef=TYPE_SHAPE[e.type]||TYPE_SHAPE.normal;
   const base=ENEMY_TYPES[e.type]||{};
   const isBig=(e.type==="boss"||!!base.heavy);
@@ -4790,7 +5127,7 @@ function drawAlienBodyFlashy(e){
     ctx.globalAlpha=cloakA;
   }
 
-  drawAreaThemeDecor(e,getCurrentArea().theme,s,bw,bh,t);
+  drawAreaThemeDecor(e,themeOverride||getCurrentArea().theme,s,bw,bh,t);
 
   // Impostor: crewmate silhouette + visor, drawn over the base body
   if(e.type==="impostor"){
