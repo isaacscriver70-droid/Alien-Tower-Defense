@@ -36,6 +36,7 @@ html,body{
   background:#000;
   color:#fff;
   font-family:'Orbitron',sans-serif;
+  touch-action:manipulation;
 }
 body:after{
   content:"";
@@ -140,19 +141,49 @@ button:disabled{opacity:.4;cursor:default;}
   top:0;
   left:0;
   width:100%;
-  padding:1.1rem 1.8rem;
+  height:64px;
+  box-sizing:border-box;
+  padding:0 1.6rem;
+  padding-right:150px;
   display:flex;
-  flex-wrap:wrap;
-  justify-content:space-between;
+  flex-wrap:nowrap;
   align-items:center;
-  row-gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  white-space:nowrap;
   background:linear-gradient(rgba(0,0,0,.9),transparent);
   pointer-events:none;
-  gap:12px;
+  gap:16px;
+  scrollbar-width:none;
 }
+#hud::-webkit-scrollbar{ display:none; }
+#hud-stats-row, #hud-controls-row{
+  display:flex;
+  align-items:center;
+  flex-shrink:0;
+  gap:16px;
+}
+#hud-controls-row{ gap:6px; pointer-events:auto; }
+/* Fixed pinned cluster (quit / shop toggle) - always the same spot on
+   screen, independent of how the stats row's content wraps or scrolls,
+   so a panicked multi-tap can never land on a button that just moved. */
+#hud-pinned{
+  position:absolute;
+  top:8px;
+  right:8px;
+  z-index:35;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+  pointer-events:none;
+}
+#hud-pinned > *{ pointer-events:auto; }
 .hud-stat{
   font-size:1.5rem;
   text-shadow:0 0 15px var(--green);
+  white-space:nowrap;
+  flex-shrink:0;
 }
 #hud-gold{
   color:var(--gold);
@@ -269,7 +300,7 @@ button:disabled{opacity:.4;cursor:default;}
 @media (max-width:820px){
   h1{ font-size:2.3rem; letter-spacing:4px; margin-bottom:10px; }
   .meta-stats,.armory-panel,.settings-panel{ width:min(92vw,380px); }
-  #hud{ padding:.7rem 1rem; }
+  #hud{ padding:0 1rem; padding-right:110px; height:56px; }
   .hud-stat{ font-size:1.05rem; }
   #shop-panel{ width:min(46vw,260px); top:70px; right:10px; padding:12px; max-height:calc(100vh - 90px); }
   #shop-open-btn{ padding:.55em .8em; font-size:.85rem; }
@@ -284,7 +315,7 @@ button:disabled{opacity:.4;cursor:default;}
 }
 @media (max-width:400px){
   h1{ font-size:1.7rem; letter-spacing:2px; }
-  #hud{ padding:.5rem .6rem; gap:8px; row-gap:6px; }
+  #hud{ padding:0 .6rem; padding-right:90px; gap:8px; height:48px; }
   .hud-stat{ font-size:.85rem; }
   #btn-quit,#shop-open-btn{ padding:.45em .7em; font-size:.75rem; min-height:32px; }
   .speed-btn{ padding:.4em .6em!important; font-size:.75rem!important; min-height:28px!important; }
@@ -298,6 +329,31 @@ button:disabled{opacity:.4;cursor:default;}
   #shop-panel{ width:380px; }
   #upgrade-panel{ width:360px; }
   .meta-stats,.armory-panel,.settings-panel{ width:420px; }
+}
+/* Height-based breakpoints: a phone in landscape (the orientation this
+   game forces via the rotate-hint) can easily be 700-900px WIDE but
+   only 320-420px TALL. The width-only breakpoints above never fire in
+   that case, which is why the HUD/side panels used to swallow most of
+   a short screen. Shrink everything by available height too. */
+@media (max-height:480px){
+  #hud{ height:46px; padding-right:120px; gap:10px; }
+  .hud-stat{ font-size:1rem; }
+  #hud-pinned{ top:5px; right:5px; gap:5px; }
+  #btn-quit,#shop-open-btn{ padding:.4em .8em; font-size:.8rem; min-height:32px; }
+  .speed-btn{ padding:.4em .6em!important; font-size:.75rem!important; min-height:28px!important; }
+  #shop-panel{ top:52px; max-height:calc(100vh - 62px); padding:10px; width:min(42vw,240px); }
+  #upgrade-panel{ bottom:6px; left:6px; padding:10px; width:min(42vw,220px); }
+  .tower-card{ padding:8px; margin-bottom:8px; }
+  .t-name{ font-size:.9rem; }
+  .t-desc{ display:none; }
+}
+@media (max-height:360px){
+  #hud{ height:38px; padding-right:100px; gap:8px; }
+  .hud-stat{ font-size:.8rem; }
+  #btn-quit,#shop-open-btn{ padding:.3em .6em; font-size:.7rem; min-height:28px; }
+  .speed-btn{ padding:.3em .5em!important; font-size:.65rem!important; min-height:24px!important; }
+  #shop-panel{ top:44px; max-height:calc(100vh - 52px); width:min(40vw,200px); }
+  #upgrade-panel{ width:min(40vw,190px); }
 }
 .rotate-hint{
   display:none;
@@ -1128,6 +1184,7 @@ button:disabled{opacity:.4;cursor:default;}
     <button onclick="openBestiary()" style="border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">BESTIARY</button>
     <button onclick="openSummoning()" style="border-color:#ff6a2b;color:#ff6a2b;box-shadow:0 0 20px rgba(255,106,43,.5);">SUMMONING</button>
     <button onclick="openCrafting()" style="border-color:#9fd8a0;color:#9fd8a0;box-shadow:0 0 20px rgba(159,216,160,.5);">CRAFTING</button>
+    <button onclick="openInventory()" style="border-color:#39ff14;color:#39ff14;box-shadow:0 0 20px rgba(57,255,20,.5);">INVENTORY</button>
     <button onclick="openAchievements()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">ACHIEVEMENTS</button>
     <button onclick="openQuests()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">QUESTS</button>
     <button id="btn-update-app" onclick="forceUpdateApp()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">CHECK FOR UPDATES</button>
@@ -1215,6 +1272,12 @@ button:disabled{opacity:.4;cursor:default;}
   <button onclick="closeQuests()" style="flex-shrink:0;margin:24px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE</button>
 </div>
 
+<div id="inventory-screen" class="screen" style="display:none;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">INVENTORY</h1>
+  <div style="max-width:680px;width:100%;" id="inventory-content"></div>
+  <button onclick="closeInventory()" style="flex-shrink:0;margin:24px 0 10px;border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,0,85,.5);">CLOSE</button>
+</div>
+
 <div class="summoning-overlay" id="crafting-overlay" onclick="if(event.target===this) closeCrafting();">
   <div class="summoning-box">
     <h2 style="color:#9fd8a0;text-shadow:0 0 12px #9fd8a0;">CRAFTING</h2>
@@ -1232,19 +1295,23 @@ button:disabled{opacity:.4;cursor:default;}
 <div id="game-container">
  <div id="stage">
   <div id="hud">
-    <div class="hud-stat">CREDITS: <span id="hud-gold">0</span></div>
-    <div class="hud-stat">WAVE: <span id="hud-wave">1</span></div>
-    <div class="hud-stat" id="hud-area" style="color:var(--cyan);text-shadow:0 0 15px var(--cyan);">AREA: The Mainframe</div>
-    <div class="hud-stat">CORE SHIELDS: <span id="hud-lives">20</span></div>
-    <div class="hud-stat" style="pointer-events:auto;display:flex;gap:6px;">
+    <div id="hud-stats-row">
+      <div class="hud-stat">CREDITS: <span id="hud-gold">0</span></div>
+      <div class="hud-stat">WAVE: <span id="hud-wave">1</span></div>
+      <div class="hud-stat" id="hud-area" style="color:var(--cyan);text-shadow:0 0 15px var(--cyan);">AREA: The Mainframe</div>
+      <div class="hud-stat">CORE SHIELDS: <span id="hud-lives">20</span></div>
+    </div>
+    <div id="hud-controls-row">
       <button class="speed-btn" data-speed="0.5" onclick="setGameSpeed(0.5)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">0.5x</button>
       <button class="speed-btn active" data-speed="1" onclick="setGameSpeed(1)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">1x</button>
       <button class="speed-btn" data-speed="2" onclick="setGameSpeed(2)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">2x</button>
       <button class="speed-btn" data-speed="3" onclick="setGameSpeed(3)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">3x</button>
       <button class="speed-btn" onclick="togglePause()" id="btn-pause" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">PAUSE</button>
     </div>
-    <button id="btn-quit" onclick="quitGame()">CANCEL MISSION</button>
+  </div>
+  <div id="hud-pinned">
     <button id="shop-open-btn" onclick="toggleShop()">OPEN SHOP</button>
+    <button id="btn-quit" onclick="quitGame()">CANCEL MISSION</button>
   </div>
 
   <div id="shop-panel">
@@ -1261,6 +1328,7 @@ button:disabled{opacity:.4;cursor:default;}
     <div style="font-family:Arial;font-size:.9rem;margin-bottom:10px;">
       Damage Dealt: <span id="upg-dmg" style="color:var(--green);font-weight:bold;">0</span><br>
       Current Level: <span id="upg-lvl">1</span>
+      <div id="upg-equip-info" style="font-family:Arial;font-size:.78rem;color:#9fd8a0;margin-top:6px;"></div>
     </div>
     <div style="display:flex;gap:10px;">
       <button id="btn-upg" onclick="upgradeTower()" style="padding:.7em;flex:1;font-size:1rem;">UPGRADE</button>
@@ -1404,6 +1472,8 @@ button:disabled{opacity:.4;cursor:default;}
 
   <div class="admin-cat-label">— Absurdly OP —</div>
   <button onclick="adminInfiniteBiomass()">INFINITE BIOMASS</button>
+  <button onclick="adminInfiniteMaterials()">INFINITE MATERIALS</button>
+  <button onclick="adminInfiniteSummonTickets()">INFINITE SUMMONING TICKETS</button>
   <button onclick="adminInfiniteCredits()">INFINITE STARTING CREDITS</button>
   <button onclick="adminSpawnOmegaTower()">SPAWN SECRET OP TOWER</button>
   <button onclick="adminGodArmorAll()">GIVE ALL TOWERS SECRET OP ARMOR</button>
@@ -1973,11 +2043,12 @@ function defaultLocalState(){
     summonTickets:0,
     areasEverCleared:0,
     unlockedAreaTowers:[],
-    powerups:{},
-    equippedPowerups:[],
+    cardInstances:[],
+    armorInstances:[],
+    towerCardEquip:{},
+    towerArmorEquip:{},
+    nextInstId:1,
     materials:{common:0,uncommon:0,rare:0,epic:0,legendary:0},
-    armors:{},
-    equippedArmor:[],
     ownedSummonTowers:[],
     stats:{totalKills:0,cratesOpened:0,armorCratesOpened:0,towerCratesOpened:0,bossesKilled:0,towersBuilt:0,runsPlayed:0,biomassEarnedTotal:0,materialsCollectedTotal:0},
     achievementsClaimed:[],
@@ -2026,16 +2097,38 @@ function onDataLoaded(data){
     metaData.settings.flashyMode = (metaData.settings.flashyLevel===undefined) ? true : metaData.settings.flashyLevel>=50;
   }
   if(metaData.summonTickets===undefined) metaData.summonTickets=0;
-  if(metaData.powerups===undefined) metaData.powerups={};
-  if(metaData.equippedPowerups===undefined) metaData.equippedPowerups=[];
   if(metaData.unlockedAreaTowers===undefined) metaData.unlockedAreaTowers=[];
   if(metaData.materials===undefined) metaData.materials={common:0,uncommon:0,rare:0,epic:0,legendary:0};
-  if(metaData.armors===undefined) metaData.armors={};
-  if(metaData.equippedArmor===undefined) metaData.equippedArmor=[];
   if(metaData.ownedSummonTowers===undefined) metaData.ownedSummonTowers=[];
   if(metaData.stats===undefined) metaData.stats={totalKills:0,cratesOpened:0,armorCratesOpened:0,towerCratesOpened:0,bossesKilled:0,towersBuilt:0,runsPlayed:0,biomassEarnedTotal:0,materialsCollectedTotal:0};
   if(metaData.achievementsClaimed===undefined) metaData.achievementsClaimed=[];
   if(metaData.settings.autoReturnSummon===undefined) metaData.settings.autoReturnSummon=false;
+
+  // --- Inventory/equipment migration: legacy count-based powerups/armors -> durability instances ---
+  if(metaData.cardInstances===undefined) metaData.cardInstances=[];
+  if(metaData.armorInstances===undefined) metaData.armorInstances=[];
+  if(metaData.towerCardEquip===undefined) metaData.towerCardEquip={};
+  if(metaData.towerArmorEquip===undefined) metaData.towerArmorEquip={};
+  if(metaData.nextInstId===undefined) metaData.nextInstId=1;
+  if(metaData.powerups){
+    Object.keys(metaData.powerups).forEach(key=>{
+      const parts=key.split("_"); const id=parts[0]; const lvl=parseInt(parts[1],10)||1;
+      const count=metaData.powerups[key]||0;
+      for(let i=0;i<count;i++) metaData.cardInstances.push(newCardInstance(id,lvl));
+    });
+    delete metaData.powerups;
+  }
+  if(metaData.armors){
+    Object.keys(metaData.armors).forEach(key=>{
+      const parts=key.split("_"); const id=parts[0]; const lvl=parseInt(parts[1],10)||1;
+      const count=metaData.armors[key]||0;
+      for(let i=0;i<count;i++) metaData.armorInstances.push(newArmorInstance(id,lvl));
+    });
+    delete metaData.armors;
+  }
+  delete metaData.equippedPowerups;
+  delete metaData.equippedArmor;
+
   document.getElementById("loader").style.display="none";
   document.getElementById("meta-stats").style.display="block";
   document.getElementById("armory-panel").style.display="block";
@@ -2472,34 +2565,34 @@ const BEAST_ORDER=["normal","runner","stunner","tank","shielded","splitter","spl
   "wraith","circuitbreaker","hologram","specter","ghoul","banshee","angler","jellydrifter","deepcrawler",
   "broodling","broodletling","hivelarva","hiveguardian","impostor"];
 const BEAST_DESC={
-  normal:"This alien is the type of alien that would visit Earth and probably be under your bed.",
-  runner:"Very fast, but very dumb and killable, outruns all the enemies distracting your towers.",
-  stunner:"A pulse explodes outside of itself as protection, stunning your towers.",
-  tank:"Slow, and 'tanks' all the damage, but is very easy to kill in late game.",
-  shielded:"A barrier spins around it protecting itself, the barrier actually caused it to not grow antennae.",
+  normal:"The baseline grunt. No tricks, no gimmicks - just numbers.",
+  runner:"Fragile but fast. Outruns slow-firing towers if left unchecked.",
+  stunner:"Periodically pulses a stun field, freezing nearby towers.",
+  tank:"Slow-moving wall of health. Absorbs sustained fire.",
+  shielded:"Wrapped in a rotating energy barrier - high HP, mechanical.",
   splitter:"Bursts into two Splitlings on death.",
-  splitling:"The disgusting larvae that was holding onto its mother.",
-  cloaked:"Moves within the shadows, where your towers cant see them.",
-  juggernaut:"Very very very very very very very very very slow moving wall of health.",
-  glitch:"Very glitchy, sometimes 404's out and into existence.",
-  daemon:"A virus, like no other virus, attacks The Mainframe.",
-  trojan:"Its not a trojan horse, though it is as fast as one, its a trojan virus.",
-  cinder:"A living bubble of lava that will attack anything it sees except its allies.",
-  ashling:"Summoned from the explosion of a volcano, it is very fast and has more health than the runner.",
-  obsidianite:"This alien is hidden as obsidian and is made of obsidian, causing it to be very heavy and slow.",
-  frostfang:"A fragile shard of ice, that speeds off.",
-  icewraith:"A strong piece of glacier that is very hard to spot.",
-  glacierback:"A big lump of permafrost, which is very slow moving.",
-  burrower:"Hides inside the sand only poking out to move spots.",
-  scarab:"A runner that adapted to the harsh Dune Sea, it has much more health but its speed is halved.",
-  mirage:"Another race of the runner that adapted differently, it is faster but has less health.",
-  drifter:"It pushes itself to move.",
-  meteorhusk:"An alien housing inside a meteorite.",
-  nebulamoth:"Called a moth because it lives in the brightest areas in the solar system.",
-  leech:"A parasitic alien that adapted in the Toxic Swamp.",
-  leechling:"The parasitic leech's young.",
-  sporeling:"Watches, then strikes.",
-  bogcrawler:"Like an alligator, it is silent and camoflauged.",
+  splitling:"The quick, weak offspring left behind when a Splitter dies.",
+  cloaked:"Flickers in and out of visibility.",
+  juggernaut:"A crawling fortress. Glacially slow, but the toughest non-boss on the field.",
+  glitch:"A flickering corrupted process from the Mainframe.",
+  daemon:"A rogue background process that slipped its sandbox.",
+  trojan:"Disguised as harmless code - hits like an armored brick.",
+  cinder:"A molten brawler dredged up from the Magma Depths.",
+  ashling:"A skittering cinder that outruns most defenses.",
+  obsidianite:"A crab-like shell of cooled volcanic glass.",
+  frostfang:"An arctic predator that closes distance fast.",
+  icewraith:"A translucent chill that fades in and out of sight.",
+  glacierback:"A lumbering wall of packed glacial ice.",
+  burrower:"An armored digger from the Dune Sea.",
+  scarab:"A segmented sand-dweller with a tough shell.",
+  mirage:"A heat-shimmer illusion that's hard to pin down.",
+  drifter:"A weightless Deep Space stray.",
+  meteorhusk:"A burnt-out meteorite fragment, still armored and dangerous.",
+  nebulamoth:"A drifting cloud of luminous space dust.",
+  leech:"A swollen parasite from the Toxic Swamp.",
+  leechling:"A small hungry offshoot of a Bog Leech.",
+  sporeling:"A quick puff of drifting toxic spores.",
+  bogcrawler:"A sludge-caked brute that wades through the muck.",
   wraith:"A rogue Neon City process that phases in and out.",
   circuitbreaker:"Pulses an overload field that shorts out nearby towers.",
   hologram:"A projected decoy that flickers between real and fake.",
@@ -2563,23 +2656,25 @@ function getAreaIndex(){
   return Math.min(AREAS.length-1, Math.floor((w-1)/10));
 }
 function getCurrentArea(){ return AREAS[getAreaIndex()]; }
-
 // ---------------------------------------------------------------------
-// POWERUPS
+// POWERUPS (CARDS)
 // ---------------------------------------------------------------------
 const POWERUP_DEFS=[
   {id:"dmg",     name:"Overcharge",      rarity:"common",    desc:"+X% tower damage",              values:[10,20,35]},
   {id:"range",   name:"Long Sight",      rarity:"common",    desc:"+X% tower range",               values:[10,20,35]},
   {id:"fire",    name:"Quickfire",       rarity:"uncommon",  desc:"+X% fire rate",                 values:[8,16,28]},
-  {id:"gold",    name:"Prospector",      rarity:"uncommon",  desc:"+X% credits earned",             values:[10,20,35]},
-  {id:"lives",   name:"Reinforced Core", rarity:"rare",      desc:"+X core shields at start",       values:[1,2,4]},
-  {id:"splash",  name:"Wide Blast",      rarity:"rare",      desc:"+X% splash radius",              values:[15,30,50]},
+  {id:"gold",    name:"Prospector",      rarity:"uncommon",  desc:"+X% credits earned from this tower's kills", values:[10,20,35]},
+  {id:"lives",   name:"Reinforced Core", rarity:"rare",      desc:"+X core shields at start (account passive, not tower-equippable)", values:[1,2,4]},
+  {id:"splash",  name:"Wide Blast",      rarity:"rare",      desc:"+X% splash radius (splash towers only)", values:[15,30,50]},
   {id:"crit",    name:"Weak Point",      rarity:"epic",      desc:"X% chance to deal double damage",values:[10,18,30]},
-  {id:"cooldown",name:"Overclock",       rarity:"epic",      desc:"-X% tower cooldowns",             values:[10,18,30]},
-  {id:"biomass", name:"Harvester",       rarity:"legendary", desc:"+X% biomass from kills",         values:[15,30,50]},
-  {id:"revive",  name:"Second Wind",     rarity:"legendary", desc:"First revive each run is X% cheaper", values:[20,35,55]},
+  {id:"cooldown",name:"Overclock",       rarity:"epic",      desc:"-X% tower cooldown",             values:[10,18,30]},
+  {id:"biomass", name:"Harvester",       rarity:"legendary", desc:"+X% biomass from kills (account passive, not tower-equippable)", values:[15,30,50]},
+  {id:"revive",  name:"Second Wind",     rarity:"legendary", desc:"First revive each run is X% cheaper (account passive, not tower-equippable)", values:[20,35,55]},
   {id:"godslayer",name:"GODSLAYER",      rarity:"godly",     desc:"+X% damage to bosses only",       values:[15,30,50]}
 ];
+// Card defIds that can be equipped onto a specific tower (the rest are
+// account-level passives with no per-tower equip slot).
+const TOWER_EQUIPPABLE_CARD_IDS=["dmg","range","fire","gold","splash","crit","cooldown","godslayer"];
 // Godly cards have no craftable levels beyond 1, so their values array is
 // only ever read at index 0 - level clamps below still guard that safely.
 function powerupDescForLevel(def,level){
@@ -2590,6 +2685,41 @@ function powerupDescForLevel(def,level){
 }
 const RARITY_ORDER=["common","uncommon","rare","epic","legendary","godly"];
 const RARITY_COLOR={common:"#9fd8a0",uncommon:"#39ff14",rare:"#00f0ff",epic:"#b026ff",legendary:"#ffd700",godly:"#ff0055"};
+
+// ---------------------------------------------------------------------
+// DURABILITY & REPAIR (cards + armor share this system)
+// ---------------------------------------------------------------------
+// Level 1 items break after a single use; Level 2 after 3 uses; Level 3
+// after 6 uses. "A use" = the item's bonus getting applied to a tower
+// when that tower type is built (see consumeEquippedItem()).
+const LEVEL_DURABILITY={1:1,2:3,3:6};
+// Repairing transfers durability from a donor item of the SAME def+kind
+// into a damaged/broken one. Rarer items need a bigger transfer and cost
+// more Biomass to repair.
+const RARITY_REPAIR_INFO={
+  common:   {amount:1, cost:20},
+  uncommon: {amount:1, cost:40},
+  rare:     {amount:2, cost:80},
+  epic:     {amount:2, cost:150},
+  legendary:{amount:3, cost:300},
+  godly:    {amount:3, cost:600}
+};
+function newCardInstance(cardId,level){
+  const def=POWERUP_DEFS.find(p=>p.id===cardId);
+  const rarity=def?def.rarity:"common";
+  const max=LEVEL_DURABILITY[level]||1;
+  metaData.nextInstId=(metaData.nextInstId||1);
+  const id="c"+(metaData.nextInstId++);
+  return {id,defId:cardId,level,rarity,durability:max,maxDurability:max};
+}
+function newArmorInstance(armorId,level){
+  const def=ARMOR_DEFS.find(a=>a.id===armorId);
+  const rarity=def?def.rarity:"common";
+  const max=LEVEL_DURABILITY[level]||1;
+  metaData.nextInstId=(metaData.nextInstId||1);
+  const id="a"+(metaData.nextInstId++);
+  return {id,defId:armorId,level,rarity,durability:max,maxDurability:max};
+}
 
 const CRATES=[
   {id:1,name:"Common Crate",cost:5,music:"crate1",
@@ -2611,18 +2741,17 @@ function rollRarity(odds){
 }
 
 function craftCards(powerupId,level){
-  metaData.powerups=metaData.powerups||{};
-  const key=powerupId+"_"+level;
-  const have=metaData.powerups[key]||0;
+  metaData.cardInstances=metaData.cardInstances||[];
   const def=POWERUP_DEFS.find(p=>p.id===powerupId);
   if(!def || def.rarity==="godly") return {success:false,message:"Godly cards cannot be crafted."};
-  if(have<2) return {success:false,message:"Need 2 copies of level "+level+" to fuse."};
   if(level>=3) return {success:false,message:"Already max level."};
+  const candidates=metaData.cardInstances.filter(c=>c.defId===powerupId && c.level===level && c.durability===c.maxDurability);
+  if(candidates.length<2) return {success:false,message:"Need 2 undamaged copies of level "+level+" to fuse."};
   const successChance=Math.max(0.15, 0.75-level*0.2-(RARITY_ORDER.indexOf(def.rarity)*0.08));
-  metaData.powerups[key]=have-2;
+  const used=candidates.slice(0,2);
+  metaData.cardInstances=metaData.cardInstances.filter(c=>!used.includes(c));
   if(Math.random()<successChance){
-    const nextKey=powerupId+"_"+(level+1);
-    metaData.powerups[nextKey]=(metaData.powerups[nextKey]||0)+1;
+    metaData.cardInstances.push(newCardInstance(powerupId,level+1));
     saveToStorage(metaData);
     return {success:true,message:def.name+" fused to Level "+(level+1)+"!"};
   }else{
@@ -2639,9 +2768,8 @@ function openCrate(crateIdx){
   const rarity=rollRarity(crate.odds);
   const pool=POWERUP_DEFS.filter(p=>p.rarity===rarity);
   const won=pool[Math.floor(Math.random()*pool.length)] || POWERUP_DEFS[0];
-  const key=won.id+"_1";
-  metaData.powerups=metaData.powerups||{};
-  metaData.powerups[key]=(metaData.powerups[key]||0)+1;
+  metaData.cardInstances=metaData.cardInstances||[];
+  metaData.cardInstances.push(newCardInstance(won.id,1));
   saveToStorage(metaData);
   return {success:true,won,rarity};
 }
@@ -2651,7 +2779,7 @@ function openCrate(crateIdx){
 // ---------------------------------------------------------------------
 const MATERIAL_TIERS=["common","uncommon","rare","epic","legendary"];
 const MATERIAL_COLOR={common:"#9fd8a0",uncommon:"#39ff14",rare:"#00f0ff",epic:"#b026ff",legendary:"#ffd700"};
-const MATERIAL_NAME={common:"Uranium",uncommon:"Plasma Core",rare:"Void Crystal",epic:"Plutonium Rod",legendary:"Nuclear Battery"};
+const MATERIAL_NAME={common:"Chitin Shard",uncommon:"Alloy Core",rare:"Plasma Crystal",epic:"Void Residue",legendary:"Genesis Cell"};
 
 function rollMaterialDrop(){
   // Higher waves skew toward rarer materials.
@@ -2686,7 +2814,7 @@ const ARMOR_DEFS=[
   {id:"core",    name:"Overdrive Core",    rarity:"rare",      desc:"+X% splash/AoE radius",      values:[10,20,35]},
   {id:"barb",    name:"Barbed Housing",    rarity:"epic",      desc:"+X% chance to deal double damage", values:[8,16,26]},
   {id:"sink",    name:"Heat Sink Array",   rarity:"epic",      desc:"+X% damage vs armored aliens", values:[10,20,32]},
-  {id:"prism",   name:"Prism Lattice",     rarity:"legendary", desc:"+X% credits from tower kills", values:[10,20,35]},
+  {id:"prism",   name:"Prism Lattice",     rarity:"legendary", desc:"+X% credits from this tower's kills", values:[10,20,35]},
   {id:"crown",   name:"Sovereign Crown",   rarity:"godly",     desc:"+X% damage to bosses only",  values:[15,30,50]}
 ];
 function armorDescForLevel(def,level){
@@ -2707,33 +2835,30 @@ function openArmorCrate(idx){
   const rarity=rollRarity(crate.odds);
   const pool=ARMOR_DEFS.filter(a=>a.rarity===rarity);
   const won=pool[Math.floor(Math.random()*pool.length)] || ARMOR_DEFS[0];
-  const key=won.id+"_1";
-  metaData.armors=metaData.armors||{};
-  metaData.armors[key]=(metaData.armors[key]||0)+1;
+  metaData.armorInstances=metaData.armorInstances||[];
+  metaData.armorInstances.push(newArmorInstance(won.id,1));
   metaData.stats.armorCratesOpened=(metaData.stats.armorCratesOpened||0)+1;
   saveToStorage(metaData);
   return {success:true,won,rarity};
 }
 function craftArmor(armorId,level){
-  metaData.armors=metaData.armors||{};
-  const key=armorId+"_"+level;
-  const have=metaData.armors[key]||0;
+  metaData.armorInstances=metaData.armorInstances||[];
   const def=ARMOR_DEFS.find(a=>a.id===armorId);
   if(!def || def.rarity==="godly") return {success:false,message:"Godly armor cannot be crafted."};
-  if(have<2) return {success:false,message:"Need 2 copies of level "+level+" to fuse."};
   if(level>=3) return {success:false,message:"Already max level."};
+  const candidates=metaData.armorInstances.filter(a=>a.defId===armorId && a.level===level && a.durability===a.maxDurability);
+  if(candidates.length<2) return {success:false,message:"Need 2 undamaged copies of level "+level+" to fuse."};
   const successChance=Math.max(0.15, 0.75-level*0.2-(RARITY_ORDER.indexOf(def.rarity)*0.08));
-  metaData.armors[key]=have-2;
+  const used=candidates.slice(0,2);
+  metaData.armorInstances=metaData.armorInstances.filter(a=>!used.includes(a));
   if(Math.random()<successChance){
-    const nextKey=armorId+"_"+(level+1);
-    metaData.armors[nextKey]=(metaData.armors[nextKey]||0)+1;
+    metaData.armorInstances.push(newArmorInstance(armorId,level+1));
     saveToStorage(metaData);
     return {success:true,message:def.name+" fused to Level "+(level+1)+"!"};
   }
   saveToStorage(metaData);
   return {success:false,message:"Fusion failed - armor lost."};
 }
-const MAX_ARMOR_SLOTS=3;
 
 // ---------------------------------------------------------------------
 // SUMMON-ONLY TOWERS - 10 unique towers only obtainable via the
@@ -2771,7 +2896,6 @@ function summonTower(){
   saveToStorage(metaData);
   return {success:true,wonId};
 }
-
 // ---------------------------------------------------------------------
 // Icon rendering - reuses the live gameplay alien-drawing functions to
 // render a small preview onto an arbitrary <canvas>, so the Bestiary,
@@ -3044,7 +3168,6 @@ document.addEventListener("click",e=>{
   const pop=document.getElementById("drop-rate-popup");
   if(pop && pop.style.display==="block" && !pop.contains(e.target)) pop.style.display="none";
 });
-
 // ---------------------------------------------------------------------
 // Armory
 // ---------------------------------------------------------------------
@@ -3135,13 +3258,16 @@ function renderArmory(){
   }
   list.appendChild(slotRow);
 
-  renderArmorLoadoutGroup(list);
-
+  const mats=metaData.materials||{};
   const matLine=document.createElement("div");
   matLine.style.cssText="font-family:Arial;font-size:.78rem;color:#9fd8a0;text-align:center;margin-top:14px;";
-  const mats=metaData.materials||{};
   matLine.innerHTML="Materials: "+MATERIAL_TIERS.map(m=>`<span style="color:${MATERIAL_COLOR[m]}">${mats[m]||0} ${MATERIAL_NAME[m]}</span>`).join(" &middot; ");
   list.appendChild(matLine);
+
+  const invNote=document.createElement("div");
+  invNote.style.cssText="font-family:Arial;font-size:.75rem;color:#888;text-align:center;margin-top:10px;";
+  invNote.innerText="Equip cards & armor onto specific towers, and repair broken gear, from the INVENTORY screen.";
+  list.appendChild(invNote);
 
   const craftBtn=document.createElement("button");
   craftBtn.style.cssText="width:100%;margin-top:10px;border-color:#9fd8a0;color:#9fd8a0;box-shadow:0 0 20px rgba(159,216,160,.5);";
@@ -3149,64 +3275,18 @@ function renderArmory(){
   craftBtn.onclick=openCrafting;
   list.appendChild(craftBtn);
 
+  const invBtn=document.createElement("button");
+  invBtn.style.cssText="width:100%;margin-top:10px;border-color:#39ff14;color:#39ff14;box-shadow:0 0 20px rgba(57,255,20,.5);";
+  invBtn.innerText="INVENTORY";
+  invBtn.onclick=openInventory;
+  list.appendChild(invBtn);
+
   const summonBtn=document.createElement("button");
   summonBtn.style.cssText="width:100%;margin-top:10px;border-color:#ff6a2b;color:#ff6a2b;box-shadow:0 0 20px rgba(255,106,43,.5);";
   summonBtn.innerText="SUMMONING";
   summonBtn.onclick=openSummoning;
   list.appendChild(summonBtn);
 }
-
-function renderArmorLoadoutGroup(list){
-  const owned=Object.keys(metaData.armors||{}).filter(k=>metaData.armors[k]>0);
-  const h=document.createElement("div");
-  h.className="armory-group-header";
-  const groupKey="armory-collapse-Armor-Loadout";
-  const isCollapsed=armoryCollapseState[groupKey];
-  if(isCollapsed) h.classList.add("collapsed");
-  h.innerHTML=`<span class="admin-cat-label" style="color:var(--purple);margin:0;">Armor Loadout (${(metaData.equippedArmor||[]).length}/${MAX_ARMOR_SLOTS})</span><span class="agh-arrow" style="color:var(--purple);">&#9662;</span>`;
-  const body=document.createElement("div");
-  body.className="armory-group-body"+(isCollapsed?" collapsed":"");
-  h.onclick=()=>{
-    armoryCollapseState[groupKey]=!armoryCollapseState[groupKey];
-    h.classList.toggle("collapsed");
-    body.classList.toggle("collapsed");
-    playSound("click");
-  };
-  list.appendChild(h);
-  list.appendChild(body);
-  if(owned.length===0){
-    body.innerHTML=`<div style="font-family:Arial;font-size:.8rem;color:#888;padding:6px 0;">No armor yet - summon some in the Armor section of Summoning.</div>`;
-    return;
-  }
-  owned.forEach(key=>{
-    const [id,lvl]=key.split("_");
-    const def=ARMOR_DEFS.find(a=>a.id===id);
-    if(!def) return;
-    const equipped=(metaData.equippedArmor||[]).includes(key);
-    const card=document.createElement("div");
-    card.className="armory-card"+(equipped?" equipped":"");
-    card.innerHTML=`
-      <div class="a-info">
-        <div class="a-name" style="color:${RARITY_COLOR[def.rarity]}">${def.name} Lvl ${lvl}</div>
-        <div class="a-desc">${armorDescForLevel(def,lvl)}</div>
-      </div>
-      <button class="armory-btn${equipped?' unequip':''}" onclick="armoryToggleEquipArmor('${key}')">${equipped?'UNEQUIP':'EQUIP'}</button>`;
-    body.appendChild(card);
-  });
-}
-function armoryToggleEquipArmor(key){
-  metaData.equippedArmor=metaData.equippedArmor||[];
-  const idx=metaData.equippedArmor.indexOf(key);
-  if(idx!==-1){ metaData.equippedArmor.splice(idx,1); }
-  else{
-    if(metaData.equippedArmor.length>=MAX_ARMOR_SLOTS){ playSound("denied"); showAlertModal("No free armor slots - unequip a piece first."); return; }
-    metaData.equippedArmor.push(key);
-  }
-  saveToStorage(metaData);
-  renderArmory();
-  playSound("click");
-}
-window.armoryToggleEquipArmor=armoryToggleEquipArmor;
 
 function armoryBuyTower(id){
   apiPost("buyTower", { towerId: id }).then(res=>{
@@ -3240,8 +3320,6 @@ function armoryBuySlot(){
 window.armoryBuyTower=armoryBuyTower;
 window.armoryToggleEquip=armoryToggleEquip;
 window.armoryBuySlot=armoryBuySlot;
-
-
 // ---------------------------------------------------------------------
 // SUMMONING (hub + 3 sub-sections: Cards, Armor, Towers)
 // ---------------------------------------------------------------------
@@ -3328,7 +3406,7 @@ function renderArmorSection(){
           ${RARITY_ORDER.map(r=>`<div>${r==="godly"?"GODLY":r.toUpperCase()}: ${r==="godly"?"???":(c.odds[r]||0)+"%"}</div>`).join("")}
         </div>
       </div>`).join("")}
-    <div style="font-family:Arial;font-size:.78rem;color:#888;">Fusing duplicate armor into higher levels happens in CRAFTING, back in the lobby.</div>`;
+    <div style="font-family:Arial;font-size:.78rem;color:#888;">Fusing duplicate armor into higher levels happens in CRAFTING, back in the lobby. Equipping repaired/fused armor onto towers happens in INVENTORY.</div>`;
   document.getElementById("summoning-content").innerHTML=body;
 }
 
@@ -3430,7 +3508,7 @@ function doOpenCrateBulk(idx,count){
             <b style="color:${RARITY_COLOR[it.rarity]}">${it.def.name}</b>
             <span style="color:${RARITY_COLOR[it.rarity]};font-size:.75rem;">${it.rarity==="godly"?"???":it.rarity.toUpperCase()}</span>
             ${it.count>1?` x${it.count}`:""}
-            <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(it.def,1)}</div>
+            <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(it.def,1)} (Durability 1/1 each)</div>
           </div>`).join("")}
         ${summonReturnFooter(renderCardsSection)}
       </div>`;
@@ -3473,7 +3551,7 @@ function showCrateWheel(res){
         <div class="crate-reveal-item" style="--rc:${RARITY_COLOR[res.rarity]}">
           <b style="color:${RARITY_COLOR[res.rarity]}">${res.won.name}</b>
           <span style="color:${RARITY_COLOR[res.rarity]};font-size:.75rem;">${res.rarity==="godly"?"???":res.rarity.toUpperCase()}</span>
-          <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(res.won,1)}</div>
+          <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${powerupDescForLevel(res.won,1)} (Durability 1/1)</div>
         </div>
         ${summonReturnFooter(renderCardsSection)}
       </div>`;
@@ -3496,7 +3574,7 @@ function doOpenArmorCrate(idx){
       <div class="crate-reveal-item" style="--rc:${RARITY_COLOR[res.rarity]}">
         <b style="color:${RARITY_COLOR[res.rarity]}">${res.won.name}</b>
         <span style="color:${RARITY_COLOR[res.rarity]};font-size:.75rem;">${res.rarity==="godly"?"???":res.rarity.toUpperCase()}</span>
-        <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${armorDescForLevel(res.won,1)}</div>
+        <div style="font-family:Arial;font-size:.78rem;color:#ccc;margin-top:3px;">${armorDescForLevel(res.won,1)} (Durability 1/1)</div>
       </div>
       ${summonReturnFooter(renderArmorSection)}
     </div>`;
@@ -3541,7 +3619,6 @@ function spinSecretTurret(){
   },400);
 }
 window.spinSecretTurret=spinSecretTurret;
-
 // ---------------------------------------------------------------------
 // CRAFTING - separate from Summoning. Uses Materials (dropped from
 // kills) to fuse card/armor levels and to craft crate openings without
@@ -3597,22 +3674,33 @@ function setCraftTab(tab){
 }
 window.setCraftTab=setCraftTab;
 
+function groupInstancesByDefLevel(list){
+  const groups={};
+  (list||[]).forEach(inst=>{
+    const key=inst.defId+"_"+inst.level;
+    (groups[key]=groups[key]||[]).push(inst);
+  });
+  return groups;
+}
+
 function renderCraftCardsTab(){
-  const pu=metaData.powerups||{};
-  const rows=Object.keys(pu).filter(k=>pu[k]>0).map(k=>{
-    const [id,lvl]=k.split("_");
+  const groups=groupInstancesByDefLevel(metaData.cardInstances);
+  const rows=Object.keys(groups).map(key=>{
+    const list=groups[key];
+    const [id,lvlStr]=key.split("_"); const level=parseInt(lvlStr,10);
     const def=POWERUP_DEFS.find(p=>p.id===id);
     if(!def) return "";
-    const level=parseInt(lvl,10);
-    const canFuseBase=pu[k]>=2 && def.rarity!=="godly" && level<3;
+    const undamaged=list.filter(c=>c.durability===c.maxDurability).length;
+    const canFuseBase=undamaged>=2 && def.rarity!=="godly" && level<3;
     const cost=CARD_FUSE_MATERIAL_COST[level]||{};
     const canAfford=hasMaterials(cost);
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #222;gap:10px;flex-wrap:wrap;">
-      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${lvl} X${pu[k]}<br><span style="color:#999;font-size:.72rem;">${powerupDescForLevel(def,lvl)}</span>${canFuseBase?`<br><span style="color:#888;font-size:.7rem;">Cost: ${materialCostText(cost)}</span>`:""}</span>
-      ${canFuseBase?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" ${canAfford?"":"disabled"} onclick="doCraftCard('${id}',${lvl})">FUSE</button>`:""}
+      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${level} X${list.length} <span style="color:#888;font-size:.7rem;">(${undamaged} undamaged)</span><br><span style="color:#999;font-size:.72rem;">${powerupDescForLevel(def,level)}</span>${canFuseBase?`<br><span style="color:#888;font-size:.7rem;">Fuse cost: ${materialCostText(cost)}</span>`:""}</span>
+      ${canFuseBase?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" ${canAfford?"":"disabled"} onclick="doCraftCard('${id}',${level})">FUSE</button>`:""}
     </div>`;
   }).join("");
-  document.getElementById("crafting-content").innerHTML=rows||`<div style="color:#666;">No cards yet - summon some in Summoning &gt; Cards!</div>`;
+  document.getElementById("crafting-content").innerHTML=(rows||`<div style="color:#666;">No cards yet - summon some in Summoning &gt; Cards!</div>`)+
+    `<div style="font-family:Arial;font-size:.72rem;color:#888;margin-top:10px;">Fusing needs 2 UNDAMAGED copies of the same level. Equip &amp; repair cards from the INVENTORY screen.</div>`;
 }
 function doCraftCard(id,level){
   const cost=CARD_FUSE_MATERIAL_COST[level]||{};
@@ -3646,9 +3734,8 @@ function doCraftCrate(idx){
   const rarity=rollRarity(CRATES[idx].odds);
   const pool=POWERUP_DEFS.filter(p=>p.rarity===rarity);
   const won=pool[Math.floor(Math.random()*pool.length)] || POWERUP_DEFS[0];
-  const key=won.id+"_1";
-  metaData.powerups=metaData.powerups||{};
-  metaData.powerups[key]=(metaData.powerups[key]||0)+1;
+  metaData.cardInstances=metaData.cardInstances||[];
+  metaData.cardInstances.push(newCardInstance(won.id,1));
   metaData.stats.cratesOpened=(metaData.stats.cratesOpened||0)+1;
   questNotifyProgress("crate",1);
   saveToStorage(metaData);
@@ -3660,18 +3747,19 @@ function doCraftCrate(idx){
 window.doCraftCrate=doCraftCrate;
 
 function renderCraftArmorTab(){
-  const owned=Object.keys(metaData.armors||{}).filter(k=>metaData.armors[k]>0);
-  const fuseRows=owned.map(key=>{
-    const [id,lvl]=key.split("_");
+  const groups=groupInstancesByDefLevel(metaData.armorInstances);
+  const fuseRows=Object.keys(groups).map(key=>{
+    const list=groups[key];
+    const [id,lvlStr]=key.split("_"); const level=parseInt(lvlStr,10);
     const def=ARMOR_DEFS.find(a=>a.id===id);
     if(!def) return "";
-    const level=parseInt(lvl,10);
-    const canFuseBase=metaData.armors[key]>=2 && def.rarity!=="godly" && level<3;
+    const undamaged=list.filter(c=>c.durability===c.maxDurability).length;
+    const canFuseBase=undamaged>=2 && def.rarity!=="godly" && level<3;
     const cost=ARMOR_FUSE_MATERIAL_COST[level]||{};
     const canAfford=hasMaterials(cost);
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #222;gap:10px;flex-wrap:wrap;">
-      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${lvl} X${metaData.armors[key]}<br><span style="color:#999;font-size:.72rem;">${armorDescForLevel(def,lvl)}</span>${canFuseBase?`<br><span style="color:#888;font-size:.7rem;">Cost: ${materialCostText(cost)}</span>`:""}</span>
-      ${canFuseBase?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" ${canAfford?"":"disabled"} onclick="doCraftArmorFuse('${id}',${lvl})">FUSE</button>`:""}
+      <span style="color:${RARITY_COLOR[def.rarity]};text-align:left;">${def.name} Lvl ${level} X${list.length} <span style="color:#888;font-size:.7rem;">(${undamaged} undamaged)</span><br><span style="color:#999;font-size:.72rem;">${armorDescForLevel(def,level)}</span>${canFuseBase?`<br><span style="color:#888;font-size:.7rem;">Fuse cost: ${materialCostText(cost)}</span>`:""}</span>
+      ${canFuseBase?`<button style="padding:.3em .7em;font-size:.7rem;min-height:0;flex-shrink:0;" ${canAfford?"":"disabled"} onclick="doCraftArmorFuse('${id}',${level})">FUSE</button>`:""}
     </div>`;
   }).join("");
   const crateRows=ARMOR_CRATES.map((c,i)=>{
@@ -3685,7 +3773,8 @@ function renderCraftArmorTab(){
   }).join("");
   document.getElementById("crafting-content").innerHTML=
     `<div style="color:#9fd8a0;font-size:.85rem;margin-bottom:8px;">Craft Armor Crates</div>${crateRows}
-     <div style="color:#9fd8a0;font-size:.85rem;margin:14px 0 8px;">Fuse Owned Armor</div>${fuseRows||'<div style="color:#666;">No armor yet - summon some in Summoning &gt; Armor!</div>'}`;
+     <div style="color:#9fd8a0;font-size:.85rem;margin:14px 0 8px;">Fuse Owned Armor (needs 2 undamaged copies)</div>${fuseRows||'<div style="color:#666;">No armor yet - summon some in Summoning &gt; Armor!</div>'}
+     <div style="font-family:Arial;font-size:.72rem;color:#888;margin-top:10px;">Equip &amp; repair armor from the INVENTORY screen.</div>`;
 }
 function doCraftArmorFuse(id,level){
   const cost=ARMOR_FUSE_MATERIAL_COST[level]||{};
@@ -3706,9 +3795,8 @@ function doCraftArmorCrate(idx){
   const rarity=rollRarity(ARMOR_CRATES[idx].odds);
   const pool=ARMOR_DEFS.filter(a=>a.rarity===rarity);
   const won=pool[Math.floor(Math.random()*pool.length)] || ARMOR_DEFS[0];
-  const key=won.id+"_1";
-  metaData.armors=metaData.armors||{};
-  metaData.armors[key]=(metaData.armors[key]||0)+1;
+  metaData.armorInstances=metaData.armorInstances||[];
+  metaData.armorInstances.push(newArmorInstance(won.id,1));
   metaData.stats.armorCratesOpened=(metaData.stats.armorCratesOpened||0)+1;
   saveToStorage(metaData);
   playSound(rarity==="godly"?"winGodly":(RARITY_ORDER.indexOf(rarity)>=3?"winRare":"winCommon"));
@@ -3717,7 +3805,6 @@ function doCraftArmorCrate(idx){
   renderCraftArmorTab();
 }
 window.doCraftArmorCrate=doCraftArmorCrate;
-
 // ---------------------------------------------------------------------
 // ACHIEVEMENTS - 50 total across 7 categories, harder tiers pay more.
 // ---------------------------------------------------------------------
@@ -3968,6 +4055,216 @@ function closeTowerReward(){
 window.showTowerRewardScreen=showTowerRewardScreen;
 window.closeTowerReward=closeTowerReward;
 // ---------------------------------------------------------------------
+// INVENTORY - equip cards/armor onto specific TOWER TYPES. Equipping
+// costs Biomass (25% of that tower's credit cost). Whenever a tower of
+// that type is BUILT during a run, its equipped card/armor applies its
+// bonus to that specific tower and loses 1 durability point ("a use").
+// When durability hits 0 the item breaks and auto-unequips; repair it
+// (transferring durability from a spare copy, for Biomass) to reuse it.
+// ---------------------------------------------------------------------
+let invView="hub";
+
+function openInventory(){
+  document.getElementById("main-menu").style.display="none";
+  document.getElementById("inventory-screen").style.display="flex";
+  invView="hub";
+  renderInventory();
+}
+function closeInventory(){
+  document.getElementById("inventory-screen").style.display="none";
+  document.getElementById("main-menu").style.display="flex";
+}
+window.openInventory=openInventory;
+window.closeInventory=closeInventory;
+
+function invGoto(v){ invView=v; renderInventory(); playSound("click"); }
+window.invGoto=invGoto;
+function invBackButton(target){ return `<button class="summon-back-btn" onclick="invGoto('${target||'hub'}')">&#8592; BACK</button>`; }
+
+function towerEligibleList(){
+  return (metaData.ownedTowers||[]).filter(id=>TOWER_STATS[id] && !TOWER_STATS[id].admin && !TOWER_STATS[id].isWall);
+}
+function invEquipCostForTower(towerId){
+  const stat=TOWER_STATS[towerId];
+  return stat?Math.ceil(stat.cost*0.25):0;
+}
+
+function renderInventory(){
+  const el=document.getElementById("inventory-content");
+  if(invView==="hub"){
+    el.innerHTML=`
+      <div style="font-family:Arial;color:#ccc;margin-bottom:16px;line-height:1.5;">
+        Equip cards and armor onto a specific tower TYPE. Equipping costs Biomass equal to 25% of that tower's credit cost.
+        Every time you build that tower type in a run, the equipped item applies its bonus and loses 1 durability - Level 1 gear
+        lasts 1 use, Level 2 lasts 3 uses, Level 3 lasts 6 uses. Broken gear can be repaired below.
+      </div>
+      <div class="summon-section-grid">
+        <div class="summon-section-card" style="border-color:#ff6a2b;" onclick="invGoto('cards')">
+          <div class="ssc-icon">&#127183;</div><div class="ssc-title" style="color:#ff6a2b;">CARDS</div>
+        </div>
+        <div class="summon-section-card" style="border-color:var(--purple);" onclick="invGoto('armor')">
+          <div class="ssc-icon">&#128737;&#65039;</div><div class="ssc-title" style="color:var(--purple);">ARMOR</div>
+        </div>
+        <div class="summon-section-card" style="border-color:var(--cyan);" onclick="invGoto('repair')">
+          <div class="ssc-icon">&#128295;</div><div class="ssc-title" style="color:var(--cyan);">REPAIR</div>
+        </div>
+      </div>`;
+  }else if(invView==="cards"){ renderInvEquip("card"); }
+  else if(invView==="armor"){ renderInvEquip("armor"); }
+  else if(invView==="repair"){
+    el.innerHTML=`
+      ${invBackButton("hub")}
+      <div style="height:8px;"></div>
+      <div class="summon-section-grid">
+        <div class="summon-section-card" style="border-color:#ff6a2b;" onclick="invGoto('repair-cards')">
+          <div class="ssc-icon">&#127183;</div><div class="ssc-title" style="color:#ff6a2b;">CARD REPAIR</div>
+        </div>
+        <div class="summon-section-card" style="border-color:var(--purple);" onclick="invGoto('repair-armor')">
+          <div class="ssc-icon">&#128737;&#65039;</div><div class="ssc-title" style="color:var(--purple);">ARMOR REPAIR</div>
+        </div>
+      </div>`;
+  }else if(invView==="repair-cards"){ renderInvRepair("card"); }
+  else if(invView==="repair-armor"){ renderInvRepair("armor"); }
+}
+
+function renderInvEquip(kind){
+  const el=document.getElementById("inventory-content");
+  const isCard=kind==="card";
+  const insts=(isCard?(metaData.cardInstances||[]):(metaData.armorInstances||[])).slice()
+    .sort((a,b)=>b.level-a.level || RARITY_ORDER.indexOf(b.rarity)-RARITY_ORDER.indexOf(a.rarity));
+  const defs=isCard?POWERUP_DEFS:ARMOR_DEFS;
+  const equipMap=isCard?(metaData.towerCardEquip||{}):(metaData.towerArmorEquip||{});
+  const towerOptions=towerEligibleList();
+  const eligibleIds=isCard?TOWER_EQUIPPABLE_CARD_IDS:defs.map(d=>d.id);
+  const rows=insts.map(inst=>{
+    const def=defs.find(d=>d.id===inst.defId);
+    if(!def) return "";
+    const broken=inst.durability<=0;
+    const equipTarget=Object.keys(equipMap).find(tid=>equipMap[tid]===inst.id);
+    const barColor=broken?"var(--red)":(inst.durability<inst.maxDurability?"#ffae00":"var(--green)");
+    const notEquippable=isCard && !eligibleIds.includes(inst.defId);
+    const descText=isCard?powerupDescForLevel(def,inst.level):armorDescForLevel(def,inst.level);
+    let controlsHtml;
+    if(notEquippable){
+      controlsHtml=`<div style="font-family:Arial;font-size:.72rem;color:#888;margin-top:8px;">This card is an account-wide passive and isn't tower-equippable in this version.</div>`;
+    }else{
+      const selectOptions=towerOptions.map(tid=>{
+        const occupied=equipMap[tid] && equipMap[tid]!==inst.id;
+        return `<option value="${tid}" ${equipTarget===tid?"selected":""}>${TOWER_STATS[tid].name} (${invEquipCostForTower(tid)} Bio)${occupied?" [replaces equipped]":""}</option>`;
+      }).join("");
+      controlsHtml=`<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+        <select id="sel-${inst.id}" style="flex:1;min-width:150px;background:rgba(0,0,0,.6);color:#39ff14;border:2px solid #39ff14;border-radius:8px;padding:.3em .5em;font-family:Arial;font-size:.8rem;" ${broken||towerOptions.length===0?"disabled":""}>
+          ${selectOptions||'<option>No owned towers</option>'}
+        </select>
+        ${equipTarget?`<button class="armory-btn unequip" onclick="unequipItem('${kind}','${inst.id}')">UNEQUIP</button>`
+          :`<button class="armory-btn" ${broken||towerOptions.length===0?"disabled":""} onclick="equipItem('${kind}','${inst.id}')">EQUIP</button>`}
+      </div>`;
+    }
+    return `<div class="armory-card" style="flex-direction:column;align-items:stretch;">
+      <div class="a-info">
+        <div class="a-name" style="color:${RARITY_COLOR[def.rarity]}">${def.name} Lvl ${inst.level}${broken?' <span style="color:var(--red);">[BROKEN]</span>':''}${equipTarget?' <span style="color:var(--green);">[EQUIPPED: '+TOWER_STATS[equipTarget].name+']</span>':''}</div>
+        <div class="a-desc">${descText}</div>
+        <div style="font-size:.72rem;color:${barColor};margin-top:4px;">Durability: ${inst.durability} / ${inst.maxDurability}</div>
+      </div>
+      ${controlsHtml}
+    </div>`;
+  }).join("");
+  el.innerHTML=`${invBackButton("hub")}<div style="height:8px;"></div>${rows||`<div style="color:#666;">No ${isCard?"cards":"armor"} yet - summon some in Summoning &gt; ${isCard?"Cards":"Armor"}!</div>`}`;
+}
+
+function equipItem(kind,instId){
+  const isCard=kind==="card";
+  const list=isCard?metaData.cardInstances:metaData.armorInstances;
+  const inst=(list||[]).find(c=>c.id===instId);
+  if(!inst || inst.durability<=0){ playSound("denied"); return; }
+  const sel=document.getElementById("sel-"+instId);
+  const towerId=sel?sel.value:null;
+  if(!towerId || !TOWER_STATS[towerId]){ playSound("denied"); return; }
+  const cost=invEquipCostForTower(towerId);
+  if((metaData.biomass||0)<cost){ playSound("denied"); showAlertModal("Not enough Biomass ("+cost+" needed)."); return; }
+  const equipMap=isCard?(metaData.towerCardEquip=metaData.towerCardEquip||{}):(metaData.towerArmorEquip=metaData.towerArmorEquip||{});
+  // free this instance from any other tower slot it might occupy
+  Object.keys(equipMap).forEach(tid=>{ if(equipMap[tid]===instId) delete equipMap[tid]; });
+  metaData.biomass-=cost;
+  equipMap[towerId]=instId;
+  saveToStorage(metaData);
+  updateMenuUI();
+  playSound("build");
+  renderInvEquip(kind);
+}
+function unequipItem(kind,instId){
+  const isCard=kind==="card";
+  const equipMap=isCard?(metaData.towerCardEquip=metaData.towerCardEquip||{}):(metaData.towerArmorEquip=metaData.towerArmorEquip||{});
+  Object.keys(equipMap).forEach(tid=>{ if(equipMap[tid]===instId) delete equipMap[tid]; });
+  saveToStorage(metaData);
+  playSound("click");
+  renderInvEquip(kind);
+}
+window.equipItem=equipItem;
+window.unequipItem=unequipItem;
+
+function renderInvRepair(kind){
+  const el=document.getElementById("inventory-content");
+  const isCard=kind==="card";
+  const insts=isCard?(metaData.cardInstances||[]):(metaData.armorInstances||[]);
+  const defs=isCard?POWERUP_DEFS:ARMOR_DEFS;
+  const damaged=insts.filter(c=>c.durability<c.maxDurability);
+  if(damaged.length===0){
+    el.innerHTML=`${invBackButton("repair")}<div style="color:#666;margin-top:14px;">No damaged ${isCard?"cards":"armor"} to repair.</div>`;
+    return;
+  }
+  const rows=damaged.map(inst=>{
+    const def=defs.find(d=>d.id===inst.defId);
+    if(!def) return "";
+    const info=RARITY_REPAIR_INFO[def.rarity]||RARITY_REPAIR_INFO.common;
+    const donors=insts.filter(o=>o.id!==inst.id && o.defId===inst.defId && o.durability>=info.amount);
+    const donorOptions=donors.map(o=>`<option value="${o.id}">Lvl ${o.level} (Durability ${o.durability}/${o.maxDurability})</option>`).join("");
+    const canAfford=(metaData.biomass||0)>=info.cost;
+    return `<div class="armory-card" style="flex-direction:column;align-items:stretch;">
+      <div class="a-info">
+        <div class="a-name" style="color:${RARITY_COLOR[def.rarity]}">${def.name} Lvl ${inst.level}${inst.durability<=0?' <span style="color:var(--red);">[BROKEN]</span>':''}</div>
+        <div style="font-size:.72rem;color:#ccc;margin-top:3px;">Durability: ${inst.durability} / ${inst.maxDurability}</div>
+        <div style="font-size:.72rem;color:#888;margin-top:3px;">Repair cost: ${info.cost} Biomass &middot; needs a donor with &ge;${info.amount} durability (${def.rarity} rarity)</div>
+      </div>
+      ${donors.length>0?`
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+        <select id="donor-${inst.id}" style="flex:1;min-width:170px;background:rgba(0,0,0,.6);color:#39ff14;border:2px solid #39ff14;border-radius:8px;padding:.3em .5em;font-family:Arial;font-size:.8rem;">
+          ${donorOptions}
+        </select>
+        <button class="armory-btn" ${canAfford?"":"disabled"} onclick="doRepair('${kind}','${inst.id}')">REPAIR</button>
+      </div>`:`<div style="font-size:.72rem;color:#888;margin-top:6px;">No eligible donor copy (need another ${def.name} with enough spare durability).</div>`}
+    </div>`;
+  }).join("");
+  el.innerHTML=`${invBackButton("repair")}<div style="height:8px;"></div>${rows}`;
+}
+
+function doRepair(kind,targetId){
+  const isCard=kind==="card";
+  const list=isCard?metaData.cardInstances:metaData.armorInstances;
+  const defs=isCard?POWERUP_DEFS:ARMOR_DEFS;
+  const target=(list||[]).find(c=>c.id===targetId);
+  if(!target){ playSound("denied"); return; }
+  const def=defs.find(d=>d.id===target.defId);
+  const info=RARITY_REPAIR_INFO[def.rarity]||RARITY_REPAIR_INFO.common;
+  const sel=document.getElementById("donor-"+targetId);
+  const donorId=sel?sel.value:null;
+  const donor=list.find(c=>c.id===donorId);
+  if(!donor || donor.durability<info.amount){ playSound("denied"); showAlertModal("Invalid donor."); return; }
+  if((metaData.biomass||0)<info.cost){ playSound("denied"); showAlertModal("Not enough Biomass."); return; }
+  metaData.biomass-=info.cost;
+  donor.durability-=info.amount;
+  target.durability=Math.min(target.maxDurability,target.durability+info.amount);
+  const equipMap=isCard?metaData.towerCardEquip:metaData.towerArmorEquip;
+  if(donor.durability<=0 && equipMap){
+    Object.keys(equipMap).forEach(tid=>{ if(equipMap[tid]===donor.id) delete equipMap[tid]; });
+  }
+  saveToStorage(metaData);
+  updateMenuUI();
+  playSound("upgrade");
+  renderInvRepair(kind);
+}
+window.doRepair=doRepair;
+// ---------------------------------------------------------------------
 // CORE GAME ENGINE
 // ---------------------------------------------------------------------
 const canvas=document.getElementById("gameCanvas");
@@ -3986,6 +4283,24 @@ function resize(){
   if(path.length===0) generatePath();
 }
 window.addEventListener("resize",resize);
+
+// ---------------------------------------------------------------------
+// Anti-zoom: the viewport meta tag already blocks most pinch/double-tap
+// zoom, but some mobile browsers still allow it through rapid taps or
+// gesture events. Belt-and-braces JS backstop so a panicked multi-tap
+// during gameplay can never zoom the page out from under the HUD.
+// ---------------------------------------------------------------------
+document.addEventListener("gesturestart",e=>e.preventDefault());
+document.addEventListener("gesturechange",e=>e.preventDefault());
+document.addEventListener("gestureend",e=>e.preventDefault());
+document.addEventListener("touchmove",e=>{ if(e.touches && e.touches.length>1) e.preventDefault(); },{passive:false});
+let __lastTouchEndTime=0;
+document.addEventListener("touchend",e=>{
+  const now=Date.now();
+  if(now-__lastTouchEndTime<350) e.preventDefault();
+  __lastTouchEndTime=now;
+},{passive:false});
+document.addEventListener("dblclick",e=>e.preventDefault());
 
 function getCanvasCoords(e){
   const rect=canvas.getBoundingClientRect();
@@ -4017,12 +4332,17 @@ function generatePath(){
   ];
 }
 
-const PLACEMENT_MARGIN_RIGHT=340, PLACEMENT_MARGIN_TOP=110, PLACEMENT_MARGIN_BOTTOM=40, PLACEMENT_MARGIN_LEFT=45;
+// Only keep aliens from being walled in by towers dropped directly on
+// the lane, and keep tower circles from rendering half off-canvas.
+// Placement is otherwise allowed anywhere on the field, including areas
+// the HUD/side panels visually sit over (toggle/hide them with OPEN
+// SHOP / HIDE if they're in the way of a spot you want).
+const PLACEMENT_EDGE_MARGIN=30;
 const MIN_PATH_CLEARANCE=55, MIN_TOWER_SPACING=52;
 
 function isValidPlacement(x,y){
-  if(x<PLACEMENT_MARGIN_LEFT || x>BASE_W-PLACEMENT_MARGIN_RIGHT) return false;
-  if(y<PLACEMENT_MARGIN_TOP || y>BASE_H-PLACEMENT_MARGIN_BOTTOM) return false;
+  if(x<PLACEMENT_EDGE_MARGIN || x>BASE_W-PLACEMENT_EDGE_MARGIN) return false;
+  if(y<PLACEMENT_EDGE_MARGIN || y>BASE_H-PLACEMENT_EDGE_MARGIN) return false;
   for(let i=0;i<path.length-1;i++){ if(getDistToSegment({x,y},path[i],path[i+1])<MIN_PATH_CLEARANCE) return false; }
   for(const t of towers){ if(Math.hypot(t.x-x,t.y-y)<MIN_TOWER_SPACING) return false; }
   return true;
@@ -4059,10 +4379,653 @@ function renderShopCards(){
     card.className="tower-card";
     card.id="card-"+id;
     card.onclick=()=>selectShopItem(id);
+    const eqCard=metaData.towerCardEquip?metaData.towerCardEquip[id]:null;
+    const eqArmor=metaData.towerArmorEquip?metaData.towerArmorEquip[id]:null;
+    let eqLine="";
+    if(eqCard||eqArmor){
+      const bits=[];
+      if(eqCard){ const inst=(metaData.cardInstances||[]).find(c=>c.id===eqCard); const def=inst&&POWERUP_DEFS.find(p=>p.id===inst.defId); if(def) bits.push("Card: "+def.name+" ("+inst.durability+"/"+inst.maxDurability+")"); }
+      if(eqArmor){ const inst=(metaData.armorInstances||[]).find(c=>c.id===eqArmor); const def=inst&&ARMOR_DEFS.find(a=>a.id===inst.defId); if(def) bits.push("Armor: "+def.name+" ("+inst.durability+"/"+inst.maxDurability+")"); }
+      if(bits.length) eqLine=`<div style="font-family:Arial;font-size:.7rem;color:#9fd8a0;margin-top:5px;">${bits.join(" | ")}</div>`;
+    }
     card.innerHTML=`<div class="t-name" style="color:${stat.color}">${stat.name}</div>
-      <div class="t-desc">${stat.desc}</div><div class="t-cost">${stat.cost} Cr</div>`;
+      <div class="t-desc">${stat.desc}</div><div class="t-cost">${stat.cost} Cr</div>${eqLine}`;
     container.appendChild(card);
   }
+}
+
+// Mobile: double-tap to place (first tap "picks up"/previews and can be
+// dragged around, second tap on the same spot commits the build).
+let pendingPlacement=null, lastTapTime=0, lastTapPos={x:-999,y:-999};
+
+function handlePointerDown(x,y,isTouch){
+  if(moveModeTower){
+    const mt=moveModeTower;
+    if(!towers.includes(mt)){ moveModeTower=null; }
+    else if(Math.hypot(mt.x-x,mt.y-y)<25){
+      moveModeTower=null; // tapped the tower itself - cancel the move
+    }else if(isValidPlacement(x,y)){
+      const cost=getTowerMoveCost(mt);
+      if(cost===null || gold<cost){ playSound("denied"); }
+      else{
+        gold-=cost;
+        mt.x=x; mt.y=y;
+        mt.moveCount=(mt.moveCount||0)+1;
+        playSound("build");
+        updateHUD();
+        if(selectedTower===mt) updateUpgradePanel();
+      }
+      moveModeTower=null;
+    }else{
+      playSound("denied");
+    }
+    return;
+  }
+  if(selectedShopItem){
+    const stat=TOWER_STATS[selectedShopItem];
+    if(selectedShopItem==="flosswall" && flossWallPlaced){ selectedShopItem=null; return; }
+    if(isTouch){
+      const now=performance.now();
+      const closeEnough=Math.hypot(x-lastTapPos.x,y-lastTapPos.y)<40;
+      if(pendingPlacement===selectedShopItem && closeEnough && (now-lastTapTime)<450){
+        if(gold>=stat.cost && isValidPlacement(x,y)){
+          buildTower(x,y,selectedShopItem);
+          playSound("build");
+          selectedShopItem=null; pendingPlacement=null;
+          document.querySelectorAll(".tower-card").forEach(c=>c.classList.remove("active"));
+        }
+      }else{
+        pendingPlacement=selectedShopItem;
+        mousePos.x=x; mousePos.y=y;
+      }
+      lastTapTime=now; lastTapPos={x,y};
+      return;
+    }
+    if(gold>=stat.cost && isValidPlacement(x,y)){
+      buildTower(x,y,selectedShopItem);
+      playSound("build");
+      selectedShopItem=null;
+      document.querySelectorAll(".tower-card").forEach(c=>c.classList.remove("active"));
+    }
+    return;
+  }
+  const prevSelected=selectedTower;
+  selectedTower=null;
+  document.getElementById("upgrade-panel").style.display="none";
+  for(const t of towers){
+    if(Math.hypot(t.x-x,t.y-y)<25){
+      if(prevSelected && prevSelected!==t && prevSelected.isFlossling && t.isFlossling && prevSelected.parentType===t.parentType){
+        fuseFlosslings(prevSelected,t);
+        updateHUD();
+        return;
+      }
+      selectedTower=t; updateUpgradePanel(); break;
+    }
+  }
+}
+canvas.addEventListener("mousedown",e=>{ const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,false); });
+canvas.addEventListener("touchstart",e=>{ e.preventDefault(); const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,true); },{passive:false});
+canvas.addEventListener("touchmove",e=>{
+  e.preventDefault();
+  const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y;
+  if(pendingPlacement) { lastTapPos={x:c.x,y:c.y}; }
+},{passive:false});
+
+function updateUpgradePanel(){
+  if(!selectedTower) return;
+  const t=selectedTower;
+  const panel=document.getElementById("upgrade-panel");
+  panel.style.display="block";
+  document.getElementById("upg-title").innerText=t.name+(t.armored?" [ARMORED]":"");
+  document.getElementById("upg-title").style.color=t.color;
+  document.getElementById("upg-dmg").innerText=Math.floor(t.dmgDealt);
+  document.getElementById("upg-lvl").innerText=t.level;
+  const eqInfo=document.getElementById("upg-equip-info");
+  if(eqInfo){
+    const parts=[];
+    if(t.equippedCardDefId){ const d=POWERUP_DEFS.find(p=>p.id===t.equippedCardDefId); if(d) parts.push("Card: "+d.name); }
+    if(t.equippedArmorDefId){ const d=ARMOR_DEFS.find(a=>a.id===t.equippedArmorDefId); if(d) parts.push("Armor: "+d.name); }
+    eqInfo.innerText=parts.length?parts.join(" | "):"";
+  }
+  const btnUpg=document.getElementById("btn-upg");
+  const btnSell=document.getElementById("btn-sell");
+  const btnFloss=document.getElementById("btn-floss");
+  const btnMove=document.getElementById("btn-move");
+  if(t.isWall){
+    btnUpg.innerText="CANNOT UPGRADE"; btnUpg.disabled=true;
+    btnSell.disabled=true; btnSell.innerText="PERMANENT";
+    btnFloss.disabled=true;
+    btnMove.disabled=true; btnMove.innerText="CANNOT MOVE";
+    return;
+  }
+  btnSell.disabled=false; btnSell.innerText="SELL";
+  if(t.isFlossling){
+    btnFloss.disabled=true; btnFloss.innerText="TAP ANOTHER TO FUSE";
+  }else{
+    btnFloss.disabled=!!t.flossed; btnFloss.innerText="FLOSS";
+  }
+  const moveCost=getTowerMoveCost(t);
+  if(moveCost===null){ btnMove.disabled=true; btnMove.innerText="CANNOT MOVE"; }
+  else{ btnMove.disabled=(gold<moveCost); btnMove.innerText=`MOVE (${moveCost})`; }
+  const upgCost=Math.floor(TOWER_STATS[t.type].cost*0.75*t.level);
+  if(t.oneTime){ btnUpg.innerText=t.used?"CONSUMED":"ONE-TIME USE"; btnUpg.disabled=true; }
+  else if(t.level>=3){ btnUpg.innerText="MAX LEVEL"; btnUpg.disabled=true; }
+  else{ btnUpg.innerText=`UPGRADE (${upgCost})`; btnUpg.disabled=gold<upgCost; }
+}
+
+// Moving a placed tower costs 1/4 of its original purchase price the
+// first time, 1/2 the second time, and can't be moved again after that.
+function getTowerMoveCost(t){
+  const base=TOWER_STATS[t.type].cost;
+  const mc=t.moveCount||0;
+  if(mc===0) return Math.floor(base*0.25);
+  if(mc===1) return Math.floor(base*0.5);
+  return null;
+}
+
+function moveSelectedTower(){
+  if(!selectedTower || selectedTower.isWall) return;
+  const cost=getTowerMoveCost(selectedTower);
+  if(cost===null){ playSound("denied"); return; }
+  if(gold<cost){ playSound("denied"); return; }
+  moveModeTower=selectedTower;
+  playSound("click");
+}
+window.moveSelectedTower=moveSelectedTower;
+
+function upgradeTower(){
+  if(!selectedTower || selectedTower.oneTime || selectedTower.level>=3 || selectedTower.isWall) return;
+  const cost=Math.floor(TOWER_STATS[selectedTower.type].cost*0.75*selectedTower.level);
+  if(gold>=cost){
+    gold-=cost; selectedTower.level++;
+    selectedTower.range*=1.2; selectedTower.damage*=1.4;
+    playSound("upgrade"); updateHUD(); updateUpgradePanel();
+  }
+}
+function sellTower(){
+  if(!selectedTower || selectedTower.isWall) return;
+  const baseVal=TOWER_STATS[selectedTower.type].cost;
+  gold+=Math.floor((baseVal+(baseVal*0.75*(selectedTower.level-1)))*0.5);
+  towers=towers.filter(t=>t!==selectedTower);
+  selectedTower=null;
+  document.getElementById("upgrade-panel").style.display="none";
+  playSound("sell"); updateHUD(); renderShopCards();
+}
+window.upgradeTower=upgradeTower; window.sellTower=sellTower;
+
+function flossTower(t){
+  if(t.isWall || t.isFlossling || t.flossed) return;
+  const idx=towers.indexOf(t);
+  if(idx===-1) return;
+  towers.splice(idx,1);
+  for(let i=0;i<2;i++){
+    towers.push({
+      x:t.x+(i===0?-20:20), y:t.y+10, type:t.type, name:t.name+" (Towerling)",
+      range:t.range*0.5, damage:t.damage*0.5, fireRate:t.fireRate, color:t.color,
+      cooldown:0, level:t.level, dmgDealt:0, angle:0, stunTimer:0, target:null,
+      oneTime:t.oneTime, used:false, isFlossling:true, parentType:t.type, armored:t.armored,
+      critChance:t.critChance||0, splashBonusPct:t.splashBonusPct||0, goldBonusPct:t.goldBonusPct||0,
+      bossDmgBonusPct:t.bossDmgBonusPct||0, armoredDmgBonusPct:t.armoredDmgBonusPct||0, stunResistPct:t.stunResistPct||0
+    });
+  }
+  playSound("sell");
+}
+function fuseFlosslings(a,b){
+  if(!a.isFlossling || !b.isFlossling || a.parentType!==b.parentType) return;
+  towers=towers.filter(x=>x!==a && x!==b);
+  const s=TOWER_STATS[a.parentType];
+  towers.push({
+    x:(a.x+b.x)/2, y:(a.y+b.y)/2, type:a.parentType, name:s.name,
+    range:s.range, damage:s.damage, fireRate:s.fireRate, color:s.color,
+    cooldown:0, level:1, dmgDealt:0, angle:0, stunTimer:0, target:null,
+    oneTime:!!s.oneTime, used:false, armored:(a.armored||b.armored),
+    critChance:0, splashBonusPct:0, goldBonusPct:0, bossDmgBonusPct:0, armoredDmgBonusPct:0, stunResistPct:0
+  });
+  playSound("build");
+}
+window.flossTower=flossTower;
+
+function getWaveMultiplier(){
+  const tier=Math.floor((Math.max(1,wave)-1)/5);
+  const mode=MODES[currentMode]||MODES.normal;
+  return { hp:(1+tier*0.22)*mode.hpMul, speed:(1+tier*0.05)*mode.speedMul };
+}
+function freezeForDiscovery(type){
+  gameFreeze=true;
+  const base=ENEMY_TYPES[type]||{};
+  const nameEl=document.getElementById("discovery-name");
+  nameEl.innerText=base.name||type;
+  nameEl.style.color=base.color||"#fff";
+  document.getElementById("discovery-desc").innerText=BEAST_DESC[type]||"";
+  renderAlienIcon(document.getElementById("discovery-canvas"),type,{color:base.color,size:46});
+  const overlay=document.getElementById("discovery-overlay");
+  overlay.style.color=base.color||"#39ff14";
+  overlay.style.display="flex";
+  playSound("typeReveal");
+  setTimeout(()=>{
+    overlay.style.display="none";
+    resumeLoopAfterFreeze();
+  },2200);
+}
+
+function showBossWarningBanner(){
+  const banner=document.getElementById("boss-warning-banner");
+  banner.innerText="\u26A0 BOSS INCOMING NEXT WAVE \u26A0";
+  banner.classList.add("show");
+  playSound("bossIncoming");
+  setTimeout(()=>{ banner.classList.remove("show"); },3200);
+}
+
+function freezeForBossIntro(bossName,color,theme){
+  gameFreeze=true;
+  document.getElementById("boss-intro-label").innerText="WARNING";
+  const nameEl=document.getElementById("boss-intro-name");
+  nameEl.innerText=bossName;
+  nameEl.style.color=color;
+  renderAlienIcon(document.getElementById("boss-intro-canvas"),"boss",{color,theme,size:52});
+  const overlay=document.getElementById("boss-intro-overlay");
+  overlay.style.color=color;
+  overlay.style.display="flex";
+  setTimeout(()=>{
+    overlay.style.display="none";
+    resumeLoopAfterFreeze();
+  },2600);
+}
+
+function spawnBoss(){
+  const areaIndex=getAreaIndex();
+  const areaBoss=AREAS[areaIndex].boss;
+  const mul=getWaveMultiplier();
+  const hp=Math.floor(ENEMY_TYPES.boss.hp*(1+wave*0.08)*(1+areaIndex*0.15)*mul.hp);
+  enemies.push({
+    type:"boss",name:areaBoss.name,x:path[0].x,y:path[0].y,hp,maxHp:hp,
+    speed:ENEMY_TYPES.boss.speed*mul.speed, baseSpeed:ENEMY_TYPES.boss.speed*mul.speed,
+    size:ENEMY_TYPES.boss.size, reward:ENEMY_TYPES.boss.reward+wave*8, color:areaBoss.color,
+    segment:0, distWalked:0, slowTimer:0, stunCooldown:60, stunRadius:ENEMY_TYPES.boss.stunRadius,
+    stunDuration:ENEMY_TYPES.boss.stunDuration, stunInterval:ENEMY_TYPES.boss.stunInterval, stunned:0,
+    isBoss:true, areaIndex, isFinalBoss:(areaIndex===AREAS.length-1)
+  });
+  playSound("bossSpawn");
+  recordDiscovery("boss",areaIndex);
+  freezeForBossIntro(areaBoss.name,areaBoss.color,AREAS[areaIndex].theme);
+}
+
+function callNextWave(){
+  if(enemiesLeft>0 || enemies.length>0) return;
+  wave++;
+  enemiesLeft=5+(wave*3);
+  spawnTimer=0;
+  if(wave%10===0) spawnBoss(); else playSound("waveStart");
+  if(wave%10===9) showBossWarningBanner();
+  questNotifyProgress("wave",wave);
+  updateHUD();
+}
+window.callNextWave=callNextWave;
+
+function pickEnemyType(){
+  const idx=getAreaIndex();
+  const trio=AREA_EXCLUSIVE_TYPES[idx];
+  if(Math.random()<0.001) return "impostor";
+  if(trio && Math.random()<0.3) return trio[Math.floor(Math.random()*trio.length)];
+  return pickGenericEnemyType();
+}
+function pickGenericEnemyType(){
+  if(wave>=50){ const r=Math.random();
+    if(r<0.14) return "juggernaut"; if(r<0.30) return "cloaked"; if(r<0.46) return "splitter";
+    if(r<0.62) return "shielded"; if(r<0.78) return "tank"; if(r<0.90) return "stunner"; return "runner"; }
+  if(wave>=30){ const r=Math.random();
+    if(r<0.14) return "shielded"; if(r<0.28) return "cloaked"; if(r<0.42) return "splitter";
+    if(r<0.60) return "tank"; if(r<0.78) return "stunner"; if(r<0.90) return "runner"; return "normal"; }
+  if(wave>=15){ const r=Math.random();
+    if(r<0.10) return "shielded"; if(r<0.20) return "splitter"; if(r<0.30) return "runner";
+    if(r<0.55) return "stunner"; if(r<0.75) return "tank"; return "normal"; }
+  if(wave>=10){ const r=Math.random(); if(r<0.45) return "normal"; if(r<0.70) return "runner"; return "stunner"; }
+  if(wave>=5){ return Math.random()<0.55 ? "normal" : "runner"; }
+  return "normal";
+}
+
+function spawnEnemy(){
+  if(enemiesLeft<=0) return;
+  enemiesLeft--;
+  const type=pickEnemyType();
+  const base=ENEMY_TYPES[type];
+  const mul=getWaveMultiplier();
+  const hp=Math.max(1,Math.floor(base.hp*(1+wave*0.16)*mul.hp));
+  enemies.push({
+    type,x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:base.speed*mul.speed,baseSpeed:base.speed*mul.speed,
+    size:tinyAliensOn?base.size*0.4:base.size,reward:base.reward+Math.floor(wave*0.4),color:base.color,segment:0,distWalked:0,
+    slowTimer:0,stunCooldown:base.stunInterval||0,stunInterval:base.stunInterval||0,
+    stunRadius:base.stunRadius||0,stunDuration:base.stunDuration||0,stunned:0,
+    cloakTimer:base.cloakInterval||0,cloaked:false,bobSeed:Math.random()*1000
+  });
+  if(!discoveredTypes.has(type)) discoveredTypes.add(type);
+  const isNewDiscovery=recordDiscovery("type",type);
+  if(isNewDiscovery) freezeForDiscovery(type);
+}
+
+function killEnemy(e,sourceTower){
+  const index=enemies.indexOf(e);
+  if(index===-1) return;
+  let reward=e.reward;
+  if(sourceTower && sourceTower.goldBonusPct) reward=Math.round(reward*(1+sourceTower.goldBonusPct/100));
+  gold+=reward; killsThisGame++;
+  enemies.splice(index,1);
+  playSound("enemyDeath");
+  metaData.stats=metaData.stats||{};
+  metaData.stats.totalKills=(metaData.stats.totalKills||0)+1;
+  questNotifyProgress("kill",1);
+  questNotifyProgress("credits",reward);
+  if(Math.random()<0.05){
+    particles.push({goldDrop:true,x:e.x,y:e.y,collected:false,life:600,size:8});
+  }
+  if(Math.random()<0.08){
+    const mat=rollMaterialDrop();
+    grantMaterial(mat,1);
+    particles.push({materialDrop:true,mat,x:e.x,y:e.y,life:600,size:8});
+  }
+  const parentBase=ENEMY_TYPES[e.type];
+  if(parentBase && parentBase.splitsInto){
+    const childKey=parentBase.splitsInto;
+    const childBase=ENEMY_TYPES[childKey];
+    const mul=getWaveMultiplier();
+    for(let i=0;i<(parentBase.splitCount||2);i++){
+      enemies.push({
+        type:childKey,x:e.x+(Math.random()-0.5)*20,y:e.y+(Math.random()-0.5)*20,
+        hp:Math.max(1,Math.floor(childBase.hp*mul.hp)),maxHp:Math.max(1,Math.floor(childBase.hp*mul.hp)),
+        speed:childBase.speed*mul.speed,baseSpeed:childBase.speed*mul.speed,size:tinyAliensOn?childBase.size*0.4:childBase.size,
+        reward:childBase.reward,color:childBase.color,segment:e.segment,distWalked:Math.max(0,e.distWalked-5),
+        slowTimer:0,stunCooldown:0,stunInterval:0,stunRadius:0,stunDuration:0,stunned:0,cloakTimer:0,cloaked:false,bobSeed:Math.random()*1000
+      });
+    }
+    if(!discoveredTypes.has(childKey)){ discoveredTypes.add(childKey); playSound("typeReveal"); }
+    recordDiscovery("type",childKey);
+  }
+  updateHUD();
+  if(e.isBoss){
+    playSound("bossDown");
+    metaData.stats.bossesKilled=(metaData.stats.bossesKilled||0)+1;
+    questNotifyProgress("boss",1);
+    if(e.isFinalBoss) endGame("VICTORY");
+  }
+}
+
+function createExplosion(x,y,color){
+  const count=Math.max(2,Math.round(15*flashyMul()));
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2, s=2+Math.random()*4;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:20+Math.random()*10,size:2+Math.random()*3,color});
+  }
+}
+
+function pointLineDistance(px,py,x1,y1,x2,y2){
+  const A=px-x1,B=py-y1,C=x2-x1,D=y2-y1;
+  const len=C*C+D*D;
+  if(len===0) return Math.hypot(px-x1,py-y1);
+  const dot=A*C+B*D, param=dot/len;
+  const xx=x1+param*C, yy=y1+param*D;
+  return Math.hypot(px-xx,py-yy);
+}
+
+function stunNearbyTowers(source){
+  const radius=source.stunRadius||0, duration=source.stunDuration||0;
+  if(radius<=0||duration<=0) return;
+  for(const t of towers){
+    const d=Math.hypot(t.x-source.x,t.y-source.y);
+    if(d<=radius){
+      const resisted=duration*(1-Math.min(90,t.stunResistPct||0)/100);
+      t.stunTimer=Math.max(t.stunTimer||0,resisted);
+    }
+  }
+  playSound("stun");
+}
+
+// ---------------------------------------------------------------------
+// Equipment application - a tower type's equipped card/armor (from the
+// INVENTORY screen) is consumed ("a use") every time a tower of that
+// type is built, and its bonus applies to that specific tower instance
+// only for the rest of the run.
+// ---------------------------------------------------------------------
+function applyItemBonus(t,defId,value){
+  if(defId==="dmg"||defId==="plate") t.damage*=(1+value/100);
+  else if(defId==="range"||defId==="visor") t.range*=(1+value/100);
+  else if(defId==="fire"||defId==="servo"||defId==="cooldown"||defId==="coil") t.fireRate=Math.max(1,Math.round(t.fireRate*(1-value/100)));
+  else if(defId==="splash"||defId==="core") t.splashBonusPct=(t.splashBonusPct||0)+value;
+  else if(defId==="crit"||defId==="barb") t.critChance=(t.critChance||0)+value/100;
+  else if(defId==="gold"||defId==="prism") t.goldBonusPct=(t.goldBonusPct||0)+value;
+  else if(defId==="godslayer"||defId==="crown") t.bossDmgBonusPct=(t.bossDmgBonusPct||0)+value;
+  else if(defId==="sink") t.armoredDmgBonusPct=(t.armoredDmgBonusPct||0)+value;
+  else if(defId==="shell") t.stunResistPct=(t.stunResistPct||0)+value;
+}
+function consumeEquippedItem(type){
+  const cardInstId=metaData.towerCardEquip?metaData.towerCardEquip[type]:null;
+  const armorInstId=metaData.towerArmorEquip?metaData.towerArmorEquip[type]:null;
+  let cardApplied=null, armorApplied=null;
+  if(cardInstId){
+    const inst=(metaData.cardInstances||[]).find(c=>c.id===cardInstId);
+    if(inst && inst.durability>0){
+      const def=POWERUP_DEFS.find(p=>p.id===inst.defId);
+      if(def){
+        const idx=Math.max(0,Math.min(def.values.length-1,inst.level-1));
+        cardApplied={defId:inst.defId,value:def.values[idx]};
+      }
+      inst.durability--;
+      if(inst.durability<=0) delete metaData.towerCardEquip[type];
+    }
+  }
+  if(armorInstId){
+    const inst=(metaData.armorInstances||[]).find(c=>c.id===armorInstId);
+    if(inst && inst.durability>0){
+      const def=ARMOR_DEFS.find(a=>a.id===inst.defId);
+      if(def){
+        const idx=Math.max(0,Math.min(def.values.length-1,inst.level-1));
+        armorApplied={defId:inst.defId,value:def.values[idx]};
+      }
+      inst.durability--;
+      if(inst.durability<=0) delete metaData.towerArmorEquip[type];
+    }
+  }
+  if(cardApplied||armorApplied) saveToStorage(metaData);
+  return {cardApplied,armorApplied};
+}
+function computeEffectiveDamage(t,baseDamage,target){
+  let dmg=baseDamage;
+  if(t && t.critChance && Math.random()<t.critChance) dmg*=2;
+  if(t && target.isBoss && t.bossDmgBonusPct) dmg*=(1+t.bossDmgBonusPct/100);
+  const eb=ENEMY_TYPES[target.type];
+  if(t && eb && eb.armored && t.armoredDmgBonusPct) dmg*=(1+t.armoredDmgBonusPct/100);
+  return dmg;
+}
+
+let gameSpeed=1, speedAccumulator=0;
+let gameFreeze=false;
+function setGameSpeed(s){
+  gameSpeed=s;
+  document.querySelectorAll(".speed-btn[data-speed]").forEach(b=>b.classList.toggle("active",parseFloat(b.dataset.speed)===s));
+}
+window.setGameSpeed=setGameSpeed;
+
+function resumeLoopAfterFreeze(){
+  gameFreeze=false;
+  if(isPlaying && !isPaused){ draw(); gameLoopId=requestAnimationFrame(loop); }
+}
+
+function loop(){
+  if(!isPlaying || isPaused || gameFreeze) return;
+  speedAccumulator+=gameSpeed;
+  let steps=0;
+  while(speedAccumulator>=1 && steps<6){ updateStep(); speedAccumulator-=1; steps++; if(!isPlaying || gameFreeze) break; }
+  if(isPlaying && !isPaused && !gameFreeze){
+    if(selectedTower) updateUpgradePanel();
+    draw();
+    gameLoopId=requestAnimationFrame(loop);
+  }else if(isPlaying && !isPaused && gameFreeze){
+    draw();
+  }
+}
+function updateStep(){
+  if(enemiesLeft>0){
+    spawnTimer++;
+    const spawnRate=Math.max(16,50-Math.min(24,wave*2));
+    if(spawnTimer>spawnRate){ spawnEnemy(); spawnTimer=0; }
+  }
+
+  for(let i=enemies.length-1;i>=0;i--){
+    const e=enemies[i];
+    if(e.stunned>0){ e.stunned--; e.speed=0; }
+    else if(e.slowTimer>0){ e.slowTimer--; e.speed=e.baseSpeed*.5; }
+    else e.speed=e.baseSpeed;
+
+    if(e.stunInterval>0 && e.stunned<=0){
+      e.stunCooldown--;
+      if(e.stunCooldown<=0){ stunNearbyTowers(e); e.stunCooldown=e.stunInterval; createExplosion(e.x,e.y,e.color); }
+    }
+    if(e.poisonTimer>0){
+      e.poisonTimer--; e.hp-=e.poisonDps;
+      if(e.hp<=0){ killEnemy(e,e.poisonSource); continue; }
+    }
+    const cloakBase=ENEMY_TYPES[e.type];
+    if(cloakBase && cloakBase.cloakInterval){
+      e.cloakTimer--;
+      if(e.cloakTimer<=0){ e.cloaked=!e.cloaked; e.cloakTimer=e.cloaked?cloakBase.cloakDuration:cloakBase.cloakInterval; }
+    }
+
+    const wall=towers.find(t=>t.isWall);
+    if(wall){
+      const distToWall=Math.hypot(e.x-wall.x,e.y-wall.y);
+      if(distToWall<40 && e.segment>=getWallSegment()){
+        wall.wallHp-=0.3;
+        if(wall.wallHp<=0){ towers=towers.filter(t=>t!==wall); flossWallPlaced=false; }
+        continue;
+      }
+    }
+
+    const target=path[e.segment+1];
+    if(!target) continue;
+    const dx=target.x-e.x, dy=target.y-e.y, dist=Math.hypot(dx,dy);
+    if(dist<=Math.max(0.01,e.speed)){
+      e.x=target.x; e.y=target.y; e.segment++;
+      if(e.segment>=path.length-1){
+        if(e.isBoss){ lives=0; enemies.splice(i,1); playSound("coreHit"); updateHUD(); endGame("CORE BREACHED"); }
+        else{ lives--; enemies.splice(i,1); playSound("coreHit"); updateHUD(); if(lives<=0) endGame("CORE BREACHED"); }
+      }
+    }else{ e.x+=dx/dist*e.speed; e.y+=dy/dist*e.speed; e.distWalked+=e.speed; }
+  }
+
+  for(const t of towers){
+    if(t.isWall) continue;
+    if(t.stunTimer>0){ t.stunTimer--; continue; }
+    t.target=null;
+    let bestDist=-1;
+    for(const e of enemies){
+      if(e.cloaked) continue;
+      if(Math.hypot(e.x-t.x,e.y-t.y)<=t.range && e.distWalked>bestDist){ bestDist=e.distWalked; t.target=e; }
+    }
+    if(oneHitModeOn && t.target){ t.target.hp=-9999; }
+    if(t.type==="freeze"){
+      if(t.cooldown<=0){
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ const dmg=computeEffectiveDamage(t,t.damage,e); e.hp-=dmg; e.slowTimer=30; t.dmgDealt+=dmg; if(e.hp<=0) killEnemy(e,t); } }
+        playSound("freeze"); t.cooldown=t.fireRate;
+      }
+    }else if(t.type==="flame" || t.type==="sandreaper" || t.type==="neonblade"){
+      if(t.cooldown<=0){
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ const dmg=computeEffectiveDamage(t,t.damage,e); e.hp-=dmg; t.dmgDealt+=dmg; if(e.hp<=0) killEnemy(e,t); } }
+        t.cooldown=t.fireRate;
+      }
+    }else if(t.type==="vortex"){
+      if(t.cooldown<=0){
+        for(const e of enemies){ if(e.cloaked) continue;
+          const dx2=t.x-e.x, dy2=t.y-e.y, d2=Math.hypot(dx2,dy2);
+          if(d2<=t.range && d2>1){ e.x+=(dx2/d2)*0.6; e.y+=(dy2/d2)*0.6; const dmg=computeEffectiveDamage(t,t.damage,e); e.hp-=dmg; t.dmgDealt+=dmg; if(e.hp<=0) killEnemy(e,t); } }
+        playSound("vortex"); t.cooldown=t.fireRate;
+      }
+    }else if(t.type==="emp"){
+      if(t.cooldown<=0){
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ const dmg=computeEffectiveDamage(t,t.damage,e); e.hp-=dmg; e.stunned=Math.max(e.stunned||0,70); t.dmgDealt+=dmg; if(e.hp<=0) killEnemy(e,t); } }
+        playSound("emp"); t.cooldown=t.fireRate;
+      }
+    }else if(t.type==="blackhole"){
+      if(t.cooldown<=0){
+        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ const dmg=computeEffectiveDamage(t,t.damage,e); e.hp-=dmg; t.dmgDealt+=dmg; createExplosion(e.x,e.y,"#c084ff"); if(e.hp<=0) killEnemy(e,t); } }
+        playSound("blackhole"); t.cooldown=t.fireRate;
+      }
+    }else if(t.type==="hijack"){
+      if(!t.used && t.target && !t.target.isBoss){ t.used=true; playSound("hijack"); createExplosion(t.x,t.y,"#ff00ff"); }
+    }else if(t.target && t.cooldown<=0){
+      playSound("shoot");
+      projectiles.push({x:t.x,y:t.y,target:t.target,speed:15,damage:t.damage,type:t.type,color:t.color,parent:t});
+      t.cooldown=t.fireRate;
+    }
+    if(t.cooldown>0) t.cooldown--;
+  }
+
+  if(towers.some(t=>t.oneTime && t.used)){
+    towers=towers.filter(t=>!(t.oneTime && t.used));
+    if(selectedTower && !towers.includes(selectedTower)){ selectedTower=null; document.getElementById("upgrade-panel").style.display="none"; }
+  }
+
+  for(let i=projectiles.length-1;i>=0;i--){
+    const p=projectiles[i];
+    if(!enemies.includes(p.target)){ projectiles.splice(i,1); continue; }
+    const dx=p.target.x-p.x, dy=p.target.y-p.y, dist=Math.hypot(dx,dy);
+    if(dist<=p.speed){
+      const dmg=computeEffectiveDamage(p.parent,p.damage,p.target);
+      p.target.hp-=dmg; p.parent.dmgDealt+=dmg;
+      const dyingTarget=p.target;
+      createExplosion(p.target.x,p.target.y,p.color);
+      const splashStat=TOWER_STATS[p.parent.type];
+      if(splashStat && splashStat.splash){
+        const radius=splashStat.splash*(1+((p.parent.splashBonusPct||0))/100);
+        for(const other of enemies){
+          if(other===dyingTarget || other.cloaked) continue;
+          if(Math.hypot(other.x-dyingTarget.x,other.y-dyingTarget.y)<=radius){
+            const splashDmg=dmg*0.5;
+            other.hp-=splashDmg; p.parent.dmgDealt+=splashDmg;
+            if(other.hp<=0) killEnemy(other,p.parent);
+          }
+        }
+      }
+      if(dyingTarget.hp<=0) killEnemy(dyingTarget,p.parent);
+      if(p.type==="poison" && enemies.includes(dyingTarget)){ dyingTarget.poisonTimer=150; dyingTarget.poisonDps=5; dyingTarget.poisonSource=p.parent; }
+      projectiles.splice(i,1);
+    }else{ p.x+=dx/dist*p.speed; p.y+=dy/dist*p.speed; }
+  }
+
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    if(p.goldDrop){ p.life--; if(p.life<=0) particles.splice(i,1); continue; }
+    p.x+=p.vx||0; p.y+=p.vy||0; p.life--;
+    if(p.life<=0) particles.splice(i,1);
+  }
+}
+
+function getWallSegment(){ return 2; }
+
+function buildTower(x,y,type){
+  const s=TOWER_STATS[type];
+  gold-=s.cost;
+  const t={
+    x,y,type,name:s.name,
+    range:s.range, damage:s.damage, fireRate:s.fireRate,
+    color:s.color,
+    cooldown:0,level:1,dmgDealt:0,angle:0,stunTimer:0,target:null,
+    oneTime:!!s.oneTime,used:false,isWall:!!s.isWall,wallHp:s.wallHp||0,wallMaxHp:s.wallHp||0,
+    flossed:false,isFlossling:false,
+    critChance:0,splashBonusPct:0,goldBonusPct:0,bossDmgBonusPct:0,armoredDmgBonusPct:0,stunResistPct:0,
+    equippedCardDefId:null,equippedArmorDefId:null
+  };
+  if(!t.isWall){
+    const applied=consumeEquippedItem(type);
+    if(applied.cardApplied){ applyItemBonus(t,applied.cardApplied.defId,applied.cardApplied.value); t.equippedCardDefId=applied.cardApplied.defId; }
+    if(applied.armorApplied){ applyItemBonus(t,applied.armorApplied.defId,applied.armorApplied.value); t.equippedArmorDefId=applied.armorApplied.defId; }
+    t.armored=!!applied.armorApplied || godArmorOn;
+  }
+  towers.push(t);
+  if(type==="flosswall") flossWallPlaced=true;
+  metaData.stats=metaData.stats||{};
+  metaData.stats.towersBuilt=(metaData.stats.towersBuilt||0)+1;
+  questNotifyProgress("build",1);
+  updateHUD();
+  renderShopCards();
 }
 
 // Mobile bug fix: each .screen (main-menu, bestiary, etc) scrolls
@@ -4268,567 +5231,6 @@ function selectShopItem(type){
   playSound("click");
 }
 window.selectShopItem=selectShopItem;
-
-function getArmorBonuses(){
-  const bonus={dmg:0,range:0,fire:0};
-  (metaData.equippedArmor||[]).forEach(key=>{
-    const [id,lvl]=key.split("_");
-    const def=ARMOR_DEFS.find(a=>a.id===id);
-    if(!def) return;
-    const idx=Math.max(0,Math.min(def.values.length-1,(parseInt(lvl,10)||1)-1));
-    const v=def.values[idx];
-    if(id==="plate") bonus.dmg+=v;
-    else if(id==="visor") bonus.range+=v;
-    else if(id==="servo") bonus.fire+=v;
-  });
-  return bonus;
-}
-function buildTower(x,y,type){
-  const s=TOWER_STATS[type];
-  gold-=s.cost;
-  const ab=getArmorBonuses();
-  const t={
-    x,y,type,name:s.name,
-    range:s.range*(1+ab.range/100),
-    damage:s.damage*(1+ab.dmg/100),
-    fireRate:Math.max(1,Math.round(s.fireRate*(1-ab.fire/100))),
-    color:s.color,
-    cooldown:0,level:1,dmgDealt:0,angle:0,stunTimer:0,target:null,
-    oneTime:!!s.oneTime,used:false,isWall:!!s.isWall,wallHp:s.wallHp||0,wallMaxHp:s.wallHp||0,
-    flossed:false,isFlossling:false,armored:godArmorOn
-  };
-  towers.push(t);
-  if(type==="flosswall") flossWallPlaced=true;
-  metaData.stats=metaData.stats||{};
-  metaData.stats.towersBuilt=(metaData.stats.towersBuilt||0)+1;
-  questNotifyProgress("build",1);
-  updateHUD();
-  renderShopCards();
-}
-
-// Mobile: double-tap to place (first tap "picks up"/previews and can be
-// dragged around, second tap on the same spot commits the build).
-let pendingPlacement=null, lastTapTime=0, lastTapPos={x:-999,y:-999};
-
-function handlePointerDown(x,y,isTouch){
-  if(moveModeTower){
-    const mt=moveModeTower;
-    if(!towers.includes(mt)){ moveModeTower=null; }
-    else if(Math.hypot(mt.x-x,mt.y-y)<25){
-      moveModeTower=null; // tapped the tower itself - cancel the move
-    }else if(isValidPlacement(x,y)){
-      const cost=getTowerMoveCost(mt);
-      if(cost===null || gold<cost){ playSound("denied"); }
-      else{
-        gold-=cost;
-        mt.x=x; mt.y=y;
-        mt.moveCount=(mt.moveCount||0)+1;
-        playSound("build");
-        updateHUD();
-        if(selectedTower===mt) updateUpgradePanel();
-      }
-      moveModeTower=null;
-    }else{
-      playSound("denied");
-    }
-    return;
-  }
-  if(selectedShopItem){
-    const stat=TOWER_STATS[selectedShopItem];
-    if(selectedShopItem==="flosswall" && flossWallPlaced){ selectedShopItem=null; return; }
-    if(isTouch){
-      const now=performance.now();
-      const closeEnough=Math.hypot(x-lastTapPos.x,y-lastTapPos.y)<40;
-      if(pendingPlacement===selectedShopItem && closeEnough && (now-lastTapTime)<450){
-        if(gold>=stat.cost && isValidPlacement(x,y)){
-          buildTower(x,y,selectedShopItem);
-          playSound("build");
-          selectedShopItem=null; pendingPlacement=null;
-          document.querySelectorAll(".tower-card").forEach(c=>c.classList.remove("active"));
-        }
-      }else{
-        pendingPlacement=selectedShopItem;
-        mousePos.x=x; mousePos.y=y;
-      }
-      lastTapTime=now; lastTapPos={x,y};
-      return;
-    }
-    if(gold>=stat.cost && isValidPlacement(x,y)){
-      buildTower(x,y,selectedShopItem);
-      playSound("build");
-      selectedShopItem=null;
-      document.querySelectorAll(".tower-card").forEach(c=>c.classList.remove("active"));
-    }
-    return;
-  }
-  const prevSelected=selectedTower;
-  selectedTower=null;
-  document.getElementById("upgrade-panel").style.display="none";
-  for(const t of towers){
-    if(Math.hypot(t.x-x,t.y-y)<25){
-      if(prevSelected && prevSelected!==t && prevSelected.isFlossling && t.isFlossling && prevSelected.parentType===t.parentType){
-        fuseFlosslings(prevSelected,t);
-        updateHUD();
-        return;
-      }
-      selectedTower=t; updateUpgradePanel(); break;
-    }
-  }
-}
-canvas.addEventListener("mousedown",e=>{ const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,false); });
-canvas.addEventListener("touchstart",e=>{ e.preventDefault(); const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,true); },{passive:false});
-canvas.addEventListener("touchmove",e=>{
-  e.preventDefault();
-  const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y;
-  if(pendingPlacement) { lastTapPos={x:c.x,y:c.y}; }
-},{passive:false});
-
-function updateUpgradePanel(){
-  if(!selectedTower) return;
-  const t=selectedTower;
-  const panel=document.getElementById("upgrade-panel");
-  panel.style.display="block";
-  document.getElementById("upg-title").innerText=t.name+(t.armored?" [ARMORED]":"");
-  document.getElementById("upg-title").style.color=t.color;
-  document.getElementById("upg-dmg").innerText=Math.floor(t.dmgDealt);
-  document.getElementById("upg-lvl").innerText=t.level;
-  const btnUpg=document.getElementById("btn-upg");
-  const btnSell=document.getElementById("btn-sell");
-  const btnFloss=document.getElementById("btn-floss");
-  const btnMove=document.getElementById("btn-move");
-  if(t.isWall){
-    btnUpg.innerText="CANNOT UPGRADE"; btnUpg.disabled=true;
-    btnSell.disabled=true; btnSell.innerText="PERMANENT";
-    btnFloss.disabled=true;
-    btnMove.disabled=true; btnMove.innerText="CANNOT MOVE";
-    return;
-  }
-  btnSell.disabled=false; btnSell.innerText="SELL";
-  if(t.isFlossling){
-    btnFloss.disabled=true; btnFloss.innerText="TAP ANOTHER TO FUSE";
-  }else{
-    btnFloss.disabled=!!t.flossed; btnFloss.innerText="FLOSS";
-  }
-  const moveCost=getTowerMoveCost(t);
-  if(moveCost===null){ btnMove.disabled=true; btnMove.innerText="CANNOT MOVE"; }
-  else{ btnMove.disabled=(gold<moveCost); btnMove.innerText=`MOVE (${moveCost})`; }
-  const upgCost=Math.floor(TOWER_STATS[t.type].cost*0.75*t.level);
-  if(t.oneTime){ btnUpg.innerText=t.used?"CONSUMED":"ONE-TIME USE"; btnUpg.disabled=true; }
-  else if(t.level>=3){ btnUpg.innerText="MAX LEVEL"; btnUpg.disabled=true; }
-  else{ btnUpg.innerText=`UPGRADE (${upgCost})`; btnUpg.disabled=gold<upgCost; }
-}
-
-// Moving a placed tower costs 1/4 of its original purchase price the
-// first time, 1/2 the second time, and can't be moved again after that.
-function getTowerMoveCost(t){
-  const base=TOWER_STATS[t.type].cost;
-  const mc=t.moveCount||0;
-  if(mc===0) return Math.floor(base*0.25);
-  if(mc===1) return Math.floor(base*0.5);
-  return null;
-}
-
-function moveSelectedTower(){
-  if(!selectedTower || selectedTower.isWall) return;
-  const cost=getTowerMoveCost(selectedTower);
-  if(cost===null){ playSound("denied"); return; }
-  if(gold<cost){ playSound("denied"); return; }
-  moveModeTower=selectedTower;
-  playSound("click");
-}
-window.moveSelectedTower=moveSelectedTower;
-
-function upgradeTower(){
-  if(!selectedTower || selectedTower.oneTime || selectedTower.level>=3 || selectedTower.isWall) return;
-  const cost=Math.floor(TOWER_STATS[selectedTower.type].cost*0.75*selectedTower.level);
-  if(gold>=cost){
-    gold-=cost; selectedTower.level++;
-    selectedTower.range*=1.2; selectedTower.damage*=1.4;
-    playSound("upgrade"); updateHUD(); updateUpgradePanel();
-  }
-}
-function sellTower(){
-  if(!selectedTower || selectedTower.isWall) return;
-  const baseVal=TOWER_STATS[selectedTower.type].cost;
-  gold+=Math.floor((baseVal+(baseVal*0.75*(selectedTower.level-1)))*0.5);
-  towers=towers.filter(t=>t!==selectedTower);
-  selectedTower=null;
-  document.getElementById("upgrade-panel").style.display="none";
-  playSound("sell"); updateHUD(); renderShopCards();
-}
-window.upgradeTower=upgradeTower; window.sellTower=sellTower;
-
-function flossTower(t){
-  if(t.isWall || t.isFlossling || t.flossed) return;
-  const idx=towers.indexOf(t);
-  if(idx===-1) return;
-  towers.splice(idx,1);
-  for(let i=0;i<2;i++){
-    towers.push({
-      x:t.x+(i===0?-20:20), y:t.y+10, type:t.type, name:t.name+" (Towerling)",
-      range:t.range*0.5, damage:t.damage*0.5, fireRate:t.fireRate, color:t.color,
-      cooldown:0, level:t.level, dmgDealt:0, angle:0, stunTimer:0, target:null,
-      oneTime:t.oneTime, used:false, isFlossling:true, parentType:t.type, armored:t.armored
-    });
-  }
-  playSound("sell");
-}
-function fuseFlosslings(a,b){
-  if(!a.isFlossling || !b.isFlossling || a.parentType!==b.parentType) return;
-  towers=towers.filter(x=>x!==a && x!==b);
-  const s=TOWER_STATS[a.parentType];
-  towers.push({
-    x:(a.x+b.x)/2, y:(a.y+b.y)/2, type:a.parentType, name:s.name,
-    range:s.range, damage:s.damage, fireRate:s.fireRate, color:s.color,
-    cooldown:0, level:1, dmgDealt:0, angle:0, stunTimer:0, target:null,
-    oneTime:!!s.oneTime, used:false, armored:(a.armored||b.armored)
-  });
-  playSound("build");
-}
-window.flossTower=flossTower;
-
-function getWaveMultiplier(){
-  const tier=Math.floor((Math.max(1,wave)-1)/5);
-  const mode=MODES[currentMode]||MODES.normal;
-  return { hp:(1+tier*0.22)*mode.hpMul, speed:(1+tier*0.05)*mode.speedMul };
-}
-
-function freezeForDiscovery(type){
-  gameFreeze=true;
-  const base=ENEMY_TYPES[type]||{};
-  const nameEl=document.getElementById("discovery-name");
-  nameEl.innerText=base.name||type;
-  nameEl.style.color=base.color||"#fff";
-  document.getElementById("discovery-desc").innerText=BEAST_DESC[type]||"";
-  renderAlienIcon(document.getElementById("discovery-canvas"),type,{color:base.color,size:46});
-  const overlay=document.getElementById("discovery-overlay");
-  overlay.style.color=base.color||"#39ff14";
-  overlay.style.display="flex";
-  playSound("typeReveal");
-  setTimeout(()=>{
-    overlay.style.display="none";
-    resumeLoopAfterFreeze();
-  },2200);
-}
-
-function showBossWarningBanner(){
-  const banner=document.getElementById("boss-warning-banner");
-  banner.innerText="\u26A0 BOSS INCOMING NEXT WAVE \u26A0";
-  banner.classList.add("show");
-  playSound("bossIncoming");
-  setTimeout(()=>{ banner.classList.remove("show"); },3200);
-}
-
-function freezeForBossIntro(bossName,color,theme){
-  gameFreeze=true;
-  document.getElementById("boss-intro-label").innerText="WARNING";
-  const nameEl=document.getElementById("boss-intro-name");
-  nameEl.innerText=bossName;
-  nameEl.style.color=color;
-  renderAlienIcon(document.getElementById("boss-intro-canvas"),"boss",{color,theme,size:52});
-  const overlay=document.getElementById("boss-intro-overlay");
-  overlay.style.color=color;
-  overlay.style.display="flex";
-  setTimeout(()=>{
-    overlay.style.display="none";
-    resumeLoopAfterFreeze();
-  },2600);
-}
-
-function spawnBoss(){
-  const areaIndex=getAreaIndex();
-  const areaBoss=AREAS[areaIndex].boss;
-  const mul=getWaveMultiplier();
-  const hp=Math.floor(ENEMY_TYPES.boss.hp*(1+wave*0.08)*(1+areaIndex*0.15)*mul.hp);
-  enemies.push({
-    type:"boss",name:areaBoss.name,x:path[0].x,y:path[0].y,hp,maxHp:hp,
-    speed:ENEMY_TYPES.boss.speed*mul.speed, baseSpeed:ENEMY_TYPES.boss.speed*mul.speed,
-    size:ENEMY_TYPES.boss.size, reward:ENEMY_TYPES.boss.reward+wave*8, color:areaBoss.color,
-    segment:0, distWalked:0, slowTimer:0, stunCooldown:60, stunRadius:ENEMY_TYPES.boss.stunRadius,
-    stunDuration:ENEMY_TYPES.boss.stunDuration, stunInterval:ENEMY_TYPES.boss.stunInterval, stunned:0,
-    isBoss:true, areaIndex, isFinalBoss:(areaIndex===AREAS.length-1)
-  });
-  playSound("bossSpawn");
-  recordDiscovery("boss",areaIndex);
-  freezeForBossIntro(areaBoss.name,areaBoss.color,AREAS[areaIndex].theme);
-}
-
-function callNextWave(){
-  if(enemiesLeft>0 || enemies.length>0) return;
-  wave++;
-  enemiesLeft=5+(wave*3);
-  spawnTimer=0;
-  if(wave%10===0) spawnBoss(); else playSound("waveStart");
-  if(wave%10===9) showBossWarningBanner();
-  questNotifyProgress("wave",wave);
-  updateHUD();
-}
-window.callNextWave=callNextWave;
-
-function pickEnemyType(){
-  const idx=getAreaIndex();
-  const trio=AREA_EXCLUSIVE_TYPES[idx];
-  if(Math.random()<0.001) return "impostor";
-  if(trio && Math.random()<0.3) return trio[Math.floor(Math.random()*trio.length)];
-  return pickGenericEnemyType();
-}
-function pickGenericEnemyType(){
-  if(wave>=50){ const r=Math.random();
-    if(r<0.14) return "juggernaut"; if(r<0.30) return "cloaked"; if(r<0.46) return "splitter";
-    if(r<0.62) return "shielded"; if(r<0.78) return "tank"; if(r<0.90) return "stunner"; return "runner"; }
-  if(wave>=30){ const r=Math.random();
-    if(r<0.14) return "shielded"; if(r<0.28) return "cloaked"; if(r<0.42) return "splitter";
-    if(r<0.60) return "tank"; if(r<0.78) return "stunner"; if(r<0.90) return "runner"; return "normal"; }
-  if(wave>=15){ const r=Math.random();
-    if(r<0.10) return "shielded"; if(r<0.20) return "splitter"; if(r<0.30) return "runner";
-    if(r<0.55) return "stunner"; if(r<0.75) return "tank"; return "normal"; }
-  if(wave>=10){ const r=Math.random(); if(r<0.45) return "normal"; if(r<0.70) return "runner"; return "stunner"; }
-  if(wave>=5){ return Math.random()<0.55 ? "normal" : "runner"; }
-  return "normal";
-}
-
-function spawnEnemy(){
-  if(enemiesLeft<=0) return;
-  enemiesLeft--;
-  const type=pickEnemyType();
-  const base=ENEMY_TYPES[type];
-  const mul=getWaveMultiplier();
-  const hp=Math.max(1,Math.floor(base.hp*(1+wave*0.16)*mul.hp));
-  enemies.push({
-    type,x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:base.speed*mul.speed,baseSpeed:base.speed*mul.speed,
-    size:tinyAliensOn?base.size*0.4:base.size,reward:base.reward+Math.floor(wave*0.4),color:base.color,segment:0,distWalked:0,
-    slowTimer:0,stunCooldown:base.stunInterval||0,stunInterval:base.stunInterval||0,
-    stunRadius:base.stunRadius||0,stunDuration:base.stunDuration||0,stunned:0,
-    cloakTimer:base.cloakInterval||0,cloaked:false,bobSeed:Math.random()*1000
-  });
-  if(!discoveredTypes.has(type)) discoveredTypes.add(type);
-  const isNewDiscovery=recordDiscovery("type",type);
-  if(isNewDiscovery) freezeForDiscovery(type);
-}
-
-function killEnemy(e){
-  const index=enemies.indexOf(e);
-  if(index===-1) return;
-  gold+=e.reward; killsThisGame++;
-  enemies.splice(index,1);
-  playSound("enemyDeath");
-  metaData.stats=metaData.stats||{};
-  metaData.stats.totalKills=(metaData.stats.totalKills||0)+1;
-  questNotifyProgress("kill",1);
-  questNotifyProgress("credits",e.reward);
-  if(Math.random()<0.05){
-    particles.push({goldDrop:true,x:e.x,y:e.y,collected:false,life:600,size:8});
-  }
-  if(Math.random()<0.08){
-    const mat=rollMaterialDrop();
-    grantMaterial(mat,1);
-    particles.push({materialDrop:true,mat,x:e.x,y:e.y,life:600,size:8});
-  }
-  const parentBase=ENEMY_TYPES[e.type];
-  if(parentBase && parentBase.splitsInto){
-    const childKey=parentBase.splitsInto;
-    const childBase=ENEMY_TYPES[childKey];
-    const mul=getWaveMultiplier();
-    for(let i=0;i<(parentBase.splitCount||2);i++){
-      enemies.push({
-        type:childKey,x:e.x+(Math.random()-0.5)*20,y:e.y+(Math.random()-0.5)*20,
-        hp:Math.max(1,Math.floor(childBase.hp*mul.hp)),maxHp:Math.max(1,Math.floor(childBase.hp*mul.hp)),
-        speed:childBase.speed*mul.speed,baseSpeed:childBase.speed*mul.speed,size:tinyAliensOn?childBase.size*0.4:childBase.size,
-        reward:childBase.reward,color:childBase.color,segment:e.segment,distWalked:Math.max(0,e.distWalked-5),
-        slowTimer:0,stunCooldown:0,stunInterval:0,stunRadius:0,stunDuration:0,stunned:0,cloakTimer:0,cloaked:false,bobSeed:Math.random()*1000
-      });
-    }
-    if(!discoveredTypes.has(childKey)){ discoveredTypes.add(childKey); playSound("typeReveal"); }
-    recordDiscovery("type",childKey);
-  }
-  updateHUD();
-  if(e.isBoss){
-    playSound("bossDown");
-    metaData.stats.bossesKilled=(metaData.stats.bossesKilled||0)+1;
-    questNotifyProgress("boss",1);
-    if(e.isFinalBoss) endGame("VICTORY");
-  }
-}
-
-function createExplosion(x,y,color){
-  const count=Math.max(2,Math.round(15*flashyMul()));
-  for(let i=0;i<count;i++){
-    const a=Math.random()*Math.PI*2, s=2+Math.random()*4;
-    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:20+Math.random()*10,size:2+Math.random()*3,color});
-  }
-}
-
-function pointLineDistance(px,py,x1,y1,x2,y2){
-  const A=px-x1,B=py-y1,C=x2-x1,D=y2-y1;
-  const len=C*C+D*D;
-  if(len===0) return Math.hypot(px-x1,py-y1);
-  const dot=A*C+B*D, param=dot/len;
-  const xx=x1+param*C, yy=y1+param*D;
-  return Math.hypot(px-xx,py-yy);
-}
-
-function stunNearbyTowers(source){
-  const radius=source.stunRadius||0, duration=source.stunDuration||0;
-  if(radius<=0||duration<=0) return;
-  for(const t of towers){
-    const d=Math.hypot(t.x-source.x,t.y-source.y);
-    if(d<=radius) t.stunTimer=Math.max(t.stunTimer||0,duration);
-  }
-  playSound("stun");
-}
-
-let gameSpeed=1, speedAccumulator=0;
-let gameFreeze=false;
-function setGameSpeed(s){
-  gameSpeed=s;
-  document.querySelectorAll(".speed-btn[data-speed]").forEach(b=>b.classList.toggle("active",parseFloat(b.dataset.speed)===s));
-}
-window.setGameSpeed=setGameSpeed;
-
-function resumeLoopAfterFreeze(){
-  gameFreeze=false;
-  if(isPlaying && !isPaused){ draw(); gameLoopId=requestAnimationFrame(loop); }
-}
-
-function loop(){
-  if(!isPlaying || isPaused || gameFreeze) return;
-  speedAccumulator+=gameSpeed;
-  let steps=0;
-  while(speedAccumulator>=1 && steps<6){ updateStep(); speedAccumulator-=1; steps++; if(!isPlaying || gameFreeze) break; }
-  if(isPlaying && !isPaused && !gameFreeze){
-    if(selectedTower) updateUpgradePanel();
-    draw();
-    gameLoopId=requestAnimationFrame(loop);
-  }else if(isPlaying && !isPaused && gameFreeze){
-    draw();
-  }
-}
-
-function updateStep(){
-  if(enemiesLeft>0){
-    spawnTimer++;
-    const spawnRate=Math.max(16,50-Math.min(24,wave*2));
-    if(spawnTimer>spawnRate){ spawnEnemy(); spawnTimer=0; }
-  }
-
-  for(let i=enemies.length-1;i>=0;i--){
-    const e=enemies[i];
-    if(e.stunned>0){ e.stunned--; e.speed=0; }
-    else if(e.slowTimer>0){ e.slowTimer--; e.speed=e.baseSpeed*.5; }
-    else e.speed=e.baseSpeed;
-
-    if(e.stunInterval>0 && e.stunned<=0){
-      e.stunCooldown--;
-      if(e.stunCooldown<=0){ stunNearbyTowers(e); e.stunCooldown=e.stunInterval; createExplosion(e.x,e.y,e.color); }
-    }
-    if(e.poisonTimer>0){
-      e.poisonTimer--; e.hp-=e.poisonDps;
-      if(e.hp<=0){ killEnemy(e); continue; }
-    }
-    const cloakBase=ENEMY_TYPES[e.type];
-    if(cloakBase && cloakBase.cloakInterval){
-      e.cloakTimer--;
-      if(e.cloakTimer<=0){ e.cloaked=!e.cloaked; e.cloakTimer=e.cloaked?cloakBase.cloakDuration:cloakBase.cloakInterval; }
-    }
-
-    const wall=towers.find(t=>t.isWall);
-    if(wall){
-      const distToWall=Math.hypot(e.x-wall.x,e.y-wall.y);
-      if(distToWall<40 && e.segment>=getWallSegment()){
-        wall.wallHp-=0.3;
-        if(wall.wallHp<=0){ towers=towers.filter(t=>t!==wall); flossWallPlaced=false; }
-        continue;
-      }
-    }
-
-    const target=path[e.segment+1];
-    if(!target) continue;
-    const dx=target.x-e.x, dy=target.y-e.y, dist=Math.hypot(dx,dy);
-    if(dist<=Math.max(0.01,e.speed)){
-      e.x=target.x; e.y=target.y; e.segment++;
-      if(e.segment>=path.length-1){
-        if(e.isBoss){ lives=0; enemies.splice(i,1); playSound("coreHit"); updateHUD(); endGame("CORE BREACHED"); }
-        else{ lives--; enemies.splice(i,1); playSound("coreHit"); updateHUD(); if(lives<=0) endGame("CORE BREACHED"); }
-      }
-    }else{ e.x+=dx/dist*e.speed; e.y+=dy/dist*e.speed; e.distWalked+=e.speed; }
-  }
-
-  for(const t of towers){
-    if(t.isWall) continue;
-    if(t.stunTimer>0){ t.stunTimer--; continue; }
-    t.target=null;
-    let bestDist=-1;
-    for(const e of enemies){
-      if(e.cloaked) continue;
-      if(Math.hypot(e.x-t.x,e.y-t.y)<=t.range && e.distWalked>bestDist){ bestDist=e.distWalked; t.target=e; }
-    }
-    if(oneHitModeOn && t.target){ t.target.hp=-9999; }
-    if(t.type==="freeze"){
-      if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; e.slowTimer=30; t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
-        playSound("freeze"); t.cooldown=t.fireRate;
-      }
-    }else if(t.type==="flame" || t.type==="sandreaper" || t.type==="neonblade"){
-      if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
-        t.cooldown=t.fireRate;
-      }
-    }else if(t.type==="vortex"){
-      if(t.cooldown<=0){
-        for(const e of enemies){ if(e.cloaked) continue;
-          const dx2=t.x-e.x, dy2=t.y-e.y, d2=Math.hypot(dx2,dy2);
-          if(d2<=t.range && d2>1){ e.x+=(dx2/d2)*0.6; e.y+=(dy2/d2)*0.6; e.hp-=t.damage; t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
-        playSound("vortex"); t.cooldown=t.fireRate;
-      }
-    }else if(t.type==="emp"){
-      if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; e.stunned=Math.max(e.stunned||0,70); t.dmgDealt+=t.damage; if(e.hp<=0) killEnemy(e); } }
-        playSound("emp"); t.cooldown=t.fireRate;
-      }
-    }else if(t.type==="blackhole"){
-      if(t.cooldown<=0){
-        for(const e of enemies){ if(!e.cloaked && Math.hypot(e.x-t.x,e.y-t.y)<=t.range){ e.hp-=t.damage; t.dmgDealt+=t.damage; createExplosion(e.x,e.y,"#c084ff"); if(e.hp<=0) killEnemy(e); } }
-        playSound("blackhole"); t.cooldown=t.fireRate;
-      }
-    }else if(t.type==="hijack"){
-      if(!t.used && t.target && !t.target.isBoss){ t.used=true; playSound("hijack"); createExplosion(t.x,t.y,"#ff00ff"); }
-    }else if(t.target && t.cooldown<=0){
-      playSound("shoot");
-      projectiles.push({x:t.x,y:t.y,target:t.target,speed:15,damage:t.damage,type:t.type,color:t.color,parent:t});
-      t.cooldown=t.fireRate;
-    }
-    if(t.cooldown>0) t.cooldown--;
-  }
-
-  if(towers.some(t=>t.oneTime && t.used)){
-    towers=towers.filter(t=>!(t.oneTime && t.used));
-    if(selectedTower && !towers.includes(selectedTower)){ selectedTower=null; document.getElementById("upgrade-panel").style.display="none"; }
-  }
-
-  for(let i=projectiles.length-1;i>=0;i--){
-    const p=projectiles[i];
-    if(!enemies.includes(p.target)){ projectiles.splice(i,1); continue; }
-    const dx=p.target.x-p.x, dy=p.target.y-p.y, dist=Math.hypot(dx,dy);
-    if(dist<=p.speed){
-      p.target.hp-=p.damage; p.parent.dmgDealt+=p.damage;
-      const dyingTarget=p.target;
-      createExplosion(p.target.x,p.target.y,p.color);
-      if(dyingTarget.hp<=0) killEnemy(dyingTarget);
-      if(p.type==="poison" && enemies.includes(dyingTarget)){ dyingTarget.poisonTimer=150; dyingTarget.poisonDps=5; }
-      projectiles.splice(i,1);
-    }else{ p.x+=dx/dist*p.speed; p.y+=dy/dist*p.speed; }
-  }
-
-  for(let i=particles.length-1;i>=0;i--){
-    const p=particles[i];
-    if(p.goldDrop){ p.life--; if(p.life<=0) particles.splice(i,1); continue; }
-    p.x+=p.vx||0; p.y+=p.vy||0; p.life--;
-    if(p.life<=0) particles.splice(i,1);
-  }
-}
-
-function getWallSegment(){ return 2; }
-
 // ---------------------------------------------------------------------
 // ALIEN RENDERING - shaped bodies (not just flat circles) with detail
 // that changes based on the area/type, and flashiness that scales
@@ -5148,6 +5550,118 @@ function drawAlienBodyFlashy(e,themeOverride){
 
   ctx.restore();
 }
+// ---------------------------------------------------------------------
+// Per-area path styling + the "core" structure aliens are marching on.
+// Purely visual: the path's collision geometry (the `path` array) is
+// unchanged, only how it's painted and what sits at its far end differs
+// per sector, so a glance at the lane tells you which area you're in.
+// ---------------------------------------------------------------------
+const AREA_PATH_STYLE={
+  hacker:    {color:"#0f3a18", edge:"#39ff14", dash:[]},
+  volcano:   {color:"#3a1508", edge:"#ff6a00", dash:[]},
+  arctic:    {color:"#284b5c", edge:"#cfefff", dash:[14,8]},
+  desert:    {color:"#4a3a1a", edge:"#ffcf6b", dash:[]},
+  space:     {color:"#12122a", edge:"#8fa0ff", dash:[3,11]},
+  swamp:     {color:"#1c2a10", edge:"#8aff33", dash:[]},
+  cyberpunk: {color:"#2a0a2a", edge:"#ff2fd0", dash:[16,6]},
+  graveyard: {color:"#26262e", edge:"#b7ffcf", dash:[7,11]},
+  underwater:{color:"#04283a", edge:"#33bbff", dash:[]},
+  hive:      {color:"#2a0512", edge:"#ff1155", dash:[]}
+};
+function drawThemedPath(){
+  const area=getCurrentArea();
+  const style=AREA_PATH_STYLE[area.theme]||AREA_PATH_STYLE.hacker;
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(path[0].x,path[0].y);
+  for(const p of path) ctx.lineTo(p.x,p.y);
+  ctx.strokeStyle=style.color; ctx.lineWidth=45; ctx.lineCap="round"; ctx.setLineDash([]); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(path[0].x,path[0].y);
+  for(const p of path) ctx.lineTo(p.x,p.y);
+  ctx.strokeStyle=style.edge; ctx.lineWidth=3; ctx.globalAlpha=0.55*flashyMul()+0.15;
+  ctx.setLineDash(style.dash);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+// One themed "core" (the structure the aliens are actually attacking)
+// per area, drawn at the final path waypoint. Kept as simple layered
+// canvas shapes rather than sprites so it scales cleanly at any zoom.
+function drawAreaCore(){
+  const area=getCurrentArea();
+  const end=path[path.length-1];
+  // The path's final waypoint sits off-canvas (BASE_W+50) so the core
+  // reads as "just inside the field" rather than off in empty space.
+  const x=Math.min(end.x,BASE_W-70), y=end.y;
+  const fm=flashyMul();
+  const pulse=(Math.sin(performance.now()/500)+1)/2;
+  ctx.save();
+  ctx.translate(x,y);
+  switch(area.theme){
+    case "hacker":
+      ctx.fillStyle="#0a1a0a"; ctx.fillRect(-34,-60,68,120);
+      ctx.strokeStyle="#39ff14"; ctx.lineWidth=3; ctx.shadowBlur=18*fm; ctx.shadowColor="#39ff14";
+      ctx.strokeRect(-34,-60,68,120);
+      ctx.font="bold 22px monospace"; ctx.fillStyle="#39ff14"; ctx.textAlign="center";
+      ctx.fillText(">_",0,6+Math.sin(performance.now()/400)*2);
+      for(let i=0;i<3;i++){ ctx.strokeRect(-24,-45+i*30,48,18); }
+      break;
+    case "volcano":
+      ctx.fillStyle="#2a1206"; ctx.beginPath(); ctx.moveTo(-45,60); ctx.lineTo(-20,-55); ctx.lineTo(20,-55); ctx.lineTo(45,60); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=`rgba(255,${120+pulse*60},20,0.9)`; ctx.shadowBlur=22*fm; ctx.shadowColor="#ff6a00";
+      ctx.beginPath(); ctx.arc(0,-58,10+pulse*4,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#ff6a00"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(-10,20); ctx.lineTo(5,-10); ctx.lineTo(-5,-10); ctx.lineTo(10,-40); ctx.stroke();
+      break;
+    case "arctic":
+      ctx.fillStyle="#dff6ff"; ctx.beginPath(); ctx.moveTo(-50,50); ctx.lineTo(0,-50); ctx.lineTo(50,50); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="#8fd9ff"; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle="#aeeaff";
+      for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(-18+i*18,-10); ctx.lineTo(-14+i*18,20); ctx.lineTo(-22+i*18,20); ctx.closePath(); ctx.fill(); }
+      break;
+    case "desert":
+      ctx.fillStyle="#5a4322"; ctx.fillRect(-40,-45,80,105);
+      ctx.fillStyle="#7a5c33"; ctx.fillRect(-48,50,96,14);
+      ctx.strokeStyle="#ffcf6b"; ctx.lineWidth=2; ctx.shadowBlur=10*fm; ctx.shadowColor="#ffcf6b";
+      for(let i=-1;i<=1;i++) ctx.strokeRect(-40+((i+1)*24),-30,16,20);
+      break;
+    case "space":
+      ctx.fillStyle="#151530"; ctx.beginPath(); ctx.ellipse(0,0,42,58,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#8fa0ff"; ctx.lineWidth=2; ctx.shadowBlur=16*fm; ctx.shadowColor="#8fa0ff"; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0,-10+pulse*4,20,10,0,0,Math.PI*2); ctx.strokeStyle="#c9d6ff"; ctx.stroke();
+      break;
+    case "swamp":
+      ctx.fillStyle="#33280f"; ctx.fillRect(-36,-40,16,100); ctx.fillRect(20,-40,16,100); ctx.fillRect(-36,-40,72,16);
+      ctx.strokeStyle="#8aff33"; ctx.lineWidth=2; ctx.globalAlpha=0.5+pulse*0.3;
+      ctx.strokeRect(-36,-40,72,100); ctx.globalAlpha=1;
+      break;
+    case "cyberpunk":
+      ctx.fillStyle="#160a26"; ctx.fillRect(-28,-65,56,125);
+      ctx.strokeStyle="#ff2fd0"; ctx.lineWidth=3; ctx.shadowBlur=20*fm; ctx.shadowColor="#ff2fd0"; ctx.strokeRect(-28,-65,56,125);
+      ctx.beginPath(); ctx.arc(0,-20,20+pulse*6,0,Math.PI*2); ctx.strokeStyle="#00f0ff"; ctx.lineWidth=2; ctx.stroke();
+      break;
+    case "graveyard":
+      ctx.fillStyle="#2a2a32"; ctx.beginPath(); ctx.moveTo(-30,55); ctx.lineTo(-30,-20); ctx.arc(0,-20,30,Math.PI,0); ctx.lineTo(30,55); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="#b7ffcf"; ctx.lineWidth=2; ctx.globalAlpha=0.4+pulse*0.3; ctx.stroke(); ctx.globalAlpha=1;
+      ctx.fillStyle="#1a1a20"; ctx.fillRect(-8,10,16,30);
+      break;
+    case "underwater":
+      ctx.fillStyle="#0a3a4a"; ctx.beginPath(); ctx.arc(0,10,45,Math.PI,0); ctx.fill();
+      ctx.strokeStyle="#33bbff"; ctx.lineWidth=2; ctx.shadowBlur=14*fm; ctx.shadowColor="#33bbff"; ctx.stroke();
+      ctx.fillStyle="rgba(150,220,255,0.6)";
+      for(let i=0;i<3;i++){ const yy=10-((performance.now()/40+i*20)%60); ctx.beginPath(); ctx.arc(-18+i*18,yy,3,0,Math.PI*2); ctx.fill(); }
+      break;
+    case "hive":
+      ctx.fillStyle=`rgba(120,0,30,${0.7+pulse*0.2})`; ctx.beginPath(); ctx.ellipse(0,0,40,55,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#ff1155"; ctx.lineWidth=3; ctx.shadowBlur=20*fm; ctx.shadowColor="#ff1155"; ctx.stroke();
+      ctx.fillStyle="#2a0009";
+      for(let i=0;i<3;i++){ const a=-0.6+i*0.6; ctx.beginPath(); ctx.ellipse(Math.cos(a)*18,Math.sin(a)*22,7,10,a,0,Math.PI*2); ctx.fill(); }
+      break;
+    default:
+      ctx.fillStyle="#222"; ctx.fillRect(-30,-45,60,100);
+  }
+  ctx.restore();
+}
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -5157,9 +5671,8 @@ function draw(){
   grad.addColorStop(0,area.bg[0]); grad.addColorStop(1,area.bg[1]);
   ctx.fillStyle=grad; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  ctx.beginPath(); ctx.moveTo(path[0].x,path[0].y);
-  for(const p of path) ctx.lineTo(p.x,p.y);
-  ctx.strokeStyle="#222"; ctx.lineWidth=45; ctx.lineCap="round"; ctx.stroke();
+  drawThemedPath();
+  drawAreaCore();
 
   if(selectedShopItem){
     const stat=TOWER_STATS[selectedShopItem];
@@ -5300,6 +5813,19 @@ function adminKillAllAliens(){
   adminStatus(`Cleared ${count} aliens.`);
 }
 function adminInfiniteBiomass(){ metaData.biomass=999999999; saveToStorage(metaData); updateMenuUI(); adminStatus("Biomass set to 999,999,999."); }
+function adminInfiniteMaterials(){
+  metaData.materials=metaData.materials||{};
+  MATERIAL_TIERS.forEach(m=>{ metaData.materials[m]=999999; });
+  saveToStorage(metaData);
+  if(document.getElementById("armory-panel").style.display!=="none") renderArmory();
+  adminStatus("All materials set to 999,999.");
+}
+function adminInfiniteSummonTickets(){
+  metaData.summonTickets=999999;
+  saveToStorage(metaData);
+  updateMenuUI(); renderArmory();
+  adminStatus("Summoning Tickets set to 999,999.");
+}
 function adminSkipWorld(){
   if(!isPlaying){ adminStatus("Start a mission first."); return; }
   enemies=[]; enemiesLeft=0; spawnTimer=0;
@@ -5406,6 +5932,8 @@ window.submitAdminCode=submitAdminCode;
 window.closeAdminPanel=closeAdminPanel;
 window.adminKillAllAliens=adminKillAllAliens;
 window.adminInfiniteBiomass=adminInfiniteBiomass;
+window.adminInfiniteMaterials=adminInfiniteMaterials;
+window.adminInfiniteSummonTickets=adminInfiniteSummonTickets;
 window.adminSkipWorld=adminSkipWorld;
 window.adminUnlockBestiary=adminUnlockBestiary;
 window.adminInfiniteCredits=adminInfiniteCredits;
