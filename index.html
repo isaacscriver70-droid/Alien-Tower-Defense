@@ -112,7 +112,7 @@ button:hover:not(:disabled){
   transform:scale(1.05);
 }
 button:disabled{opacity:.4;cursor:default;}
-.speed-btn{box-shadow:none;}
+.speed-btn{box-shadow:none;padding:.5em .8em;font-size:.85rem;min-height:34px;}
 .speed-btn.active{background:var(--green);color:#000;}
 #game-container{
   display:none;
@@ -196,11 +196,11 @@ button:disabled{opacity:.4;cursor:default;}
 }
 #btn-quit{
   pointer-events:auto;
-  padding:.6em 1.3em;
-  font-size:1rem;
+  padding:clamp(.35em,.9vw + .6vh,.6em) clamp(.6em,2vw + .8vh,1.3em);
+  font-size:clamp(.6rem,1vw + .9vh,1rem);
+  min-height:clamp(28px,3.2vh + 1.5vw,40px);
   color:var(--red);
   border-color:var(--red);
-  min-height:40px;
 }
 #btn-quit:hover{
   background:var(--red);
@@ -245,8 +245,20 @@ button:disabled{opacity:.4;cursor:default;}
 #shop-open-btn{
   display:none;
   pointer-events:auto;
-  padding:.6em 1em;
-  min-height:38px;
+  padding:clamp(.35em,.9vw + .6vh,.6em) clamp(.5em,1.8vw + .6vh,1em);
+  font-size:clamp(.6rem,1vw + .9vh,1rem);
+  min-height:clamp(28px,3.2vh + 1.5vw,38px);
+}
+#game-speed-cluster{
+  position:absolute;
+  left:14px;
+  bottom:14px;
+  z-index:30;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  max-width:60vw;
+  pointer-events:auto;
 }
 .tower-card{
   padding:.9rem;
@@ -304,13 +316,11 @@ button:disabled{opacity:.4;cursor:default;}
   #hud{ padding:0 1rem; padding-right:110px; height:56px; }
   .hud-stat{ font-size:1.05rem; }
   #shop-panel{ width:min(46vw,260px); top:70px; right:10px; padding:12px; max-height:calc(100vh - 90px); }
-  #shop-open-btn{ padding:.55em .8em; font-size:.85rem; }
   .shop-title{ font-size:1.05rem; }
   .tower-card{ padding:10px; margin-bottom:10px; }
   .t-name{ font-size:1rem; }
   .t-desc{ font-size:.72rem; }
   #upgrade-panel{ width:min(46vw,240px); left:10px; bottom:10px; padding:12px; }
-  #btn-quit{ padding:.55em .9em; font-size:.85rem; }
   button{ padding:.75em 1.5em; font-size:1rem; min-height:40px; }
   .menu-actions,.go-buttons,.win-buttons{ gap:12px; margin-top:14px; }
 }
@@ -318,7 +328,6 @@ button:disabled{opacity:.4;cursor:default;}
   h1{ font-size:1.7rem; letter-spacing:2px; }
   #hud{ padding:0 .6rem; padding-right:90px; gap:8px; height:48px; }
   .hud-stat{ font-size:.85rem; }
-  #btn-quit,#shop-open-btn{ padding:.45em .7em; font-size:.75rem; min-height:32px; }
   .speed-btn{ padding:.4em .6em!important; font-size:.75rem!important; min-height:28px!important; }
   #shop-panel{ right:6px; width:min(50vw,220px); padding:9px; }
   #upgrade-panel{ left:6px; width:min(50vw,210px); padding:9px; }
@@ -340,7 +349,6 @@ button:disabled{opacity:.4;cursor:default;}
   #hud{ height:46px; padding-right:120px; gap:10px; }
   .hud-stat{ font-size:1rem; }
   #hud-pinned{ top:5px; right:5px; gap:5px; }
-  #btn-quit,#shop-open-btn{ padding:.4em .8em; font-size:.8rem; min-height:32px; }
   .speed-btn{ padding:.4em .6em!important; font-size:.75rem!important; min-height:28px!important; }
   #shop-panel{ top:52px; max-height:calc(100vh - 62px); padding:10px; width:min(42vw,240px); }
   #upgrade-panel{ bottom:6px; left:6px; padding:10px; width:min(42vw,220px); }
@@ -351,7 +359,6 @@ button:disabled{opacity:.4;cursor:default;}
 @media (max-height:360px){
   #hud{ height:38px; padding-right:100px; gap:8px; }
   .hud-stat{ font-size:.8rem; }
-  #btn-quit,#shop-open-btn{ padding:.3em .6em; font-size:.7rem; min-height:28px; }
   .speed-btn{ padding:.3em .5em!important; font-size:.65rem!important; min-height:24px!important; }
   #shop-panel{ top:44px; max-height:calc(100vh - 52px); width:min(40vw,200px); }
   #upgrade-panel{ width:min(40vw,190px); }
@@ -755,15 +762,47 @@ button:disabled{opacity:.4;cursor:default;}
   position:absolute; inset:0; z-index:65; display:none; align-items:center; justify-content:center;
   background:rgba(0,0,0,.82); backdrop-filter:blur(4px); text-align:center;
 }
-.discovery-inner, .boss-intro-inner{ animation:discoveryPop .55s ease-out; }
+.discovery-inner{ animation:discoveryPop .55s ease-out; }
 @keyframes discoveryPop{ 0%{ transform:scale(.5); opacity:0; } 60%{ transform:scale(1.08); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
 .discovery-label{ font-family:'Orbitron'; letter-spacing:4px; color:var(--cyan); text-shadow:0 0 18px var(--cyan); font-size:1.3rem; margin-bottom:10px; }
 .discovery-name{ font-family:'Orbitron'; font-size:1.5rem; margin-top:10px; }
 .discovery-desc{ font-family:Arial; color:#ccc; max-width:420px; margin:10px auto 0; font-size:.9rem; }
 #discovery-canvas, #boss-intro-canvas{ display:block; margin:0 auto; width:auto; height:auto; filter:drop-shadow(0 0 20px currentColor); }
-.boss-intro-label{ font-family:'Orbitron'; letter-spacing:6px; color:var(--red); text-shadow:0 0 20px var(--red); font-size:2rem; animation:bossIntroFlash .5s infinite alternate; }
-@keyframes bossIntroFlash{ from{ opacity:.6; } to{ opacity:1; } }
 .boss-intro-name{ font-family:'Orbitron'; font-size:1.6rem; margin-top:14px; color:#fff; }
+
+/* FLASHY boss intro: big overshooting zoom + wobble, plus a hot screen
+   flash on the overlay itself and a shaking/pulsing WARNING label. */
+@keyframes bossZoomFlashy{
+  0%{ transform:scale(.15) rotate(-18deg); opacity:0; filter:brightness(2.4); }
+  35%{ transform:scale(1.4) rotate(8deg); opacity:1; filter:brightness(1.6); }
+  55%{ transform:scale(.88) rotate(-4deg); filter:brightness(1.1); }
+  75%{ transform:scale(1.12) rotate(2deg); }
+  100%{ transform:scale(1) rotate(0deg); filter:brightness(1); }
+}
+.boss-intro-inner.flashy-mode{ animation:bossZoomFlashy .9s cubic-bezier(.34,1.56,.64,1) both; }
+#boss-intro-overlay.flash-mode{ animation:bossScreenFlash .55s ease-out; }
+@keyframes bossScreenFlash{
+  0%{ background:rgba(255,40,40,.7); }
+  40%{ background:rgba(255,120,0,.35); }
+  100%{ background:rgba(0,0,0,.82); }
+}
+.boss-intro-label.flashy-mode{
+  font-family:'Orbitron'; letter-spacing:6px; color:var(--red); text-shadow:0 0 26px var(--red),0 0 50px var(--red);
+  font-size:2.2rem; animation:bossIntroFlashyPulse .35s infinite alternate;
+}
+@keyframes bossIntroFlashyPulse{ from{ opacity:.55; transform:scale(1) translateX(0); } to{ opacity:1; transform:scale(1.08) translateX(2px); } }
+
+/* RETRO boss intro: a plain, chunky, stepped zoom - no flash, no wobble,
+   matching the flatter Space-Invaders art style. */
+@keyframes bossZoomRetro{
+  0%{ transform:scale(.4); opacity:0; }
+  100%{ transform:scale(1); opacity:1; }
+}
+.boss-intro-inner.retro-mode{ animation:bossZoomRetro .5s steps(5,end) both; }
+.boss-intro-label.retro-mode{
+  font-family:'Orbitron'; letter-spacing:6px; color:var(--red); text-shadow:none;
+  font-size:2rem; animation:none; opacity:1;
+}
 
 .bestiary-area-label{font-family:'Orbitron';font-size:1rem;letter-spacing:2px;margin-bottom:10px;padding-left:4px;border-left:4px solid var(--gcolor,var(--green));}
 .boss-entry{
@@ -980,8 +1019,13 @@ button:disabled{opacity:.4;cursor:default;}
 .admin-speed-row button{ width:auto; flex:0 0 auto; padding:8px 12px; margin-bottom:0; }
 #admin-status{ font-family:Arial; font-size:.75rem; color:#9fd8a0; text-align:center; min-height:16px; margin-top:4px; }
 #admin-close-btn{ color:#888; border-color:#555; box-shadow:none; margin-top:4px; }
-.lobby-credits{ position:fixed; bottom:8px; left:50%; transform:translateX(-50%); z-index:40; font-family:Arial; font-size:.72rem; letter-spacing:1px; color:#4a5a4a; pointer-events:none; }
-.discord-link{ position:fixed; left:14px; bottom:14px; z-index:40; display:flex; align-items:center; gap:6px; font-family:Arial; font-size:.85rem; color:#8fa8ff; text-decoration:none; opacity:.85; transition:.2s; }
+#lobby-footer{
+  position:fixed; left:14px; bottom:14px; z-index:40;
+  display:flex; align-items:center; gap:14px;
+  pointer-events:none;
+}
+.lobby-credits{ font-family:Arial; font-size:.72rem; letter-spacing:1px; color:#4a5a4a; pointer-events:none; }
+.discord-link{ display:flex; align-items:center; gap:6px; font-family:Arial; font-size:.85rem; color:#8fa8ff; text-decoration:none; opacity:.85; transition:.2s; pointer-events:auto; }
 .discord-link:hover{ opacity:1; text-shadow:0 0 8px #8fa8ff; }
 .discord-link svg{ width:18px; height:18px; fill:#8fa8ff; }
 #end-credits-screen{
@@ -1143,6 +1187,7 @@ button:disabled{opacity:.4;cursor:default;}
 .ach-progress-bar, .quest-progress-bar{ height:8px; border-radius:4px; background:#222; margin-top:8px; overflow:hidden; }
 .ach-progress-fill, .quest-progress-fill{ height:100%; background:var(--green); }
 #craft-tab-cards.active,#craft-tab-crates.active,#craft-tab-armor.active{ background:#9fd8a0; color:#000; }
+.craft-tab.active{ background:var(--green); color:#000; }
 </style>
 </head>
 <body>
@@ -1184,6 +1229,7 @@ button:disabled{opacity:.4;cursor:default;}
   <div class="loader" id="loader">Syncing Database...</div>
 
   <div class="menu-actions">
+    <div id="coop-client-waiting-banner" style="display:none;color:var(--green);font-family:Arial;font-size:.85rem;text-align:center;text-shadow:0 0 8px var(--green);">CONNECTED AS TEAMMATE — waiting for the host to deploy...</div>
     <div id="drop-rate-dropdown">
       <div style="display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;">
         <button onclick="startGame()">Deploy Defenses</button>
@@ -1207,6 +1253,15 @@ button:disabled{opacity:.4;cursor:default;}
     <button onclick="openInventory()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">INVENTORY</button>
     <button onclick="openAchievements()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">ACHIEVEMENTS</button>
     <button onclick="openQuests()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">QUESTS</button>
+    <button onclick="openLeaderboard()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">LEADERBOARD</button>
+    <button id="btn-open-coop" onclick="netOpenModal()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">ONLINE CO-OP</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="toggleLocalCoop()" id="btn-local-coop" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">LOCAL CO-OP: OFF</button>
+      <div id="coop-mobile-notice" style="display:none;align-items:center;gap:6px;">
+        <span style="color:#ff0044;text-shadow:0 0 8px #ff0044,0 0 16px #ff0044;font-family:'Orbitron';font-size:.72rem;letter-spacing:1px;">MOBILE ONLY</span>
+        <button onclick="dismissCoopNotice()" style="padding:.2em .55em;min-height:0;font-size:.7rem;box-shadow:none;border-color:#888;color:#ccc;">X</button>
+      </div>
+    </div>
     <button id="btn-update-app" onclick="forceUpdateApp()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">CHECK FOR UPDATES</button>
   </div>
 
@@ -1232,11 +1287,22 @@ button:disabled{opacity:.4;cursor:default;}
       <label for="lobby-theme-select">Lobby Theme</label>
       <select id="lobby-theme-select" onchange="updateSetting('lobbyTheme', this.value)"></select>
     </div>
-    <div class="settings-row" style="justify-content:center;">
-      <label for="flashy-toggle" style="flex:none;display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" id="flashy-toggle" checked onchange="updateSetting('flashyMode', this.checked)">
-        Flashy Mode (unchecked = retro Space Invaders art)
-      </label>
+    <div class="settings-row" id="custom-theme-editor" style="display:none;flex-direction:column;align-items:stretch;gap:8px;">
+      <div style="font-size:.78rem;color:#9fd8a0;">Customize this slot's background &amp; music:</div>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:.8rem;">
+        <label style="flex:0 0 auto;display:flex;align-items:center;gap:4px;">BG 1 <input type="color" id="custom-bg1" onchange="updateCustomThemeField('bg1',this.value)"></label>
+        <label style="flex:0 0 auto;display:flex;align-items:center;gap:4px;">BG 2 <input type="color" id="custom-bg2" onchange="updateCustomThemeField('bg2',this.value)"></label>
+        <label style="flex:0 0 auto;display:flex;align-items:center;gap:4px;">Accent <input type="color" id="custom-accent" onchange="updateCustomThemeField('accent',this.value)"></label>
+      </div>
+      <select id="custom-music-select" onchange="updateCustomThemeField('music',this.value)"></select>
+    </div>
+    <div class="settings-row">
+      <label for="flashy-level-slider">Flashy Intensity</label>
+      <input type="range" id="flashy-level-slider" min="0" max="100" value="100" oninput="updateSetting('flashyLevel', this.value)">
+      <span id="flashy-level-val">100</span>
+    </div>
+    <div class="settings-row" style="margin-top:-10px;">
+      <label style="flex:none;font-size:.72rem;color:#888;">Below 50 switches to flatter retro Space Invaders art.</label>
     </div>
     <div class="settings-row" style="justify-content:center;">
       <label for="autoreturn-toggle" style="flex:none;display:flex;align-items:center;gap:8px;">
@@ -1292,6 +1358,20 @@ button:disabled{opacity:.4;cursor:default;}
   <button onclick="closeQuests()" style="flex-shrink:0;margin:24px 0 10px;border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">CLOSE</button>
 </div>
 
+<div id="leaderboard-screen" class="screen" style="display:none;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">LEADERBOARD</h1>
+  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:.9rem;line-height:1.5;margin-bottom:16px;">
+    Local only - this device has no server, so these are YOUR best runs, not a comparison against other players.
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
+    <button id="lb-tab-wave" class="craft-tab active" onclick="setLeaderboardTab('wave')" style="padding:.5em 1em;font-size:.85rem;">TOP WAVES</button>
+    <button id="lb-tab-kills" class="craft-tab" onclick="setLeaderboardTab('kills')" style="padding:.5em 1em;font-size:.85rem;">TOP KILLS</button>
+    <button id="lb-tab-records" class="craft-tab" onclick="setLeaderboardTab('records')" style="padding:.5em 1em;font-size:.85rem;">CAREER RECORDS</button>
+  </div>
+  <div style="max-width:640px;width:100%;" id="leaderboard-content"></div>
+  <button onclick="closeLeaderboard()" style="flex-shrink:0;margin:24px 0 10px;border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">CLOSE</button>
+</div>
+
 <div id="inventory-screen" class="screen" style="display:none;">
   <h1 style="font-size:3rem;letter-spacing:6px;">INVENTORY</h1>
   <div style="max-width:680px;width:100%;" id="inventory-content"></div>
@@ -1321,17 +1401,19 @@ button:disabled{opacity:.4;cursor:default;}
       <div class="hud-stat" id="hud-area" style="color:var(--cyan);text-shadow:0 0 15px var(--cyan);">AREA: The Mainframe</div>
       <div class="hud-stat">CORE SHIELDS: <span id="hud-lives">20</span></div>
     </div>
-    <div id="hud-controls-row">
-      <button class="speed-btn" data-speed="0.5" onclick="setGameSpeed(0.5)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">0.5x</button>
-      <button class="speed-btn active" data-speed="1" onclick="setGameSpeed(1)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">1x</button>
-      <button class="speed-btn" data-speed="2" onclick="setGameSpeed(2)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">2x</button>
-      <button class="speed-btn" data-speed="3" onclick="setGameSpeed(3)" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">3x</button>
-      <button class="speed-btn" onclick="togglePause()" id="btn-pause" style="padding:.5em .8em;font-size:.85rem;min-height:34px;">PAUSE</button>
-    </div>
   </div>
   <div id="hud-pinned">
+    <div id="coop-badge" style="display:none;font-family:Arial;font-size:.7rem;color:var(--green);background:rgba(0,0,0,.5);padding:4px 8px;border-radius:6px;border:1px solid var(--green);white-space:nowrap;"></div>
     <button id="shop-open-btn" onclick="toggleShop()">OPEN SHOP</button>
     <button id="btn-quit" onclick="quitGame()">CANCEL MISSION</button>
+  </div>
+
+  <div id="game-speed-cluster">
+    <button class="speed-btn" data-speed="0.5" onclick="setGameSpeed(0.5)">0.5x</button>
+    <button class="speed-btn active" data-speed="1" onclick="setGameSpeed(1)">1x</button>
+    <button class="speed-btn" data-speed="2" onclick="setGameSpeed(2)">2x</button>
+    <button class="speed-btn" data-speed="3" onclick="setGameSpeed(3)">3x</button>
+    <button class="speed-btn" onclick="togglePause()" id="btn-pause">PAUSE</button>
   </div>
 
   <div id="shop-panel">
@@ -1427,14 +1509,49 @@ button:disabled{opacity:.4;cursor:default;}
   <button id="end-credits-close-btn" onclick="closeEndCredits()">CLOSE</button>
 </div>
 
-<a class="discord-link" href="https://www.youtube.com/watch?v=QDia3e12czc" target="_blank" rel="noopener">
-  <svg viewBox="0 0 24 24"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.893.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.099.246.197.373.291a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.673-3.549-13.662a.06.06 0 0 0-.031-.028z"/></svg>
-  Discord
-</a>
-
-<div class="lobby-credits">Made by Isaac</div>
+<div id="lobby-footer">
+  <a class="discord-link" href="https://www.youtube.com/watch?v=QDia3e12czc" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.893.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.099.246.197.373.291a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.673-3.549-13.662a.06.06 0 0 0-.031-.028z"/></svg>
+    Discord
+  </a>
+  <div class="lobby-credits">Made by Isaac</div>
+</div>
 
 <button id="admin-secret-btn" onclick="openAdminCodeModal()" title="&#8203;">&#9881;&#65038;</button>
+
+<div class="admin-overlay" id="coop-overlay">
+  <div class="admin-box" style="border-color:var(--green);box-shadow:0 0 40px rgba(57,255,20,.5);width:380px;max-width:88vw;">
+    <h2 style="color:var(--green);text-shadow:0 0 12px var(--green);">ONLINE CO-OP</h2>
+    <div id="coop-status" style="font-family:Arial;font-size:.8rem;color:var(--cyan);min-height:18px;margin-bottom:8px;"></div>
+
+    <div id="coop-choice-view" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Team up with a friend and defend the same base together — one shared credit pool, one shared core.</div>
+      <button onclick="netStartHost()">HOST A GAME</button>
+      <button onclick="netStartJoinView()">JOIN A GAME</button>
+      <button onclick="netCloseModal()" style="color:#888;border-color:#555;box-shadow:none;">CLOSE</button>
+    </div>
+
+    <div id="coop-host-view" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Share this code with your teammate:</div>
+      <div id="coop-host-code" style="font-size:2rem;letter-spacing:6px;color:var(--gold);text-shadow:0 0 15px var(--gold);text-align:center;">....</div>
+      <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+    </div>
+
+    <div id="coop-join-view" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Enter your teammate's code:</div>
+      <input type="text" id="coop-join-input" maxlength="4" placeholder="CODE" style="width:100%;box-sizing:border-box;padding:12px;font-family:'Orbitron';font-size:1.2rem;letter-spacing:6px;text-align:center;background:rgba(0,0,0,.6);border:2px solid var(--green);color:var(--green);border-radius:8px;text-transform:uppercase;" onkeydown="if(event.key==='Enter')netJoinSubmit();">
+      <div class="admin-box-actions">
+        <button onclick="netJoinSubmit()">CONNECT</button>
+        <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+      </div>
+    </div>
+
+    <div id="coop-waiting-view" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.85rem;color:var(--green);text-align:center;">Connected! Waiting for the host to deploy defenses...</div>
+      <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">LEAVE</button>
+    </div>
+  </div>
+</div>
 
 <div class="admin-overlay" id="admin-code-overlay">
   <div class="admin-box">
@@ -1486,6 +1603,7 @@ button:disabled{opacity:.4;cursor:default;}
   <button id="admin-close-btn" onclick="closeAdminPanel()">CLOSE</button>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script>
 function showModal(message,buttons){
   const overlay=document.getElementById("ui-modal-overlay");
@@ -2027,7 +2145,14 @@ function apiPost(fn, body){
 }
 
 function defaultSettings(){
-  return { musicVolume:50, sfxVolume:60, muted:false, lobbyTheme:"menu", flashyMode:true, autoReturnSummon:false };
+  return { musicVolume:50, sfxVolume:60, muted:false, lobbyTheme:"menu", flashyLevel:100, autoReturnSummon:false, customThemes:defaultCustomThemes() };
+}
+function defaultCustomThemes(){
+  return [
+    {bg1:"#241832",bg2:"#050208",accent:"#ff6a2b",music:"area6"},
+    {bg1:"#0a1a2a",bg2:"#000000",accent:"#33bbff",music:"area8"},
+    {bg1:"#2a0505",bg2:"#000000",accent:"#ff1155",music:"area9"}
+  ];
 }
 
 function defaultLocalState(){
@@ -2042,6 +2167,7 @@ function defaultLocalState(){
     discoveredTypes:[],
     discoveredBosses:[],
     bossesDefeated:[],
+    runHistory:[],
     summonTickets:0,
     areasEverCleared:0,
     unlockedAreaTowers:[],
@@ -2094,10 +2220,11 @@ function onDataLoaded(data){
   metaData=data || metaData;
   if(!metaData.settings) metaData.settings=defaultSettings();
   if(metaData.settings.lobbyTheme===undefined) metaData.settings.lobbyTheme="menu";
-  if(metaData.settings.flashyMode===undefined){
-    // migrate old 0-100 flashyLevel saves: half or more counted as "on"
-    metaData.settings.flashyMode = (metaData.settings.flashyLevel===undefined) ? true : metaData.settings.flashyLevel>=50;
+  if(metaData.settings.flashyLevel===undefined){
+    // migrate old boolean flashyMode saves into the new 0-100 intensity slider
+    metaData.settings.flashyLevel = (metaData.settings.flashyMode===undefined) ? 100 : (metaData.settings.flashyMode?100:0);
   }
+  if(metaData.settings.customThemes===undefined) metaData.settings.customThemes=defaultCustomThemes();
   if(metaData.summonTickets===undefined) metaData.summonTickets=0;
   if(metaData.unlockedAreaTowers===undefined) metaData.unlockedAreaTowers=[];
   if(metaData.materials===undefined) metaData.materials={common:0,uncommon:0,rare:0,epic:0,legendary:0};
@@ -2105,6 +2232,7 @@ function onDataLoaded(data){
   if(metaData.stats===undefined) metaData.stats={totalKills:0,cratesOpened:0,armorCratesOpened:0,towerCratesOpened:0,bossesKilled:0,towersBuilt:0,runsPlayed:0,biomassEarnedTotal:0,materialsCollectedTotal:0};
   if(metaData.achievementsClaimed===undefined) metaData.achievementsClaimed=[];
   if(metaData.bossesDefeated===undefined) metaData.bossesDefeated=[];
+  if(metaData.runHistory===undefined) metaData.runHistory=[];
   if(metaData.settings.autoReturnSummon===undefined) metaData.settings.autoReturnSummon=false;
 
   // --- Inventory/equipment migration: legacy count-based powerups/armors -> durability instances ---
@@ -2140,7 +2268,8 @@ function onDataLoaded(data){
   applySettingsToUI();
   applyLobbyBackground(metaData.settings.lobbyTheme||"menu");
   ensureQuestsFresh();
-  if(!isPlaying) AudioEngine.playMusic(metaData.settings.lobbyTheme||"menu");
+  initCoopNotice();
+  if(!isPlaying) AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu"));
 }
 
 function applySettingsToUI(){
@@ -2148,7 +2277,7 @@ function applySettingsToUI(){
   const musicSlider=document.getElementById("music-vol-slider");
   const sfxSlider=document.getElementById("sfx-vol-slider");
   const muteToggle=document.getElementById("mute-toggle");
-  const flashyToggle=document.getElementById("flashy-toggle");
+  const flashySlider=document.getElementById("flashy-level-slider");
   const autoReturnToggle=document.getElementById("autoreturn-toggle");
   const lobbySelect=document.getElementById("lobby-theme-select");
   if(musicSlider){
@@ -2160,28 +2289,35 @@ function applySettingsToUI(){
     document.getElementById("sfx-vol-val").innerText=s.sfxVolume;
   }
   if(muteToggle) muteToggle.checked=!!s.muted;
-  if(flashyToggle) flashyToggle.checked=!!s.flashyMode;
+  if(flashySlider){
+    flashySlider.value=s.flashyLevel!==undefined?s.flashyLevel:100;
+    document.getElementById("flashy-level-val").innerText=flashySlider.value;
+  }
   if(autoReturnToggle) autoReturnToggle.checked=!!s.autoReturnSummon;
   if(lobbySelect && lobbySelect.options.length===0){
     populateLobbyThemeSelect();
   }
   if(lobbySelect) lobbySelect.value=s.lobbyTheme||"menu";
+  showCustomThemeEditorIfNeeded(s.lobbyTheme||"menu");
   AudioEngine.setMusicVolume(s.musicVolume/100);
   AudioEngine.setSfxVolume(s.sfxVolume/100);
   AudioEngine.setMuted(!!s.muted);
-  applyFlashyMode(s.flashyMode);
+  applyFlashyLevel(s.flashyLevel!==undefined?s.flashyLevel:100);
 }
 
-// Flashy mode is now an on/off switch (Settings panel). ON keeps the
-// detailed alien/turret art plus full glow/particle counts. OFF switches
-// rendering to a flat retro "Space Invaders" pixel-sprite style (see
-// drawAlienBodyRetro / drawTowerBarrelRetro) and dims the leftover
-// glow-scaling call sites that still use flashyMul() for particle counts.
+// Flashy Intensity is now a 0-100 slider (Settings panel). At 50+ it keeps
+// the detailed alien/turret art with glow/particle strength scaling with
+// the slider; below 50 it switches to a flat retro "Space Invaders"
+// pixel-sprite style (see drawAlienBodyRetro / drawTowerBarrelRetro) at a
+// dimmer intensity. flashyMul() is read all over the renderer to scale
+// glow blur, particle counts, etc.
+let flashyLevel=100;
 let flashyMode=true;
-function applyFlashyMode(v){
-  flashyMode=!!v;
+function applyFlashyLevel(level){
+  flashyLevel=Math.max(0,Math.min(100,parseInt(level,10)||0));
+  flashyMode=flashyLevel>=50;
 }
-function flashyMul(){ return flashyMode?1:0.35; }
+function flashyMul(){ return Math.max(0.12,flashyLevel/100); }
 
 // Lobby background: recolor the menu/bestiary screens using an area's palette,
 // or a neutral green theme for the default menu / a custom slot.
@@ -2198,8 +2334,10 @@ function applyLobbyBackground(themeKey){
     const idx=parseInt(themeKey.replace("area",""),10);
     const area=AREAS[idx];
     if(area){ bg1=area.bg[0]; bg2=area.bg[1]; accent=area.accent; }
-  }else if(themeKey==="custom"){
-    bg1="#241832"; bg2="#050208"; accent="#ff6a2b";
+  }else if(themeKey && themeKey.startsWith("custom")){
+    const idx=parseInt(themeKey.replace("custom",""),10);
+    const slot=(metaData.settings && metaData.settings.customThemes || defaultCustomThemes())[idx];
+    if(slot){ bg1=slot.bg1; bg2=slot.bg2; accent=slot.accent; }
   }
   screens.forEach(s=>{ s.style.background=`radial-gradient(circle,${bg1},${bg2})`; });
   document.documentElement.style.setProperty("--green",accent);
@@ -2219,9 +2357,12 @@ function populateLobbyThemeSelect(){
     opt.innerText="Area "+(i+1)+" - "+a.name;
     sel.appendChild(opt);
   });
-  const customOpt=document.createElement("option");
-  customOpt.value="custom"; customOpt.innerText="Custom Theme (Purple/Orange)";
-  sel.appendChild(customOpt);
+  for(let i=0;i<3;i++){
+    const opt=document.createElement("option");
+    opt.value="custom"+i;
+    opt.innerText="Custom Slot "+(i+1);
+    sel.appendChild(opt);
+  }
 }
 
 function toggleSettings(){
@@ -2240,11 +2381,15 @@ function updateSetting(key,value){
   }else if(key==="lobbyTheme"){
     metaData.settings.lobbyTheme=value;
     applyLobbyBackground(value);
-    if(!isPlaying) AudioEngine.playMusic(value);
+    if(!isPlaying) AudioEngine.playMusic(lobbyMusicKeyFor(value));
+    showCustomThemeEditorIfNeeded(value);
     playSound("click");
-  }else if(key==="flashyMode"){
-    metaData.settings.flashyMode=!!value;
-    applyFlashyMode(!!value);
+  }else if(key==="flashyLevel"){
+    const v=Math.max(0,Math.min(100,parseInt(value,10)||0));
+    metaData.settings.flashyLevel=v;
+    applyFlashyLevel(v);
+    const disp=document.getElementById("flashy-level-val");
+    if(disp) disp.innerText=v;
     playSound("click");
   }else if(key==="autoReturnSummon"){
     metaData.settings.autoReturnSummon=!!value;
@@ -2266,6 +2411,58 @@ function updateSetting(key,value){
 }
 window.toggleSettings=toggleSettings;
 window.updateSetting=updateSetting;
+
+// ---------------------------------------------------------------------
+// Custom lobby theme slots - up to 3 user-editable background/accent
+// color combos, each paired with any existing music track (no file
+// uploads in a self-contained offline game, so "custom music" means
+// picking which existing track plays for that custom background).
+// ---------------------------------------------------------------------
+function lobbyMusicKeyFor(themeKey){
+  if(themeKey && themeKey.startsWith("custom")){
+    const idx=parseInt(themeKey.replace("custom",""),10);
+    const slot=(metaData.settings.customThemes||defaultCustomThemes())[idx];
+    return slot?slot.music:"menu";
+  }
+  return themeKey||"menu";
+}
+function populateCustomMusicSelect(sel){
+  sel.innerHTML="";
+  const opts=[["menu","Menu Theme"],["boss","Boss Theme"]];
+  AREAS.forEach((a,i)=>opts.push(["area"+i,"Area "+(i+1)+" - "+a.name]));
+  opts.forEach(([val,label])=>{ const o=document.createElement("option"); o.value=val; o.innerText=label; sel.appendChild(o); });
+}
+function showCustomThemeEditorIfNeeded(themeKey){
+  const editor=document.getElementById("custom-theme-editor");
+  if(!editor) return;
+  if(themeKey && themeKey.startsWith("custom")){
+    const idx=parseInt(themeKey.replace("custom",""),10);
+    metaData.settings.customThemes=metaData.settings.customThemes||defaultCustomThemes();
+    const slot=metaData.settings.customThemes[idx]||defaultCustomThemes()[idx];
+    editor.style.display="flex";
+    editor.dataset.slotIdx=idx;
+    document.getElementById("custom-bg1").value=slot.bg1;
+    document.getElementById("custom-bg2").value=slot.bg2;
+    document.getElementById("custom-accent").value=slot.accent;
+    const msel=document.getElementById("custom-music-select");
+    if(msel.options.length===0) populateCustomMusicSelect(msel);
+    msel.value=slot.music;
+  }else{
+    editor.style.display="none";
+  }
+}
+function updateCustomThemeField(field,value){
+  const editor=document.getElementById("custom-theme-editor");
+  const idx=parseInt(editor.dataset.slotIdx,10);
+  metaData.settings.customThemes=metaData.settings.customThemes||defaultCustomThemes();
+  if(!metaData.settings.customThemes[idx]) metaData.settings.customThemes[idx]=defaultCustomThemes()[idx];
+  metaData.settings.customThemes[idx][field]=value;
+  saveToStorage(metaData);
+  applyLobbyBackground(metaData.settings.lobbyTheme);
+  if(!isPlaying) AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme));
+  playSound("click");
+}
+window.updateCustomThemeField=updateCustomThemeField;
 
 function updateMenuUI(){
   const setText=(id,val)=>{ const el=document.getElementById(id); if(el) el.innerText=val; };
@@ -2375,7 +2572,7 @@ const TOWER_STATS={
   phantomtrap:{ name:"Phantom Trap", desc:"[Haunted Grounds] Roots and damages one target until it dies.", unlockCost:2400, cost:950, range:180, damage:26, fireRate:12, color:"#b7ffcf", areaLocked:true, areaIndex:7 },
   krakenharpoon:{ name:"Kraken Harpoon", desc:"[The Abyss] Massive single-target harpoon shot.", unlockCost:2600, cost:1000, range:380, damage:260, fireRate:90, color:"#33bbff", areaLocked:true, areaIndex:8 },
   hivespike:{ name:"Hive Spike", desc:"[The Hive Core] Organic turret, grows stronger the longer it survives.", unlockCost:2800, cost:1050, range:220, damage:30, fireRate:20, color:"#ff1155", areaLocked:true, areaIndex:9 },
-  flosswall:{ name:"Floss Wall", desc:"A moving wall that blocks aliens. Cannot be upgraded or flossed. Only one allowed on the field.", unlockCost:0, cost:1250, range:0, damage:0, fireRate:1, color:"#ffffff", isWall:true, wallHp:400 },
+  flosswall:{ name:"Floss Wall", desc:"A moving wall that blocks aliens. Cannot be upgraded or flossed. Only one allowed on the field. Price rises the more times you place one in a run.", unlockCost:1250, cost:100, range:0, damage:0, fireRate:1, color:"#ffffff", isWall:true, wallHp:400 },
   omega:{ name:"OMEGA ANNIHILATOR", desc:"ADMIN ONLY. Erases anything that enters its range.", unlockCost:0, cost:0, range:9999, damage:999999, fireRate:1, color:"#ffffff", admin:true },
   secretop:{ name:"VOIDBRINGER", desc:"SECRET. Extremely rare summon-only turret.", unlockCost:0, cost:0, range:320, damage:400, fireRate:12, color:"#ff00ff", admin:true, secretSummon:true }
 };
@@ -2833,9 +3030,9 @@ function armorDescForLevel(def,level){
   return def.desc.replace("X",def.values[idx]);
 }
 const ARMOR_CRATES=[
-  {id:1,name:"Common Armor Crate",cost:6,odds:{common:55,uncommon:28,rare:12,epic:4,legendary:0.9,godly:0.1}},
-  {id:2,name:"Rare Armor Crate",cost:18,odds:{common:30,uncommon:32,rare:24,epic:10,legendary:3.5,godly:0.5}},
-  {id:3,name:"Legendary Armor Crate",cost:45,odds:{common:10,uncommon:20,rare:28,epic:25,legendary:15,godly:2}}
+  {id:1,name:"Common Armor Crate",cost:6,music:"crate1",odds:{common:55,uncommon:28,rare:12,epic:4,legendary:0.9,godly:0.1}},
+  {id:2,name:"Rare Armor Crate",cost:18,music:"crate2",odds:{common:30,uncommon:32,rare:24,epic:10,legendary:3.5,godly:0.5}},
+  {id:3,name:"Legendary Armor Crate",cost:45,music:"crate3",odds:{common:10,uncommon:20,rare:28,epic:25,legendary:15,godly:2}}
 ];
 function openArmorCrate(idx){
   const crate=ARMOR_CRATES[idx];
@@ -3191,7 +3388,7 @@ function renderArmory(){
   const groups={cheap:[],mid:[],expensive:[],areaLocked:[],summonOnly:[]};
   for(const id in TOWER_STATS){
     const s=TOWER_STATS[id];
-    if(s.admin||s.isWall) continue;
+    if(s.admin) continue;
     if(s.summonOnly) groups.summonOnly.push(id);
     else if(s.areaLocked) groups.areaLocked.push(id);
     else if(s.unlockCost<1000) groups.cheap.push(id);
@@ -3344,6 +3541,7 @@ window.openSummoning=openSummoning;
 
 function closeSummoning(){
   document.getElementById("summoning-overlay").style.display="none";
+  if(!isPlaying) AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu"));
 }
 window.closeSummoning=closeSummoning;
 
@@ -3462,11 +3660,12 @@ function summonReturnFooter(backFn){
   // if the player has enabled it in Settings; otherwise this button
   // (and only this button) sends them back.
   const auto=!!(metaData.settings && metaData.settings.autoReturnSummon);
+  const resumeLobbyMusic=()=>{ if(!isPlaying) AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu")); };
   if(auto){
-    setTimeout(()=>{ if(document.getElementById("summoning-overlay").style.display!=="none") backFn(); },1700);
+    setTimeout(()=>{ if(document.getElementById("summoning-overlay").style.display!=="none"){ resumeLobbyMusic(); backFn(); } },1700);
     return `<div style="margin-top:10px;font-family:Arial;font-size:.75rem;color:#888;">Auto-returning...</div>`;
   }
-  window.__summonReturnFn=backFn;
+  window.__summonReturnFn=()=>{ resumeLobbyMusic(); backFn(); };
   return `<button style="width:100%;margin-top:14px;" onclick="window.__summonReturnFn && window.__summonReturnFn()">RETURN</button>`;
 }
 
@@ -3478,6 +3677,7 @@ function doOpenCrateBulk(idx,count){
     showAlertModal("Not enough Summoning Tickets.");
     return;
   }
+  AudioEngine.playMusic(crate.music||"crate1");
   if(count===1){
     const res=openCrate(idx);
     if(!res.success){ playSound("denied"); showAlertModal(res.message||"Could not open crate."); return; }
@@ -3576,6 +3776,7 @@ function doOpenArmorCrate(idx){
   if(!crate) return;
   const res=openArmorCrate(idx);
   if(!res.success){ playSound("denied"); showAlertModal(res.message||"Could not open crate."); return; }
+  AudioEngine.playMusic(crate.music||"crate1");
   playSound(res.rarity==="godly"?"winGodly":(RARITY_ORDER.indexOf(res.rarity)>=3?"winRare":"winCommon"));
   const content=document.getElementById("summoning-content");
   content.innerHTML=`
@@ -4015,6 +4216,90 @@ function claimQuest(kind,idx){
 window.claimQuest=claimQuest;
 
 // ---------------------------------------------------------------------
+// LOCAL CO-OP (2 players, one device, mobile only). Both players share
+// the same board/run - this isn't two separate simulations, it's true
+// simultaneous multi-touch so two people tapping the same screen at once
+// (one on each half) can each select/build without stepping on the
+// other's tap. A dashed divider + P1/P2 labels are drawn during
+// gameplay purely as a visual guide (see draw()).
+// ---------------------------------------------------------------------
+function isMobileDevice(){
+  return ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
+}
+function initCoopNotice(){
+  const notice=document.getElementById("coop-mobile-notice");
+  if(!notice) return;
+  notice.style.display=isMobileDevice()?"flex":"none";
+}
+function dismissCoopNotice(){
+  const notice=document.getElementById("coop-mobile-notice");
+  if(notice) notice.style.display="none";
+}
+window.dismissCoopNotice=dismissCoopNotice;
+function toggleLocalCoop(){
+  localCoopMode=!localCoopMode;
+  const btn=document.getElementById("btn-local-coop");
+  if(btn) btn.innerText="LOCAL CO-OP: "+(localCoopMode?"ON":"OFF");
+  playSound("click");
+}
+window.toggleLocalCoop=toggleLocalCoop;
+
+// ---------------------------------------------------------------------
+// LEADERBOARD - local only (this game has no server/backend, so this
+// tracks and ranks YOUR OWN past runs on this device/browser, not other
+// players). Categorized into tabs by what they're ranking.
+// ---------------------------------------------------------------------
+let leaderboardTab="wave";
+function openLeaderboard(){
+  document.getElementById("main-menu").style.display="none";
+  document.getElementById("leaderboard-screen").style.display="flex";
+  leaderboardTab="wave";
+  renderLeaderboard();
+}
+window.openLeaderboard=openLeaderboard;
+function closeLeaderboard(){
+  document.getElementById("leaderboard-screen").style.display="none";
+  document.getElementById("main-menu").style.display="flex";
+}
+window.closeLeaderboard=closeLeaderboard;
+function setLeaderboardTab(tab){
+  leaderboardTab=tab;
+  ["wave","kills","records"].forEach(t=>{
+    const btn=document.getElementById("lb-tab-"+t);
+    if(btn) btn.classList.toggle("active",t===tab);
+  });
+  renderLeaderboard();
+  playSound("click");
+}
+window.setLeaderboardTab=setLeaderboardTab;
+function renderLeaderboard(){
+  const el=document.getElementById("leaderboard-content");
+  const history=metaData.runHistory||[];
+  if(leaderboardTab==="records"){
+    const s=metaData.stats||{};
+    el.innerHTML=`
+      <div class="ach-card"><div class="ach-title">Highest Wave Ever</div><div class="ach-desc">${metaData.bestWave||0}</div></div>
+      <div class="ach-card"><div class="ach-title">Total Aliens Harvested</div><div class="ach-desc">${s.totalKills||0}</div></div>
+      <div class="ach-card"><div class="ach-title">Bosses Defeated</div><div class="ach-desc">${s.bossesKilled||0}</div></div>
+      <div class="ach-card"><div class="ach-title">Areas Cleared (best run)</div><div class="ach-desc">${metaData.areasEverCleared||0} / ${AREAS.length}</div></div>
+      <div class="ach-card"><div class="ach-title">Crates Opened</div><div class="ach-desc">${(s.cratesOpened||0)+(s.armorCratesOpened||0)+(s.towerCratesOpened||0)}</div></div>
+      <div class="ach-card"><div class="ach-title">Towers Built (lifetime)</div><div class="ach-desc">${s.towersBuilt||0}</div></div>`;
+    return;
+  }
+  const sortKey=leaderboardTab==="wave"?"wave":"kills";
+  const rows=[...history].sort((a,b)=>b[sortKey]-a[sortKey]).slice(0,10);
+  if(rows.length===0){
+    el.innerHTML=`<div style="color:#666;">No completed runs logged yet - finish a mission to appear here.</div>`;
+    return;
+  }
+  el.innerHTML=rows.map((r,i)=>`
+    <div class="ach-card">
+      <div class="ach-title">#${i+1} - Wave ${r.wave} &middot; ${r.kills} kills</div>
+      <div class="ach-desc">${(MODES[r.mode]&&MODES[r.mode].name)||r.mode} &middot; ${new Date(r.date).toLocaleDateString()}</div>
+    </div>`).join("");
+}
+
+// ---------------------------------------------------------------------
 // End Credits - Star Wars style crawl, with a roll call of every area's
 // boss and whether it's been slain (metaData.bossesDefeated).
 // ---------------------------------------------------------------------
@@ -4350,10 +4635,13 @@ document.addEventListener("touchend",e=>{
 },{passive:false});
 document.addEventListener("dblclick",e=>e.preventDefault());
 
-function getCanvasCoords(e){
+function canvasPointFromClient(clientX,clientY){
   const rect=canvas.getBoundingClientRect();
+  return { x:(clientX-rect.left)*(BASE_W/rect.width), y:(clientY-rect.top)*(BASE_H/rect.height) };
+}
+function getCanvasCoords(e){
   const point=(e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
-  return { x:(point.clientX-rect.left)*(BASE_W/rect.width), y:(point.clientY-rect.top)*(BASE_H/rect.height) };
+  return canvasPointFromClient(point.clientX,point.clientY);
 }
 
 let gameLoopId, isPlaying=false, isPaused=false, gold=0, lives=20, wave=0, killsThisGame=0;
@@ -4366,7 +4654,12 @@ let mousePos={x:0,y:0};
 let lastDeathWave=0, lastDeathWasBoss=false, savedBossSnapshot=null;
 let reviveUsedThisRun=false;
 let godArmorOn=false, oneHitModeOn=false, tinyAliensOn=false, discoBallOn=false;
+let localCoopMode=false;
 let flossWallPlaced=false;
+let flossWallPlacementCount=0;
+function getFlossWallCost(){
+  return 100+flossWallPlacementCount*150;
+}
 let pendingFlossTarget=null;
 let moveModeTower=null;
 
@@ -4418,11 +4711,11 @@ function renderShopCards(){
   const loadout=adminAllTowersUnlocked
     ? Object.keys(TOWER_STATS).filter(id=>!TOWER_STATS[id].admin)
     : ((metaData.equippedTowers && metaData.equippedTowers.length) ? metaData.equippedTowers : ["acid"]);
-  const allIds=[...loadout,"flosswall"];
+  const allIds=[...loadout];
   for(const id of allIds){
     const stat=TOWER_STATS[id];
     if(!stat) continue;
-    if(id==="flosswall" && flossWallPlaced) continue;
+    if(stat.isWall && flossWallPlaced) continue;
     const card=document.createElement("div");
     card.className="tower-card";
     card.id="card-"+id;
@@ -4436,8 +4729,9 @@ function renderShopCards(){
       if(eqArmor){ const inst=(metaData.armorInstances||[]).find(c=>c.id===eqArmor); const def=inst&&ARMOR_DEFS.find(a=>a.id===inst.defId); if(def) bits.push("Armor: "+def.name+" ("+inst.durability+"/"+inst.maxDurability+")"); }
       if(bits.length) eqLine=`<div style="font-family:Arial;font-size:.7rem;color:#9fd8a0;margin-top:5px;">${bits.join(" | ")}</div>`;
     }
+    const displayCost=stat.isWall?getFlossWallCost():stat.cost;
     card.innerHTML=`<div class="t-name" style="color:${stat.color}">${stat.name}</div>
-      <div class="t-desc">${stat.desc}</div><div class="t-cost">${stat.cost} Cr</div>${eqLine}`;
+      <div class="t-desc">${stat.desc}</div><div class="t-cost">${displayCost} Cr</div>${eqLine}`;
     container.appendChild(card);
   }
 }
@@ -4446,23 +4740,32 @@ function renderShopCards(){
 // dragged around, second tap on the same spot commits the build).
 let pendingPlacement=null, lastTapTime=0, lastTapPos={x:-999,y:-999};
 
+function tryCollectGoldDrop(x,y){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    if(p.goldDrop && Math.hypot(p.x-x,p.y-y)<26){
+      if(netRole==="client"){ netSendAction("collectGold",{x,y}); return true; }
+      particles.splice(i,1);
+      const bonus=10+Math.floor(Math.random()*21);
+      gold+=bonus;
+      particles.push({floatText:true,text:"+"+bonus,x,y,vy:-1.3,life:45,color:"#ffd700"});
+      updateHUD();
+      playSound("build");
+      return true;
+    }
+  }
+  return false;
+}
+
 function handlePointerDown(x,y,isTouch){
+  if(isPlaying && tryCollectGoldDrop(x,y)) return;
   if(moveModeTower){
     const mt=moveModeTower;
-    if(!towers.includes(mt)){ moveModeTower=null; }
+    if(!(mt.id!=null ? towers.some(t=>t.id===mt.id) : towers.includes(mt))){ moveModeTower=null; }
     else if(Math.hypot(mt.x-x,mt.y-y)<25){
       moveModeTower=null; // tapped the tower itself - cancel the move
     }else if(isValidPlacement(x,y)){
-      const cost=getTowerMoveCost(mt);
-      if(cost===null || gold<cost){ playSound("denied"); }
-      else{
-        gold-=cost;
-        mt.x=x; mt.y=y;
-        mt.moveCount=(mt.moveCount||0)+1;
-        playSound("build");
-        updateHUD();
-        if(selectedTower===mt) updateUpgradePanel();
-      }
+      moveTowerTo(mt,x,y);
       moveModeTower=null;
     }else{
       playSound("denied");
@@ -4471,14 +4774,14 @@ function handlePointerDown(x,y,isTouch){
   }
   if(selectedShopItem){
     const stat=TOWER_STATS[selectedShopItem];
+    const effCost=stat.isWall?getFlossWallCost():stat.cost;
     if(selectedShopItem==="flosswall" && flossWallPlaced){ selectedShopItem=null; return; }
     if(isTouch){
       const now=performance.now();
       const closeEnough=Math.hypot(x-lastTapPos.x,y-lastTapPos.y)<40;
       if(pendingPlacement===selectedShopItem && closeEnough && (now-lastTapTime)<450){
-        if(gold>=stat.cost && isValidPlacement(x,y)){
-          buildTower(x,y,selectedShopItem);
-          playSound("build");
+        if(gold>=effCost && isValidPlacement(x,y)){
+          requestBuildTower(x,y,selectedShopItem);
           selectedShopItem=null; pendingPlacement=null;
           document.querySelectorAll(".tower-card").forEach(c=>c.classList.remove("active"));
         }
@@ -4489,9 +4792,8 @@ function handlePointerDown(x,y,isTouch){
       lastTapTime=now; lastTapPos={x,y};
       return;
     }
-    if(gold>=stat.cost && isValidPlacement(x,y)){
-      buildTower(x,y,selectedShopItem);
-      playSound("build");
+    if(gold>=effCost && isValidPlacement(x,y)){
+      requestBuildTower(x,y,selectedShopItem);
       selectedShopItem=null;
       document.querySelectorAll(".tower-card").forEach(c=>c.classList.remove("active"));
     }
@@ -4512,7 +4814,17 @@ function handlePointerDown(x,y,isTouch){
   }
 }
 canvas.addEventListener("mousedown",e=>{ const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,false); });
-canvas.addEventListener("touchstart",e=>{ e.preventDefault(); const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,true); },{passive:false});
+canvas.addEventListener("touchstart",e=>{
+  e.preventDefault();
+  if(localCoopMode){
+    for(const touch of e.changedTouches){
+      const c=canvasPointFromClient(touch.clientX,touch.clientY);
+      handlePointerDown(c.x,c.y,false);
+    }
+    return;
+  }
+  const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y; handlePointerDown(c.x,c.y,true);
+},{passive:false});
 canvas.addEventListener("touchmove",e=>{
   e.preventDefault();
   const c=getCanvasCoords(e); mousePos.x=c.x; mousePos.y=c.y;
@@ -4571,6 +4883,17 @@ function getTowerMoveCost(t){
   return null;
 }
 
+function moveTowerTo(t,x,y){
+  if(netRole==="client"){ netSendAction("moveTower",{id:t.id,x,y}); return; }
+  const cost=getTowerMoveCost(t);
+  if(cost===null || gold<cost){ playSound("denied"); return; }
+  gold-=cost;
+  t.x=x; t.y=y;
+  t.moveCount=(t.moveCount||0)+1;
+  playSound("build");
+  updateHUD();
+  if(selectedTower===t) updateUpgradePanel();
+}
 function moveSelectedTower(){
   if(!selectedTower || selectedTower.isWall) return;
   const cost=getTowerMoveCost(selectedTower);
@@ -4581,21 +4904,29 @@ function moveSelectedTower(){
 }
 window.moveSelectedTower=moveSelectedTower;
 
-function upgradeTower(){
-  if(!selectedTower || selectedTower.oneTime || selectedTower.level>=3 || selectedTower.isWall) return;
-  const cost=Math.floor(TOWER_STATS[selectedTower.type].cost*0.75*selectedTower.level);
+function upgradeTower(target){
+  const t=target||selectedTower;
+  if(!t || t.oneTime || t.level>=3 || t.isWall) return;
+  if(netRole==="client"){ netSendAction("upgradeTower",{id:t.id}); return; }
+  const cost=Math.floor(TOWER_STATS[t.type].cost*0.75*t.level);
   if(gold>=cost){
-    gold-=cost; selectedTower.level++;
-    selectedTower.range*=1.2; selectedTower.damage*=1.4;
+    gold-=cost; t.level++;
+    t.range*=1.2; t.damage*=1.4;
     playSound("upgrade"); updateHUD(); updateUpgradePanel();
   }
 }
-function sellTower(){
-  if(!selectedTower || selectedTower.isWall) return;
-  const baseVal=TOWER_STATS[selectedTower.type].cost;
-  gold+=Math.floor((baseVal+(baseVal*0.75*(selectedTower.level-1)))*0.5);
-  towers=towers.filter(t=>t!==selectedTower);
-  selectedTower=null;
+function sellTower(target){
+  const t=target||selectedTower;
+  if(!t || t.isWall) return;
+  if(netRole==="client"){
+    netSendAction("sellTower",{id:t.id});
+    if(selectedTower===t){ selectedTower=null; document.getElementById("upgrade-panel").style.display="none"; }
+    return;
+  }
+  const baseVal=TOWER_STATS[t.type].cost;
+  gold+=Math.floor((baseVal+(baseVal*0.75*(t.level-1)))*0.5);
+  towers=towers.filter(x=>x!==t);
+  if(selectedTower===t) selectedTower=null;
   document.getElementById("upgrade-panel").style.display="none";
   playSound("sell"); updateHUD(); renderShopCards();
 }
@@ -4603,11 +4934,13 @@ window.upgradeTower=upgradeTower; window.sellTower=sellTower;
 
 function flossTower(t){
   if(t.isWall || t.isFlossling || t.flossed) return;
+  if(netRole==="client"){ netSendAction("flossTower",{id:t.id}); return; }
   const idx=towers.indexOf(t);
   if(idx===-1) return;
   towers.splice(idx,1);
   for(let i=0;i<2;i++){
     towers.push({
+      id:nextTowerId(),
       x:t.x+(i===0?-20:20), y:t.y+10, type:t.type, name:t.name+" (Towerling)",
       range:t.range*0.5, damage:t.damage*0.5, fireRate:t.fireRate, color:t.color,
       cooldown:0, level:t.level, dmgDealt:0, angle:0, stunTimer:0, target:null,
@@ -4620,9 +4953,11 @@ function flossTower(t){
 }
 function fuseFlosslings(a,b){
   if(!a.isFlossling || !b.isFlossling || a.parentType!==b.parentType) return;
+  if(netRole==="client"){ netSendAction("fuseFloss",{aId:a.id,bId:b.id}); return; }
   towers=towers.filter(x=>x!==a && x!==b);
   const s=TOWER_STATS[a.parentType];
   towers.push({
+    id:nextTowerId(),
     x:(a.x+b.x)/2, y:(a.y+b.y)/2, type:a.parentType, name:s.name,
     range:s.range, damage:s.damage, fireRate:s.fireRate, color:s.color,
     cooldown:0, level:1, dmgDealt:0, angle:0, stunTimer:0, target:null,
@@ -4666,16 +5001,31 @@ function showBossWarningBanner(){
 
 function freezeForBossIntro(bossName,color,theme){
   gameFreeze=true;
-  document.getElementById("boss-intro-label").innerText="WARNING";
+  const label=document.getElementById("boss-intro-label");
+  label.innerText="WARNING";
   const nameEl=document.getElementById("boss-intro-name");
   nameEl.innerText=bossName;
   nameEl.style.color=color;
   renderAlienIcon(document.getElementById("boss-intro-canvas"),"boss",{color,theme,size:52});
   const overlay=document.getElementById("boss-intro-overlay");
+  const inner=overlay.querySelector(".boss-intro-inner");
   overlay.style.color=color;
+  inner.classList.remove("flashy-mode","retro-mode");
+  label.classList.remove("flashy-mode","retro-mode");
+  overlay.classList.remove("flash-mode");
+  void inner.offsetWidth; // restart the CSS animations from scratch each time
+  if(flashyMode){
+    inner.classList.add("flashy-mode");
+    label.classList.add("flashy-mode");
+    overlay.classList.add("flash-mode");
+  }else{
+    inner.classList.add("retro-mode");
+    label.classList.add("retro-mode");
+  }
   overlay.style.display="flex";
   setTimeout(()=>{
     overlay.style.display="none";
+    overlay.classList.remove("flash-mode");
     resumeLoopAfterFreeze();
   },2600);
 }
@@ -4905,13 +5255,26 @@ function resumeLoopAfterFreeze(){
 }
 
 function loop(){
-  if(!isPlaying || isPaused || gameFreeze) return;
+  if(!isPlaying) return;
+  if(netRole==="client"){
+    // Never simulates locally - just paints the host's latest snapshot.
+    if(selectedTower){
+      const fresh=findTowerById(selectedTower.id);
+      selectedTower=fresh||null;
+      if(fresh) updateUpgradePanel(); else document.getElementById("upgrade-panel").style.display="none";
+    }
+    draw();
+    gameLoopId=requestAnimationFrame(loop);
+    return;
+  }
+  if(isPaused || gameFreeze) return;
   speedAccumulator+=gameSpeed;
   let steps=0;
   while(speedAccumulator>=1 && steps<6){ updateStep(); speedAccumulator-=1; steps++; if(!isPlaying || gameFreeze) break; }
   if(isPlaying && !isPaused && !gameFreeze){
     if(selectedTower) updateUpgradePanel();
     draw();
+    netMaybeBroadcastState();
     gameLoopId=requestAnimationFrame(loop);
   }else if(isPlaying && !isPaused && gameFreeze){
     draw();
@@ -5055,10 +5418,17 @@ function updateStep(){
 
 function getWallSegment(){ return 2; }
 
+function requestBuildTower(x,y,type){
+  if(netRole==="client"){ netSendAction("placeTower",{x,y,type}); playSound("build"); return; }
+  buildTower(x,y,type);
+  playSound("build");
+}
 function buildTower(x,y,type){
   const s=TOWER_STATS[type];
-  gold-=s.cost;
+  gold-=s.isWall?getFlossWallCost():s.cost;
+  if(s.isWall) flossWallPlacementCount++;
   const t={
+    id:nextTowerId(),
     x,y,type,name:s.name,
     range:s.range, damage:s.damage, fireRate:s.fireRate,
     color:s.color,
@@ -5113,7 +5483,7 @@ function startGame(){
   discoveredTypes=new Set();
   enemiesLeft=0; spawnTimer=0;
   selectedShopItem=null; selectedTower=null; moveModeTower=null;
-  flossWallPlaced=false; reviveUsedThisRun=false;
+  flossWallPlaced=false; flossWallPlacementCount=0; reviveUsedThisRun=false;
   isPaused=false;
   setGameSpeed(1);
   document.getElementById("upgrade-panel").style.display="none";
@@ -5123,10 +5493,12 @@ function startGame(){
   isPlaying=true;
   updateHUD();
   gameLoopId=requestAnimationFrame(loop);
+  if(netRole==="host" && netConn && netConn.open) netConn.send({t:"start"});
 }
 
 function togglePause(){
   if(!isPlaying) return;
+  if(netRole==="client"){ netSendAction("togglePause",{}); return; }
   isPaused=!isPaused;
   document.getElementById("btn-pause").innerText=isPaused?"RESUME":"PAUSE";
   document.getElementById("btn-pause").classList.toggle("active",isPaused);
@@ -5143,6 +5515,15 @@ function flossSelectedTower(){
 window.flossSelectedTower=flossSelectedTower;
 
 function quitGame(){
+  if(netRole==="client"){
+    showConfirmModal("Leave co-op? Your teammate's mission will continue without you.", ()=>{
+      isPlaying=false;
+      cancelAnimationFrame(gameLoopId);
+      netTeardown();
+      returnToLobbyFromGameOver();
+    });
+    return;
+  }
   showConfirmModal("Abort mission? You will save your Biomass, but the run will end.", ()=>{ endGame("ABORTED"); });
 }
 
@@ -5151,10 +5532,15 @@ function endGame(status){
   isPlaying=false;
   isPaused=false;
   cancelAnimationFrame(gameLoopId);
+  if(netRole==="host" && netConn && netConn.open){ try{ netConn.send({t:"gameOver",status}); }catch(e){} }
   AudioEngine.stopMusic();
   playSound(status==="VICTORY"?"victory":"defeat");
   const previousBest=metaData.bestWave ?? 0;
   const previousUnlockedTowers=[...(metaData.unlockedAreaTowers||[])];
+  metaData.runHistory=metaData.runHistory||[];
+  metaData.runHistory.push({wave,kills:killsThisGame,mode:currentMode,date:Date.now()});
+  if(metaData.runHistory.length>50) metaData.runHistory=metaData.runHistory.slice(-50);
+  saveToStorage(metaData);
   lastDeathWave=wave;
   lastDeathWasBoss=enemies.some(e=>e.isBoss);
   if(lastDeathWasBoss){
@@ -5177,7 +5563,7 @@ function endGame(status){
     document.getElementById("go-kills").innerText=killsThisGame;
     document.getElementById("go-record").style.display=(wave>previousBest && wave>0) ? "block" : "none";
     const reviveBtn=document.getElementById("btn-revive");
-    if(status==="CORE BREACHED" && !reviveUsedThisRun){
+    if(status==="CORE BREACHED" && !reviveUsedThisRun && netRole!=="client"){
       const cost=getReviveCost();
       reviveBtn.style.display="inline-block";
       reviveBtn.innerText="REVIVE ("+cost+" Biomass)";
@@ -5260,7 +5646,8 @@ function returnToLobbyFromGameOver(){
   document.getElementById("main-menu").style.display="flex";
   updateMenuUI(); renderArmory();
   applyLobbyBackground(metaData.settings.lobbyTheme||"menu");
-  AudioEngine.playMusic(metaData.settings.lobbyTheme||"menu");
+  AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu"));
+  netUpdateLobbyUI();
 }
 window.restartFromGameOver=restartFromGameOver;
 window.returnToLobbyFromGameOver=returnToLobbyFromGameOver;
@@ -5797,7 +6184,30 @@ function draw(){
       ctx.beginPath(); ctx.moveTo(0,-p.size); ctx.lineTo(p.size,0); ctx.lineTo(0,p.size); ctx.lineTo(-p.size,0); ctx.closePath(); ctx.fill();
       ctx.restore(); continue;
     }
+    if(p.floatText){
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,Math.min(1,(p.life||0)/45));
+      ctx.fillStyle=p.color||"#fff";
+      ctx.font="bold 30px Orbitron, sans-serif";
+      ctx.textAlign="center";
+      ctx.shadowBlur=12*flashyMul(); ctx.shadowColor=p.color||"#fff";
+      ctx.fillText(p.text,p.x,p.y);
+      ctx.restore(); continue;
+    }
     ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+  }
+
+  if(localCoopMode){
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,.35)";
+    ctx.lineWidth=3; ctx.setLineDash([16,10]);
+    ctx.beginPath(); ctx.moveTo(BASE_W/2,0); ctx.lineTo(BASE_W/2,BASE_H); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font="bold 34px Orbitron, sans-serif"; ctx.textAlign="center";
+    ctx.fillStyle="rgba(255,255,255,.55)";
+    ctx.fillText("P1",BASE_W*0.25,50);
+    ctx.fillText("P2",BASE_W*0.75,50);
+    ctx.restore();
   }
 
   if(isPaused){
@@ -5810,20 +6220,260 @@ function draw(){
   }
 }
 
-canvas.addEventListener("click",e=>{
-  const c=getCanvasCoords(e);
-  for(let i=particles.length-1;i>=0;i--){
-    const p=particles[i];
-    if(p.goldDrop && Math.hypot(p.x-c.x,p.y-c.y)<20){
-      particles.splice(i,1);
-      metaData.goldMaterial=(metaData.goldMaterial||0)+1;
-      saveToStorage(metaData);
-      playSound("build");
-    }
-  }
-});
-
 resize();
+// ---------------------------------------------------------------------
+// ONLINE CO-OP (WebRTC via PeerJS, host-authoritative "shared base")
+// ---------------------------------------------------------------------
+// Model: the host runs the real simulation (updateStep) exactly as in
+// solo play. The client never simulates - each frame it just paints
+// whatever state snapshot it last received. Anything that would mutate
+// shared state (build/upgrade/sell/move/floss/fuse/collect gold/pause)
+// is intercepted on the client and sent to the host as an "action"
+// instead of being applied locally; the host applies it with its own
+// existing functions (so all the normal cost/validity checks still run)
+// and the result comes back on the next state snapshot.
+let netRole=null;          // null | "host" | "client"
+let netPeer=null, netConn=null, netConnected=false, netRoomCode=null;
+let netBroadcastFrameCounter=0;
+let netTowerIdSeq=1;
+function nextTowerId(){ return netTowerIdSeq++; }
+function findTowerById(id){ return towers.find(t=>t.id===id); }
+
+function netOpenModal(){
+  document.getElementById("coop-overlay").style.display="flex";
+  if(!netRole){
+    document.getElementById("coop-choice-view").style.display="flex";
+    document.getElementById("coop-host-view").style.display="none";
+    document.getElementById("coop-join-view").style.display="none";
+    document.getElementById("coop-waiting-view").style.display="none";
+    document.getElementById("coop-status").innerText="";
+  }
+}
+function netCloseModal(){ document.getElementById("coop-overlay").style.display="none"; }
+window.netOpenModal=netOpenModal; window.netCloseModal=netCloseModal;
+
+function netStartHost(){
+  if(typeof Peer==="undefined"){
+    document.getElementById("coop-status").innerText="Networking library failed to load. Check your connection and reload the page.";
+    return;
+  }
+  netTeardown();
+  netRole="host";
+  document.getElementById("coop-choice-view").style.display="none";
+  document.getElementById("coop-host-view").style.display="flex";
+  document.getElementById("coop-host-code").innerText="....";
+  document.getElementById("coop-status").innerText="Setting up...";
+  const code=Math.random().toString(36).slice(2,6).toUpperCase();
+  netRoomCode=code;
+  netPeer=new Peer("atd-"+code);
+  netPeer.on("open",()=>{
+    document.getElementById("coop-host-code").innerText=code;
+    document.getElementById("coop-status").innerText="Waiting for a teammate to join...";
+  });
+  netPeer.on("connection",c=>{
+    if(netConn && netConn.open){ c.close(); return; }
+    netSetupConn(c);
+  });
+  netPeer.on("error",err=>{
+    document.getElementById("coop-status").innerText="Connection error ("+(err&&err.type||"unknown")+"). Try again.";
+  });
+}
+window.netStartHost=netStartHost;
+
+function netStartJoinView(){
+  document.getElementById("coop-choice-view").style.display="none";
+  document.getElementById("coop-join-view").style.display="flex";
+  document.getElementById("coop-join-input").value="";
+  document.getElementById("coop-status").innerText="";
+}
+window.netStartJoinView=netStartJoinView;
+
+function netJoinSubmit(){
+  const raw=document.getElementById("coop-join-input").value.trim().toUpperCase();
+  if(!raw) return;
+  if(typeof Peer==="undefined"){
+    document.getElementById("coop-status").innerText="Networking library failed to load. Check your connection and reload the page.";
+    return;
+  }
+  netTeardown();
+  netRole="client";
+  document.getElementById("coop-status").innerText="Connecting...";
+  netPeer=new Peer();
+  netPeer.on("open",()=>{
+    const c=netPeer.connect("atd-"+raw,{reliable:true});
+    netSetupConn(c);
+  });
+  netPeer.on("error",()=>{
+    document.getElementById("coop-status").innerText="Couldn't connect. Check the code and try again.";
+    netRole=null;
+  });
+}
+window.netJoinSubmit=netJoinSubmit;
+
+function netSetupConn(c){
+  netConn=c;
+  netConn.on("open",()=>{
+    netConnected=true;
+    if(netRole==="host"){
+      document.getElementById("coop-status").innerText="Teammate connected! Click CLOSE, then DEPLOY DEFENSES to start together.";
+    }else{
+      document.getElementById("coop-host-view").style.display="none";
+      document.getElementById("coop-join-view").style.display="none";
+      document.getElementById("coop-waiting-view").style.display="flex";
+      document.getElementById("coop-status").innerText="Connected!";
+    }
+    netUpdateLobbyUI();
+  });
+  netConn.on("data",msg=>netHandleMessage(msg));
+  netConn.on("close",()=>netHandlePeerLeft());
+  netConn.on("error",()=>netHandlePeerLeft());
+}
+
+function netCancelSetup(){
+  netTeardown();
+  netCloseModal();
+  netUpdateLobbyUI();
+}
+window.netCancelSetup=netCancelSetup;
+
+function netTeardown(){
+  if(netConn){ try{ netConn.close(); }catch(e){} netConn=null; }
+  if(netPeer){ try{ netPeer.destroy(); }catch(e){} netPeer=null; }
+  netRole=null; netConnected=false; netRoomCode=null;
+}
+
+function netHandlePeerLeft(){
+  const wasHost=netRole==="host";
+  const wasPlaying=isPlaying;
+  netConnected=false; netConn=null;
+  if(wasHost){
+    if(wasPlaying) showAlertModal("Your teammate disconnected. You're now playing solo.",null);
+    netRole=null; netPeer=null;
+  }else{
+    if(wasPlaying){
+      isPlaying=false;
+      cancelAnimationFrame(gameLoopId);
+      showAlertModal("Connection to the host was lost.",()=>{ returnToLobbyFromGameOver(); });
+    }
+    netTeardown();
+  }
+  netUpdateLobbyUI();
+}
+
+function netUpdateLobbyUI(){
+  const waitBanner=document.getElementById("coop-client-waiting-banner");
+  const deployBtn=document.querySelector('.menu-actions button[onclick="startGame()"]');
+  const modeSel=document.getElementById("mode-select");
+  const badge=document.getElementById("coop-badge");
+  const isClientConnected=netRole==="client" && netConnected;
+  if(waitBanner) waitBanner.style.display=isClientConnected?"block":"none";
+  if(deployBtn) deployBtn.style.display=isClientConnected?"none":"inline-block";
+  if(modeSel) modeSel.style.display=isClientConnected?"none":"inline-block";
+  if(badge){
+    if(netRole==="host" && netConnected){ badge.style.display="inline-block"; badge.innerText="\uD83D\uDFE2 CO-OP HOST"; }
+    else if(netRole==="client" && netConnected){ badge.style.display="inline-block"; badge.innerText="\uD83D\uDFE2 CO-OP GUEST"; }
+    else{ badge.style.display="none"; }
+  }
+}
+
+function netSendAction(type,payload){
+  if(!netConn || !netConn.open) return;
+  try{ netConn.send({t:"action",type,payload}); }catch(e){}
+}
+
+function netHandleMessage(msg){
+  if(!msg || !msg.t) return;
+  if(msg.t==="action" && netRole==="host") netApplyAction(msg.type,msg.payload);
+  else if(msg.t==="state" && netRole==="client") netApplyState(msg);
+  else if(msg.t==="start" && netRole==="client") netEnterGameAsClient();
+  else if(msg.t==="gameOver" && netRole==="client") endGame(msg.status);
+}
+
+function netApplyAction(type,payload){
+  if(!isPlaying) return;
+  if(type==="placeTower"){
+    const stat=TOWER_STATS[payload.type];
+    if(!stat) return;
+    if(payload.type==="flosswall" && flossWallPlaced) return;
+    const effCost=stat.isWall?getFlossWallCost():stat.cost;
+    if(gold>=effCost && isValidPlacement(payload.x,payload.y)){ buildTower(payload.x,payload.y,payload.type); playSound("build"); }
+  }else if(type==="upgradeTower"){
+    const t=findTowerById(payload.id); if(t) upgradeTower(t);
+  }else if(type==="sellTower"){
+    const t=findTowerById(payload.id); if(t) sellTower(t);
+  }else if(type==="moveTower"){
+    const t=findTowerById(payload.id); if(t) moveTowerTo(t,payload.x,payload.y);
+  }else if(type==="flossTower"){
+    const t=findTowerById(payload.id); if(t) flossTower(t);
+  }else if(type==="fuseFloss"){
+    const a=findTowerById(payload.aId), b=findTowerById(payload.bId); if(a && b) fuseFlosslings(a,b);
+  }else if(type==="collectGold"){
+    tryCollectGoldDrop(payload.x,payload.y);
+  }else if(type==="togglePause"){
+    togglePause();
+  }
+}
+
+function netMaybeBroadcastState(){
+  if(netRole!=="host" || !netConn || !netConn.open) return;
+  netBroadcastFrameCounter++;
+  if(netBroadcastFrameCounter%2!==0) return; // ~30/sec at 60fps
+  netSendState();
+}
+function netSendState(){
+  const towersOut=towers.map(t=>{ const {target,...rest}=t; return rest; });
+  try{
+    netConn.send({
+      t:"state", gold, lives, wave, enemiesLeft, isPaused, killsThisGame,
+      towers:towersOut,
+      enemies:enemies.map(e=>({...e})),
+      projectiles:projectiles.map(p=>({x:p.x,y:p.y,color:p.color})),
+      particles:particles.slice(-60).map(p=>({...p}))
+    });
+  }catch(e){}
+}
+function netApplyState(msg){
+  if(!isPlaying){
+    isPlaying=true;
+    resetScreenScroll();
+    document.getElementById("game-over-screen").style.display="none";
+    document.getElementById("winner-screen").style.display="none";
+    document.getElementById("main-menu").style.display="none";
+    document.getElementById("game-container").style.display="flex";
+    gameLoopId=requestAnimationFrame(loop);
+  }
+  gold=msg.gold; lives=msg.lives; wave=msg.wave; enemiesLeft=msg.enemiesLeft;
+  killsThisGame=msg.killsThisGame;
+  towers=msg.towers; enemies=msg.enemies; projectiles=msg.projectiles; particles=msg.particles;
+  const wasPaused=isPaused;
+  isPaused=msg.isPaused;
+  if(wasPaused!==isPaused){
+    const pb=document.getElementById("btn-pause");
+    if(pb){ pb.innerText=isPaused?"RESUME":"PAUSE"; pb.classList.toggle("active",isPaused); }
+  }
+  updateHUD();
+}
+
+function netEnterGameAsClient(){
+  resetScreenScroll();
+  netCloseModal();
+  document.getElementById("main-menu").style.display="none";
+  document.getElementById("game-container").style.display="flex";
+  document.getElementById("game-over-screen").style.display="none";
+  document.getElementById("winner-screen").style.display="none";
+  resize();
+  towers=[]; enemies=[]; projectiles=[]; particles=[];
+  selectedShopItem=null; selectedTower=null; moveModeTower=null;
+  document.getElementById("upgrade-panel").style.display="none";
+  document.getElementById("shop-panel").style.display="block";
+  document.getElementById("shop-open-btn").style.display="none";
+  renderShopCards();
+  isPlaying=true; isPaused=false;
+  updateHUD();
+  netUpdateLobbyUI();
+  gameLoopId=requestAnimationFrame(loop);
+}
+
 // ---------------------------------------------------------------------
 // SECRET ADMIN PANEL
 // ---------------------------------------------------------------------
@@ -6024,6 +6674,23 @@ function setDifficultyMode(m){
   if(MODES[m]) currentMode=m;
 }
 window.setDifficultyMode=setDifficultyMode;
+
+// ---------------------------------------------------------------------
+// The Discord link + "Made by Isaac" credit should only be visible on
+// the lobby (main menu), not while browsing other screens or in-game.
+// Rather than editing every screen-open/close function, just watch the
+// main menu's own display style and mirror it onto the footer.
+// ---------------------------------------------------------------------
+(function initLobbyFooterVisibility(){
+  const mainMenu=document.getElementById("main-menu");
+  const footer=document.getElementById("lobby-footer");
+  if(!mainMenu || !footer) return;
+  function sync(){
+    footer.style.display = (mainMenu.style.display!=="none") ? "flex" : "none";
+  }
+  sync();
+  new MutationObserver(sync).observe(mainMenu,{attributes:true,attributeFilter:["style"]});
+})();
 
 </script>
 </body>
