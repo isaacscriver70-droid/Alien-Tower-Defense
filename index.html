@@ -1244,17 +1244,18 @@ button:disabled{opacity:.4;cursor:default;}
       <button class="crate-odds-toggle" style="display:block;margin:6px auto 0;" onclick="toggleDropRatePopup(event)">Area drop rates &#9662;</button>
       <div id="drop-rate-popup"></div>
     </div>
-    <button id="btn-buy-meta" onclick="requestMetaUpgrade()">Upgrade Gold (<span id="meta-cost">50</span> Biomass)</button>
-    <button id="btn-save-lobby" onclick="saveProgressManually()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">SAVE PROGRESS</button>
-    <button onclick="toggleSettings()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">SETTINGS</button>
-    <button onclick="openBestiary()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">BESTIARY</button>
-    <button onclick="openSummoning()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">SUMMONING</button>
-    <button onclick="openCrafting()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">CRAFTING</button>
-    <button onclick="openInventory()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">INVENTORY</button>
-    <button onclick="openAchievements()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">ACHIEVEMENTS</button>
-    <button onclick="openQuests()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">QUESTS</button>
-    <button onclick="openLeaderboard()" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">LEADERBOARD</button>
-    <button id="btn-open-coop" onclick="netOpenModal()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">ONLINE CO-OP</button>
+    <button onclick="startGame()">Deploy Defenses</button>
+<button id="btn-buy-meta" onclick="requestMetaUpgrade()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">Upgrade Gold (<span id="meta-cost">50</span> Biomass)</button>
+<button id="btn-save-lobby" onclick="saveProgressManually()" style="border-color:#00ffaa;color:#00ffaa;box-shadow:0 0 20px rgba(0,255,170,.5);">SAVE PROGRESS</button>
+<button onclick="toggleSettings()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">SETTINGS</button>
+<button onclick="openBestiary()" style="border-color:var(--purple);color:var(--purple);box-shadow:0 0 20px rgba(176,38,255,.5);">BESTIARY</button>
+<button onclick="openSummoning()" style="border-color:#ff6a2b;color:#ff6a2b;box-shadow:0 0 20px rgba(255,106,43,.5);">SUMMONING</button>
+<button onclick="openCrafting()" style="border-color:#ff2fd0;color:#ff2fd0;box-shadow:0 0 20px rgba(255,47,208,.5);">CRAFTING</button>
+<button onclick="openInventory()" style="border-color:#00ffaa;color:#00ffaa;box-shadow:0 0 20px rgba(0,255,170,.5);">INVENTORY</button>
+<button onclick="openAchievements()" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">ACHIEVEMENTS</button>
+<button onclick="openQuests()" style="border-color:var(--purple);color:var(--purple);box-shadow:0 0 20px rgba(176,38,255,.5);">QUESTS</button>
+<button onclick="openLeaderboard()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">LEADERBOARD</button>
+<button id="btn-open-coop" onclick="netOpenModal()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">ONLINE CO-OP</button>
     <div style="display:flex;align-items:center;gap:8px;">
       <button onclick="toggleLocalCoop()" id="btn-local-coop" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">LOCAL CO-OP: OFF</button>
       <div id="coop-mobile-notice" style="display:none;align-items:center;gap:6px;">
@@ -1407,7 +1408,14 @@ button:disabled{opacity:.4;cursor:default;}
     <button id="shop-open-btn" onclick="toggleShop()">OPEN SHOP</button>
     <button id="btn-quit" onclick="quitGame()">CANCEL MISSION</button>
   </div>
-
+<div id="coop-chat-panel" style="display:none;position:absolute;left:14px;top:70px;width:260px;z-index:36;">
+  <div id="coop-chat-log" style="height:150px;overflow-y:auto;background:rgba(0,0,0,.6);border:2px solid var(--cyan);border-radius:10px;padding:8px;font-family:Arial;font-size:.75rem;color:#cfe9ff;margin-bottom:6px;"></div>
+  <div style="display:flex;gap:6px;">
+    <input id="coop-chat-input" placeholder="Message team..." maxlength="120" style="flex:1;padding:.4em;font-family:Arial;font-size:.78rem;background:rgba(0,0,0,.6);border:2px solid var(--cyan);color:#fff;border-radius:8px;" onkeydown="if(event.key==='Enter')sendCoopChat();">
+    <button onclick="sendCoopChat()" style="padding:.4em .7em;min-height:0;font-size:.75rem;border-color:var(--cyan);color:var(--cyan);">SEND</button>
+  </div>
+</div>
+<button id="coop-chat-toggle" onclick="toggleCoopChat()" style="display:none;position:absolute;left:14px;top:70px;z-index:36;padding:.4em .8em;min-height:0;font-size:.75rem;border-color:var(--cyan);color:var(--cyan);">CHAT</button>
   <div id="game-speed-cluster">
     <button class="speed-btn" data-speed="0.5" onclick="setGameSpeed(0.5)">0.5x</button>
     <button class="speed-btn active" data-speed="1" onclick="setGameSpeed(1)">1x</button>
@@ -1523,33 +1531,45 @@ button:disabled{opacity:.4;cursor:default;}
   <div class="admin-box" style="border-color:var(--green);box-shadow:0 0 40px rgba(57,255,20,.5);width:380px;max-width:88vw;">
     <h2 style="color:var(--green);text-shadow:0 0 12px var(--green);">ONLINE CO-OP</h2>
     <div id="coop-status" style="font-family:Arial;font-size:.8rem;color:var(--cyan);min-height:18px;margin-bottom:8px;"></div>
+<div id="coop-choice-view" style="display:flex;flex-direction:column;gap:12px;">
+  <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Team up with up to 3 friends (4 total) and defend the same base together.</div>
+  <button onclick="netStartHost()">HOST A GAME</button>
+  <button onclick="netStartJoinView()">JOIN A GAME</button>
+  <button onclick="netCloseModal()" style="color:#888;border-color:#555;box-shadow:none;">CLOSE</button>
+</div>
 
-    <div id="coop-choice-view" style="display:flex;flex-direction:column;gap:12px;">
-      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Team up with a friend and defend the same base together — one shared credit pool, one shared core.</div>
-      <button onclick="netStartHost()">HOST A GAME</button>
-      <button onclick="netStartJoinView()">JOIN A GAME</button>
-      <button onclick="netCloseModal()" style="color:#888;border-color:#555;box-shadow:none;">CLOSE</button>
-    </div>
+<div id="coop-host-view" style="display:none;flex-direction:column;gap:12px;">
+  <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Share this code — up to 3 teammates can join:</div>
+  <div id="coop-host-code" style="font-size:2rem;letter-spacing:6px;color:var(--gold);text-shadow:0 0 15px var(--gold);text-align:center;">....</div>
+  <div id="coop-roster" style="font-family:Arial;font-size:.85rem;color:#39ff14;text-align:left;"></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <label style="font-family:Arial;font-size:.8rem;color:#ccc;">Difficulty:</label>
+    <select id="coop-mode-select" onchange="netHostSetMode(this.value)" style="flex:1;background:rgba(0,0,0,.5);color:var(--green);border:2px solid var(--green);border-radius:8px;padding:.4em;font-family:'Orbitron';">
+      <option value="easy">Easy</option>
+      <option value="normal" selected>Normal</option>
+      <option value="hard">Hard</option>
+      <option value="extreme">EXTREME MODE</option>
+      <option value="expert">EXPERT MODE!</option>
+    </select>
+  </div>
+  <button onclick="netHostBeginCountdown()">DEPLOY TEAM</button>
+  <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+</div>
 
-    <div id="coop-host-view" style="display:none;flex-direction:column;gap:12px;">
-      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Share this code with your teammate:</div>
-      <div id="coop-host-code" style="font-size:2rem;letter-spacing:6px;color:var(--gold);text-shadow:0 0 15px var(--gold);text-align:center;">....</div>
-      <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
-    </div>
+<div id="coop-join-view" style="display:none;flex-direction:column;gap:12px;">
+  <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Enter the host's code:</div>
+  <input type="text" id="coop-join-input" maxlength="4" placeholder="CODE" style="width:100%;box-sizing:border-box;padding:12px;font-family:'Orbitron';font-size:1.2rem;letter-spacing:6px;text-align:center;background:rgba(0,0,0,.6);border:2px solid var(--green);color:var(--green);border-radius:8px;text-transform:uppercase;" onkeydown="if(event.key==='Enter')netJoinSubmit();">
+  <div class="admin-box-actions">
+    <button onclick="netJoinSubmit()">CONNECT</button>
+    <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+  </div>
+</div>
 
-    <div id="coop-join-view" style="display:none;flex-direction:column;gap:12px;">
-      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Enter your teammate's code:</div>
-      <input type="text" id="coop-join-input" maxlength="4" placeholder="CODE" style="width:100%;box-sizing:border-box;padding:12px;font-family:'Orbitron';font-size:1.2rem;letter-spacing:6px;text-align:center;background:rgba(0,0,0,.6);border:2px solid var(--green);color:var(--green);border-radius:8px;text-transform:uppercase;" onkeydown="if(event.key==='Enter')netJoinSubmit();">
-      <div class="admin-box-actions">
-        <button onclick="netJoinSubmit()">CONNECT</button>
-        <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
-      </div>
-    </div>
-
-    <div id="coop-waiting-view" style="display:none;flex-direction:column;gap:12px;">
-      <div style="font-family:Arial;font-size:.85rem;color:var(--green);text-align:center;">Connected! Deployment will begin automatically...</div>
-      <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">LEAVE</button>
-    </div>
+<div id="coop-waiting-view" style="display:none;flex-direction:column;gap:12px;">
+  <div id="coop-roster-client" style="font-family:Arial;font-size:.85rem;color:#39ff14;text-align:left;"></div>
+  <div style="font-family:Arial;font-size:.85rem;color:var(--green);text-align:center;">Waiting for the host to deploy...</div>
+  <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">LEAVE</button>
+</div>
   </div>
 </div>
 
@@ -1633,7 +1653,16 @@ function showAlertModal(message,onOk){ showModal(message,[{label:"OK",onClick:on
 function showConfirmModal(message,onConfirm,onCancel){
   showModal(message,[{label:"CANCEL",onClick:onCancel},{label:"CONFIRM",onClick:onConfirm,danger:true}]);
 }
-
+function showModalThemed(message,buttons,color){
+  const box=document.querySelector(".ui-modal-box");
+  box.style.borderColor=color||"var(--purple)";
+  box.style.boxShadow=`0 0 40px ${color||"rgba(176,38,255,.55)"}`;
+  showModal(message,buttons);
+}
+function showAlertThemed(message,color,onOk){ showModalThemed(message,[{label:"OK",onClick:onOk}],color); }
+function showConfirmThemed(message,color,onConfirm,onCancel){
+  showModalThemed(message,[{label:"CANCEL",onClick:onCancel},{label:"CONFIRM",onClick:onConfirm,danger:true}],color);
+}
 // ---------------------------------------------------------------------
 // Click ring effect - a ring in the color of whatever was clicked
 // ---------------------------------------------------------------------
@@ -2738,7 +2767,7 @@ const ENEMY_TYPES={
   splitling:{name:"Splitling",color:"#ff99dd",size:8,hp:12,speed:2.1,reward:5,tiny:true},
   cloaked:{name:"Cloaked Stalker",color:"#888888",size:13,hp:65,speed:1.9,reward:24,cloakInterval:90,cloakDuration:45},
   juggernaut:{name:"Juggernaut",color:"#aa0000",size:22,hp:400,speed:0.6,reward:60,armored:true,heavy:true},
-  boss:{name:"Boss",color:"#00ff88",size:28,hp:850,speed:0.75,reward:200,stunRadius:250,stunDuration:90,stunInterval:75},
+  boss:{name:"Boss",color:"#00ff88",size:28,hp:850,speed:0.75,reward:200,stunRadius:130,stunDuration:55,stunInterval:95,stunIsBoss:true},
   glitch:{name:"Glitch Wisp",color:"#39ff14",size:10,hp:20,speed:3.2,reward:14,cloakInterval:55,cloakDuration:25,shape:"wisp"},
   daemon:{name:"Rogue Daemon",color:"#00ffcc",size:10,hp:20,speed:3.2,reward:14,shape:"wisp"},
   trojan:{name:"Trojan Crawler",color:"#2fbf71",size:18,hp:130,speed:0.95,reward:32,armored:true,shape:"brute"},
@@ -5168,7 +5197,9 @@ function createExplosion(x,y,color){
     particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:20+Math.random()*10,size:2+Math.random()*3,color});
   }
 }
-
+function createShockwaveRing(x,y,color){
+  particles.push({shockwave:true,x,y,color,life:34,maxLife:34,radius:10});
+}
 function pointLineDistance(px,py,x1,y1,x2,y2){
   const A=px-x1,B=py-y1,C=x2-x1,D=y2-y1;
   const len=C*C+D*D;
@@ -5300,9 +5331,14 @@ function updateStep(){
     else if(e.slowTimer>0){ e.slowTimer--; e.speed=e.baseSpeed*.5; }
     else e.speed=e.baseSpeed;
 
-    if(e.stunInterval>0 && e.stunned<=0){
+if(e.stunInterval>0 && e.stunned<=0){
       e.stunCooldown--;
-      if(e.stunCooldown<=0){ stunNearbyTowers(e); e.stunCooldown=e.stunInterval; createExplosion(e.x,e.y,e.color); }
+      if(e.stunCooldown<=0){
+        stunNearbyTowers(e);
+        e.stunCooldown=e.stunInterval;
+        if(e.isBoss) createShockwaveRing(e.x,e.y,e.color);
+        else createExplosion(e.x,e.y,e.color);
+      }
     }
     if(e.poisonTimer>0){
       e.poisonTimer--; e.hp-=e.poisonDps;
@@ -5414,14 +5450,12 @@ function updateStep(){
       projectiles.splice(i,1);
     }else{ p.x+=dx/dist*p.speed; p.y+=dy/dist*p.speed; }
   }
-
-  for(let i=particles.length-1;i>=0;i--){
+for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
-    if(p.goldDrop){ p.life--; if(p.life<=0) particles.splice(i,1); continue; }
+    if(p.goldDrop || p.shockwave){ p.life--; if(p.life<=0) particles.splice(i,1); continue; }
     p.x+=p.vx||0; p.y+=p.vy||0; p.life--;
     if(p.life<=0) particles.splice(i,1);
   }
-}
 
 function getWallSegment(){ return 2; }
 
@@ -6184,6 +6218,20 @@ function draw(){
       ctx.save(); ctx.translate(p.x,p.y+Math.sin(performance.now()/200)*3);
       ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(0,0,p.size,0,Math.PI*2); ctx.fill();
       ctx.restore(); continue;
+      if(p.shockwave){
+      const prog=1-(p.life/p.maxLife);
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,1-prog)*0.85;
+      ctx.strokeStyle=p.color;
+      ctx.lineWidth=4*flashyMul();
+      ctx.shadowBlur=20*flashyMul();
+      ctx.shadowColor=p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.radius+prog*130,0,Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+      continue;
+    }
     }
     if(p.materialDrop){
       ctx.save(); ctx.translate(p.x,p.y+Math.sin(performance.now()/220)*3);
@@ -6437,6 +6485,7 @@ function netHandlePeerLeft(){
   }
   netUpdateLobbyUI();
 }
+
 
 function netUpdateLobbyUI(){
   const waitBanner=document.getElementById("coop-client-waiting-banner");
