@@ -1547,9 +1547,16 @@ button:disabled{opacity:.4;cursor:default;}
     </div>
 
     <div id="coop-waiting-view" style="display:none;flex-direction:column;gap:12px;">
-      <div style="font-family:Arial;font-size:.85rem;color:var(--green);text-align:center;">Connected! Waiting for the host to deploy defenses...</div>
+      <div style="font-family:Arial;font-size:.85rem;color:var(--green);text-align:center;">Connected! Deployment will begin automatically...</div>
       <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">LEAVE</button>
     </div>
+  </div>
+</div>
+
+<div class="admin-overlay" id="coop-countdown-overlay" style="z-index:7000;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <div style="font-family:Arial;font-size:.9rem;letter-spacing:2px;color:var(--green);text-shadow:0 0 8px var(--green);">DEPLOYING DEFENSES</div>
+    <div id="coop-countdown-number" style="font-family:'Orbitron';font-weight:bold;font-size:5rem;color:var(--cyan);text-shadow:0 0 30px var(--cyan);">3</div>
   </div>
 </div>
 
@@ -6235,6 +6242,20 @@ resize();
 let netRole=null;          // null | "host" | "client"
 let netPeer=null, netConn=null, netConnected=false, netRoomCode=null;
 let netBroadcastFrameCounter=0;
+let netHeartbeatInterval=null, netLastMsgAt=0;
+// A handful of public STUN/TURN servers, so the connection can still find a
+// path (via relay) when both players are behind NATs that plain STUN can't
+// punch through (this is the #1 cause of "connects fine, then drops after
+// a while" or "one side never sees the other's data"). The TURN entries are
+// a free/public demo relay - fine for casual play, but if drops still happen
+// for you regularly, swapping in your own TURN credentials here is the fix.
+const NET_ICE_SERVERS=[
+  {urls:"stun:stun.l.google.com:19302"},
+  {urls:"stun:stun.relay.metered.ca:80"},
+  {urls:"turn:global.relay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
+  {urls:"turn:global.relay.metered.ca:443",username:"openrelayproject",credential:"openrelayproject"},
+  {urls:"turn:global.relay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
+];
 let netTowerIdSeq=1;
 function nextTowerId(){ return netTowerIdSeq++; }
 function findTowerById(id){ return towers.find(t=>t.id===id); }
@@ -6265,7 +6286,7 @@ function netStartHost(){
   document.getElementById("coop-status").innerText="Setting up...";
   const code=Math.random().toString(36).slice(2,6).toUpperCase();
   netRoomCode=code;
-  netPeer=new Peer("atd-"+code);
+  netPeer=new Peer("atd-"+code,{config:{iceServers:NET_ICE_SERVERS}});
   netPeer.on("open",()=>{
     document.getElementById("coop-host-code").innerText=code;
     document.getElementById("coop-status").innerText="Waiting for a teammate to join...";
@@ -6298,7 +6319,7 @@ function netJoinSubmit(){
   netTeardown();
   netRole="client";
   document.getElementById("coop-status").innerText="Connecting...";
-  netPeer=new Peer();
+  netPeer=new Peer({config:{iceServers:NET_ICE_SERVERS}});
   netPeer.on("open",()=>{
     const c=netPeer.connect("atd-"+raw,{reliable:true});
     netSetupConn(c);
@@ -6314,8 +6335,11 @@ function netSetupConn(c){
   netConn=c;
   netConn.on("open",()=>{
     netConnected=true;
+    netLastMsgAt=Date.now();
+    netStartHeartbeat();
     if(netRole==="host"){
-      document.getElementById("coop-status").innerText="Teammate connected! Click CLOSE, then DEPLOY DEFENSES to start together.";
+      document.getElementById("coop-status").innerText="Teammate connected! Deploying...";
+      netHostBeginCountdown();
     }else{
       document.getElementById("coop-host-view").style.display="none";
       document.getElementById("coop-join-view").style.display="none";
@@ -6324,10 +6348,59 @@ function netSetupConn(c){
     }
     netUpdateLobbyUI();
   });
-  netConn.on("data",msg=>netHandleMessage(msg));
+  netConn.on("data",msg=>{ netLastMsgAt=Date.now(); netHandleMessage(msg); });
   netConn.on("close",()=>netHandlePeerLeft());
   netConn.on("error",()=>netHandlePeerLeft());
 }
+
+// --- Synced countdown (replaces the old "click Deploy Defenses" manual step) ---
+let netCountdownTimer=null;
+function netShowCountdown(n){
+  const overlay=document.getElementById("coop-countdown-overlay");
+  const numEl=document.getElementById("coop-countdown-number");
+  if(!overlay||!numEl) return;
+  overlay.style.display="flex";
+  numEl.innerText=n>0?String(n):"GO!";
+}
+function netHideCountdown(){
+  clearTimeout(netCountdownTimer); netCountdownTimer=null;
+  const overlay=document.getElementById("coop-countdown-overlay");
+  if(overlay) overlay.style.display="none";
+}
+function netHostBeginCountdown(){
+  if(netRole!=="host") return;
+  if(!netConn || !netConn.open){
+    document.getElementById("coop-status").innerText="Connection isn't ready yet. Try again.";
+    return;
+  }
+  netCloseModal();
+  try{ netConn.send({t:"countdown"}); }catch(e){}
+  let n=3;
+  netShowCountdown(n);
+  const tick=()=>{
+    n--;
+    if(!netConn || !netConn.open){ netHideCountdown(); return; } // teammate left mid-countdown
+    if(n>=0){ netShowCountdown(n); netCountdownTimer=setTimeout(tick,1000); }
+    else{ netHideCountdown(); startGame(); }
+  };
+  netCountdownTimer=setTimeout(tick,1000);
+}
+
+function netStartHeartbeat(){
+  clearInterval(netHeartbeatInterval);
+  netHeartbeatInterval=setInterval(()=>{
+    if(!netConn || !netConn.open){ return; }
+    try{ netConn.send({t:"ping"}); }catch(e){}
+    // If nothing at all (ping, pong, state, or action) has come back in a
+    // while, the underlying WebRTC path is dead even though PeerJS hasn't
+    // told us yet - treat it as a real disconnect instead of leaving the
+    // other side staring at a screen forever.
+    if(netLastMsgAt && Date.now()-netLastMsgAt>12000){
+      netHandlePeerLeft();
+    }
+  },3000);
+}
+function netStopHeartbeat(){ clearInterval(netHeartbeatInterval); netHeartbeatInterval=null; }
 
 function netCancelSetup(){
   netTeardown();
@@ -6337,12 +6410,17 @@ function netCancelSetup(){
 window.netCancelSetup=netCancelSetup;
 
 function netTeardown(){
+  netStopHeartbeat();
+  netHideCountdown();
   if(netConn){ try{ netConn.close(); }catch(e){} netConn=null; }
   if(netPeer){ try{ netPeer.destroy(); }catch(e){} netPeer=null; }
   netRole=null; netConnected=false; netRoomCode=null;
 }
 
 function netHandlePeerLeft(){
+  if(netConn===null && !netConnected) return; // already handled (heartbeat + a real PeerJS event can both fire)
+  netStopHeartbeat();
+  netHideCountdown();
   const wasHost=netRole==="host";
   const wasPlaying=isPlaying;
   netConnected=false; netConn=null;
@@ -6383,9 +6461,12 @@ function netSendAction(type,payload){
 
 function netHandleMessage(msg){
   if(!msg || !msg.t) return;
+  if(msg.t==="ping"){ if(netConn && netConn.open){ try{ netConn.send({t:"pong"}); }catch(e){} } return; }
+  if(msg.t==="pong") return; // just resets netLastMsgAt (done by the caller), nothing else to do
   if(msg.t==="action" && netRole==="host") netApplyAction(msg.type,msg.payload);
   else if(msg.t==="state" && netRole==="client") netApplyState(msg);
-  else if(msg.t==="start" && netRole==="client") netEnterGameAsClient();
+  else if(msg.t==="countdown" && netRole==="client"){ netCloseModal(); netShowCountdown(3); }
+  else if(msg.t==="start" && netRole==="client"){ netHideCountdown(); netEnterGameAsClient(); }
   else if(msg.t==="gameOver" && netRole==="client") endGame(msg.status);
 }
 
@@ -6434,6 +6515,7 @@ function netSendState(){
 }
 function netApplyState(msg){
   if(!isPlaying){
+    netHideCountdown();
     isPlaying=true;
     resetScreenScroll();
     document.getElementById("game-over-screen").style.display="none";
@@ -6455,6 +6537,7 @@ function netApplyState(msg){
 }
 
 function netEnterGameAsClient(){
+  netHideCountdown();
   resetScreenScroll();
   netCloseModal();
   document.getElementById("main-menu").style.display="none";
