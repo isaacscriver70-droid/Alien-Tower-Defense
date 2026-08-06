@@ -322,7 +322,18 @@ const AudioEngine=(function(){
     if(nextEl){
       if(nextEl.paused){
         nextEl.currentTime=0;
-        nextEl.play().catch(()=>{});
+        const playPromise=nextEl.play();
+        if(playPromise && playPromise.catch){
+          playPromise.catch(()=>{
+            // Autoplay was blocked (no user gesture on THIS page yet - each
+            // page load resets that, since these are now separate HTML
+            // pages rather than one single-page app). Fall back to
+            // procedural music immediately so something plays; the next
+            // click/tap will swap back to the real track via
+            // resumeMusicIfNeeded() below.
+            if(currentMusicKey===key) startProceduralFallback(key);
+          });
+        }
       }
       fadeTo(nextEl,muted?0:musicVolume,600);
     }else{
@@ -331,10 +342,14 @@ const AudioEngine=(function(){
   }
 
   function resumeMusicIfNeeded(){
-    if(currentAudioEl && currentAudioEl.paused){
-      currentAudioEl.play().catch(()=>{});
-    }
     if(ctx && ctx.state==="suspended") ctx.resume().catch(()=>{});
+    if(currentAudioEl && currentAudioEl.paused){
+      // Retry the real track. If it succeeds, stop any procedural
+      // fallback that had taken over for this key.
+      currentAudioEl.play().then(()=>{
+        if(trackDef) stopProceduralFallback();
+      }).catch(()=>{});
+    }
   }
 
   return {
@@ -344,11 +359,16 @@ const AudioEngine=(function(){
   };
 })();
 
+// Not {once:true}: each new page load starts audio "locked" again (these
+// are now separate page loads, not one persistent single-page app), and
+// the very first click on a page can happen before music has even tried
+// to start. Retrying on every interaction is cheap (no-ops once audio is
+// already unlocked and playing) and guarantees it recovers.
 ["pointerdown","keydown"].forEach(evt=>{
   window.addEventListener(evt,()=>{
     AudioEngine.ensureCtx();
     AudioEngine.resumeMusicIfNeeded();
-  },{once:true});
+  });
 });
 
 function playSound(type){
