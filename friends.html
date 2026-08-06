@@ -11,24 +11,27 @@
 <link rel="stylesheet" href="shared/style.css">
 </head>
 <body>
-
 <div class="ui-modal-overlay" id="ui-modal-overlay">
   <div class="ui-modal-box">
     <div class="ui-modal-message" id="ui-modal-message"></div>
     <div class="ui-modal-buttons" id="ui-modal-buttons"></div>
   </div>
 </div>
-
 <div id="friends-screen" class="screen" style="display:flex;">
   <h1 style="font-size:3rem;letter-spacing:6px;">FRIENDS</h1>
-  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:.9rem;line-height:1.5;margin-bottom:16px;">
-    Local only - this is a personal roster saved on this device, not a global friends network. Add people you play Online Co-op with so you can quickly send them an invite link or save the code they give you.
+  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:.9rem;line-height:1.5;margin-bottom:10px;">
+    Add a friend by their ID below. If they're online right now with this page open, they'll get a live request to accept.
   </div>
-  <button onclick="addFriendPrompt()" style="margin-bottom:16px;">+ ADD FRIEND</button>
+  <div style="max-width:640px;text-align:center;color:#8fae8f;font-size:.85rem;margin-bottom:16px;">
+    Your ID: <b id="my-id-display" style="color:var(--gold);letter-spacing:2px;">...</b>
+    <button onclick="copyMyId()" style="min-height:0;padding:.3em .8em;font-size:.7rem;margin-left:8px;">COPY</button>
+  </div>
+  <button onclick="addFriendPrompt()" style="margin-bottom:8px;">+ ADD FRIEND</button>
+  <div id="conn-status" style="min-height:1.2em;font-size:.8rem;color:#8fae8f;margin-bottom:16px;"></div>
   <div style="max-width:640px;width:100%;" id="friends-content"></div>
   <a class="btn-link" href="index.html" style="flex-shrink:0;margin:24px 0 10px;">BACK TO LOBBY</a>
 </div>
-
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="shared/data.js"></script>
 <script src="shared/storage.js"></script>
 <script src="shared/audio.js"></script>
