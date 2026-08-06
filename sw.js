@@ -1,19 +1,43 @@
 // Minimal service worker: caches the app shell on install so the game
 // still opens (and can be installed) without a network connection.
 //
-// Bumped to v3 + switched from cache.addAll (which is atomic - one
-// missing file like a not-yet-added icon fails the ENTIRE install and
-// silently leaves nothing cached) to per-file caching, so a missing
-// icon just gets skipped instead of breaking offline support.
-const CACHE_NAME="alien-td-v3";
+// Updated for the multi-page split: every page + shared module gets
+// listed explicitly (cache.add is atomic per URL below via the
+// per-file .catch(), so one missing file never breaks the rest).
+const CACHE_NAME="alien-td-v4-split";
 const APP_SHELL=[
   "./",
   "./index.html",
+  "./game.html",
+  "./bestiary.html",
+  "./achievements.html",
+  "./quests.html",
+  "./leaderboard.html",
+  "./inventory.html",
+  "./summoning.html",
+  "./crafting.html",
   "./manifest.json",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./lobby.js",
+  "./game.js",
+  "./bestiary.js",
+  "./achievements.js",
+  "./quests-page.js",
+  "./leaderboard.js",
+  "./inventory.js",
+  "./summoning.js",
+  "./crafting.js",
+  "./shared/style.css",
+  "./shared/data.js",
+  "./shared/storage.js",
+  "./shared/audio.js",
+  "./shared/ui.js",
+  "./shared/settings.js",
+  "./shared/icons.js",
+  "./shared/quests.js",
+  "./shared/admin-meta.js"
 ];
-
 self.addEventListener("install",e=>{
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache=>
@@ -26,7 +50,6 @@ self.addEventListener("install",e=>{
   );
   self.skipWaiting();
 });
-
 self.addEventListener("activate",e=>{
   e.waitUntil(
     caches.keys().then(keys=>
@@ -35,7 +58,6 @@ self.addEventListener("activate",e=>{
   );
   self.clients.claim();
 });
-
 // Cache-first for the app shell, falling back to network (and caching
 // what we fetch) for anything else, e.g. the Google Font or music files.
 self.addEventListener("fetch",e=>{

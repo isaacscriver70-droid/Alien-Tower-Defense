@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alien TD - Quests</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+
+<div class="ui-modal-overlay" id="ui-modal-overlay">
+  <div class="ui-modal-box">
+    <div class="ui-modal-message" id="ui-modal-message"></div>
+    <div class="ui-modal-buttons" id="ui-modal-buttons"></div>
+  </div>
+</div>
+
+<div id="quests-screen" class="screen" style="display:flex;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">QUESTS</h1>
+  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:.95rem;line-height:1.5;margin-bottom:16px;">
+    Three easy Daily Quests reset every day. One tough Weekly Quest resets every week and pays out far more.
+  </div>
+  <div style="max-width:640px;width:100%;">
+    <div class="shop-title" style="color:var(--cyan);margin-bottom:10px;">DAILY QUESTS</div>
+    <div id="daily-quest-list"></div>
+    <div class="shop-title" style="color:var(--gold);margin:24px 0 10px;">WEEKLY QUEST</div>
+    <div id="weekly-quest-list"></div>
+  </div>
+  <a class="btn-link" href="index.html" style="flex-shrink:0;margin:24px 0 10px;">BACK TO LOBBY</a>
+</div>
+
+<script src="shared/data.js"></script>
+<script src="shared/storage.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/settings.js"></script>
+<script src="shared/quests.js"></script>
+<script src="quests-page.js"></script>
+</body>
+</html>

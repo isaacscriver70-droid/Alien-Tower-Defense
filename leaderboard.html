@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alien TD - Leaderboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+
+<div id="leaderboard-screen" class="screen" style="display:flex;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">LEADERBOARD</h1>
+  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:.9rem;line-height:1.5;margin-bottom:16px;">
+    Local only - this device has no server, so these are YOUR best runs, not a comparison against other players.
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
+    <button id="lb-tab-wave" class="craft-tab active" onclick="setLeaderboardTab('wave')" style="padding:.5em 1em;font-size:.85rem;">TOP WAVES</button>
+    <button id="lb-tab-kills" class="craft-tab" onclick="setLeaderboardTab('kills')" style="padding:.5em 1em;font-size:.85rem;">TOP KILLS</button>
+    <button id="lb-tab-records" class="craft-tab" onclick="setLeaderboardTab('records')" style="padding:.5em 1em;font-size:.85rem;">CAREER RECORDS</button>
+  </div>
+  <div style="max-width:640px;width:100%;" id="leaderboard-content"></div>
+  <a class="btn-link" href="index.html" style="flex-shrink:0;margin:24px 0 10px;">BACK TO LOBBY</a>
+</div>
+
+<script src="shared/data.js"></script>
+<script src="shared/storage.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/settings.js"></script>
+<script src="leaderboard.js"></script>
+</body>
+</html>

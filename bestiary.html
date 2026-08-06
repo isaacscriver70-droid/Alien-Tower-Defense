@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alien TD - Bestiary</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+
+<div class="ui-modal-overlay" id="ui-modal-overlay">
+  <div class="ui-modal-box">
+    <div class="ui-modal-message" id="ui-modal-message"></div>
+    <div class="ui-modal-buttons" id="ui-modal-buttons"></div>
+  </div>
+</div>
+
+<div id="bestiary-screen" class="screen" style="display:flex;">
+  <h1 style="font-size:3rem;letter-spacing:6px;">ALIEN BESTIARY</h1>
+  <div style="color:#9fd8a0;letter-spacing:2px;font-size:.95rem;text-transform:uppercase;margin-bottom:6px;">Field Bestiary</div>
+  <div style="max-width:640px;text-align:center;color:#c9e8c9;font-size:1rem;line-height:1.5;margin-bottom:10px;">
+    Entries unlock the moment you meet a creature in the field, grouped by the sector they call home. Undiscovered classes stay redacted.
+  </div>
+  <div id="bestiary-progress" style="color:var(--gold);font-size:.9rem;letter-spacing:1px;margin-bottom:26px;"></div>
+
+  <div style="max-width:1100px;width:100%;">
+    <div id="bestiary-roster"></div>
+    <div class="shop-title" style="color:var(--purple);margin:34px 0 16px;">SECTOR BOSSES</div>
+    <div id="bestiary-bosses"></div>
+  </div>
+
+  <a class="btn-link" href="index.html" style="flex-shrink:0;margin:34px 0 10px;">BACK TO LOBBY</a>
+</div>
+
+<script src="shared/data.js"></script>
+<script src="shared/storage.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/settings.js"></script>
+<script src="shared/icons.js"></script>
+<script src="shared/admin-meta.js"></script>
+<script src="bestiary.js"></script>
+</body>
+</html>

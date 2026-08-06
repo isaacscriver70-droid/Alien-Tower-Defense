@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alien TD - Mission</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+
+<div class="rotate-hint">
+  <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="19" x2="14" y2="19"/>
+  </svg>
+  <div style="font-size:1.1rem;letter-spacing:2px;">ROTATE YOUR DEVICE</div>
+  <div style="font-family:Arial;font-size:.85rem;color:#8fa08f;max-width:280px;">This game is designed for landscape play.</div>
+</div>
+
+<div class="ui-modal-overlay" id="ui-modal-overlay">
+  <div class="ui-modal-box">
+    <div class="ui-modal-message" id="ui-modal-message"></div>
+    <div class="ui-modal-buttons" id="ui-modal-buttons"></div>
+  </div>
+</div>
+
+<div id="game-container" style="display:flex;">
+ <div id="stage">
+  <div id="hud">
+    <div id="hud-stats-row">
+      <div class="hud-stat">CREDITS: <span id="hud-gold">0</span></div>
+      <div class="hud-stat">WAVE: <span id="hud-wave">1</span></div>
+      <div class="hud-stat" id="hud-area" style="color:var(--cyan);text-shadow:0 0 15px var(--cyan);">AREA: The Mainframe</div>
+      <div class="hud-stat">CORE SHIELDS: <span id="hud-lives">20</span></div>
+    </div>
+  </div>
+  <div id="hud-pinned">
+    <div id="coop-badge" style="display:none;font-family:Arial;font-size:.7rem;color:var(--green);background:rgba(0,0,0,.5);padding:4px 8px;border-radius:6px;border:1px solid var(--green);white-space:nowrap;"></div>
+    <button id="shop-open-btn" onclick="toggleShop()">OPEN SHOP</button>
+    <button id="btn-quit" onclick="quitGame()">CANCEL MISSION</button>
+  </div>
+
+  <div id="game-speed-cluster">
+    <button class="speed-btn" data-speed="0.5" onclick="setGameSpeed(0.5)">0.5x</button>
+    <button class="speed-btn active" data-speed="1" onclick="setGameSpeed(1)">1x</button>
+    <button class="speed-btn" data-speed="2" onclick="setGameSpeed(2)">2x</button>
+    <button class="speed-btn" data-speed="3" onclick="setGameSpeed(3)">3x</button>
+    <button class="speed-btn" onclick="togglePause()" id="btn-pause">PAUSE</button>
+  </div>
+
+  <div id="shop-panel">
+    <div class="shop-header">
+      <div class="shop-title">TACTICAL ARSENAL</div>
+      <button id="shop-close-btn" onclick="toggleShop()">HIDE</button>
+    </div>
+    <div id="shop-cards"></div>
+    <button onclick="callNextWave()" style="width:100%;padding:.7em;margin-top:5px;">CALL NEXT WAVE</button>
+  </div>
+
+  <div id="upgrade-panel">
+    <div class="shop-title" id="upg-title">Tower Selected</div>
+    <div style="font-family:Arial;font-size:.9rem;margin-bottom:10px;">
+      Damage Dealt: <span id="upg-dmg" style="color:var(--green);font-weight:bold;">0</span><br>
+      Current Level: <span id="upg-lvl">1</span>
+      <div id="upg-equip-info" style="font-family:Arial;font-size:.78rem;color:#9fd8a0;margin-top:6px;"></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button id="btn-upg" onclick="upgradeTower()" style="padding:.7em;flex:1;font-size:1rem;">UPGRADE</button>
+      <button id="btn-sell" onclick="sellTower()" style="padding:.7em;flex:1;font-size:1rem;color:var(--red);border-color:var(--red);">SELL</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button id="btn-floss" onclick="flossSelectedTower()" style="padding:.6em;flex:1;font-size:.85rem;color:var(--cyan);border-color:var(--cyan);">FLOSS</button>
+      <button id="btn-move" onclick="moveSelectedTower()" style="padding:.6em;flex:1;font-size:.85rem;color:var(--gold);border-color:var(--gold);">MOVE</button>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="game-over-screen">
+    <div class="go-title" id="go-title">CORE BREACHED</div>
+    <div class="go-stats">
+      <div>Wave Reached: <span id="go-wave">0</span></div>
+      <div>Biomass Harvested: <span id="go-kills">0</span></div>
+    </div>
+    <div class="go-record" id="go-record">&#9733; NEW BEST WAVE &#9733;</div>
+    <button id="btn-revive" class="revive-btn" onclick="requestRevive()" style="margin-top:18px;display:none;"></button>
+    <div class="go-buttons">
+      <button onclick="restartFromGameOver()">PLAY AGAIN</button>
+      <a class="btn-link" href="index.html" style="color:var(--purple);border-color:var(--purple);">RETURN TO LOBBY</a>
+    </div>
+  </div>
+
+  <div id="winner-screen">
+    <div id="confetti-layer"></div>
+    <div class="win-title">VICTORY</div>
+    <div class="win-sub">You have cleared all 10 areas and defeated the Hive Mother!</div>
+    <div class="win-stats">
+      <div>Final Wave: <span id="win-wave">0</span></div>
+      <div>Biomass Harvested: <span id="win-kills">0</span></div>
+    </div>
+    <div class="win-buttons">
+      <button onclick="restartFromGameOver()">PLAY AGAIN</button>
+      <a class="btn-link" href="index.html" style="color:var(--purple);border-color:var(--purple);">RETURN TO LOBBY</a>
+    </div>
+  </div>
+
+  <div id="boss-warning-banner"></div>
+
+  <div id="discovery-overlay">
+    <div class="discovery-inner">
+      <div class="discovery-label">NEW ALIEN DISCOVERED</div>
+      <canvas id="discovery-canvas" width="200" height="200"></canvas>
+      <div class="discovery-name" id="discovery-name"></div>
+      <div class="discovery-desc" id="discovery-desc"></div>
+    </div>
+  </div>
+
+  <div id="boss-intro-overlay">
+    <div class="boss-intro-inner">
+      <div class="boss-intro-label" id="boss-intro-label">WARNING</div>
+      <canvas id="boss-intro-canvas" width="220" height="220"></canvas>
+      <div class="boss-intro-name" id="boss-intro-name"></div>
+    </div>
+  </div>
+ </div>
+</div>
+
+<div id="tower-reward-screen">
+  <div class="tr-inner">
+    <div id="tower-reward-icon"><canvas id="tower-reward-canvas" width="90" height="90"></canvas></div>
+    <div style="font-family:'Orbitron';font-size:1.5rem;letter-spacing:3px;color:var(--gold);text-shadow:0 0 20px var(--gold);">NEW TOWER ACQUIRED</div>
+    <div id="tower-reward-name" style="font-family:'Orbitron';font-size:1.3rem;margin-top:14px;"></div>
+    <div id="tower-reward-desc" style="font-family:Arial;color:#ccc;max-width:420px;margin:14px auto 0;font-size:.9rem;line-height:1.5;"></div>
+    <button onclick="closeTowerReward()" style="margin-top:26px;border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,.5);">CONTINUE</button>
+  </div>
+</div>
+
+<div id="end-credits-screen">
+  <div id="end-credits-intro">A long time from now,<br>in a lobby far, far away...</div>
+  <div id="end-credits-scroll"></div>
+  <button id="end-credits-close-btn" onclick="closeEndCredits()">CLOSE</button>
+</div>
+
+<button id="admin-secret-btn" onclick="openAdminCodeModal()" title="&#8203;">&#9881;&#65038;</button>
+<div class="admin-overlay" id="admin-code-overlay">
+  <div class="admin-box">
+    <h2>RESTRICTED ACCESS</h2>
+    <input type="password" id="admin-code-input" maxlength="8" placeholder="ENTER CODE" inputmode="numeric" onkeydown="if(event.key==='Enter')submitAdminCode();">
+    <div id="admin-code-error"></div>
+    <div class="admin-box-actions">
+      <button onclick="submitAdminCode()">UNLOCK</button>
+      <button onclick="closeAdminCodeModal()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+    </div>
+  </div>
+</div>
+<div class="admin-panel" id="admin-panel">
+  <h3>ADMIN COMMANDS</h3>
+
+  <div class="admin-cat-label">— Mild —</div>
+  <button onclick="adminSkipWave()">SKIP WAVE</button>
+  <button onclick="adminUnlockBestiary()">UNLOCK ALL ALIENS IN BESTIARY</button>
+  <button onclick="adminGiveTicket()">+5 SUMMONING TICKETS</button>
+  <button onclick="adminHealCore1()">+1 CORE SHIELD</button>
+  <div class="admin-speed-row">
+    <input type="number" id="admin-speed-input" placeholder="X speed" step="0.1" min="0.1">
+    <button onclick="adminSetCustomSpeed()">SET</button>
+  </div>
+
+  <div class="admin-cat-label">— Strong —</div>
+  <button onclick="adminKillAllAliens()">KILL ALL ALIENS ON SCREEN</button>
+  <button onclick="adminSkipWorld()">SKIP WORLD</button>
+  <button onclick="adminInfiniteSlots()">INFINITE EQUIP SLOTS</button>
+  <button onclick="adminToggleAllTowers()" id="admin-alltowers-btn">CHOOSE ANY TOWER MID-GAME</button>
+  <button onclick="adminSummonImpostor()">SUMMON THE IMPOSTOR</button>
+  <button onclick="adminFullHeal()">RESTORE ALL CORE SHIELDS</button>
+  <button onclick="adminTinyAliens()">SHRINK RAY (TINY ALIENS)</button>
+  <button onclick="adminDiscoBall()">DISCO BALL MODE</button>
+
+  <div class="admin-cat-label">— Absurdly OP —</div>
+  <button onclick="adminInfiniteBiomass()">INFINITE BIOMASS</button>
+  <button onclick="adminInfiniteMaterials()">INFINITE MATERIALS</button>
+  <button onclick="adminInfiniteSummonTickets()">INFINITE SUMMONING TICKETS</button>
+  <button onclick="adminInfiniteCredits()">INFINITE STARTING CREDITS</button>
+  <button onclick="adminSpawnOmegaTower()">SPAWN SECRET OP TOWER</button>
+  <button onclick="adminGodArmorAll()">GIVE ALL TOWERS SECRET OP ARMOR</button>
+  <button onclick="adminOneHitMode()">ONE-HIT-KILL MODE</button>
+  <button onclick="adminEndCredits()">PLAY END CREDITS</button>
+  <button onclick="adminSpawnTinyBossArmy()">SPAWN 20 BOSSES (RIP)</button>
+
+  <div id="admin-status"></div>
+  <button id="admin-close-btn" onclick="closeAdminPanel()">CLOSE</button>
+</div>
+
+<div class="admin-overlay" id="coop-overlay">
+  <div class="admin-box" style="border-color:var(--green);box-shadow:0 0 40px rgba(57,255,20,.5);width:380px;max-width:88vw;">
+    <h2 style="color:var(--green);text-shadow:0 0 12px var(--green);">ONLINE CO-OP</h2>
+    <div id="coop-status" style="font-family:Arial;font-size:.8rem;color:var(--cyan);min-height:18px;margin-bottom:8px;"></div>
+
+    <div id="coop-choice-view" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Team up with a friend and defend the same base together — one shared credit pool, one shared core.</div>
+      <button onclick="netStartHost()">HOST A GAME</button>
+      <button onclick="netStartJoinView()">JOIN A GAME</button>
+      <a class="btn-link" href="index.html" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</a>
+    </div>
+
+    <div id="coop-host-view" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Share this code with your teammate:</div>
+      <div id="coop-host-code" style="font-size:2rem;letter-spacing:6px;color:var(--gold);text-shadow:0 0 15px var(--gold);text-align:center;">....</div>
+      <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+    </div>
+
+    <div id="coop-join-view" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Enter your teammate's code:</div>
+      <input type="text" id="coop-join-input" maxlength="4" placeholder="CODE" style="width:100%;box-sizing:border-box;padding:12px;font-family:'Orbitron';font-size:1.2rem;letter-spacing:6px;text-align:center;background:rgba(0,0,0,.6);border:2px solid var(--green);color:var(--green);border-radius:8px;text-transform:uppercase;" onkeydown="if(event.key==='Enter')netJoinSubmit();">
+      <div class="admin-box-actions">
+        <button onclick="netJoinSubmit()">CONNECT</button>
+        <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
+      </div>
+    </div>
+
+    <div id="coop-waiting-view" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-family:Arial;font-size:.85rem;color:var(--green);text-align:center;">Connected! Deployment will begin automatically...</div>
+      <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">LEAVE</button>
+    </div>
+  </div>
+</div>
+
+<div class="admin-overlay" id="coop-countdown-overlay" style="z-index:7000;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <div style="font-family:Arial;font-size:.9rem;letter-spacing:2px;color:var(--green);text-shadow:0 0 8px var(--green);">DEPLOYING DEFENSES</div>
+    <div id="coop-countdown-number" style="font-family:'Orbitron';font-weight:bold;font-size:5rem;color:var(--cyan);text-shadow:0 0 30px var(--cyan);">3</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/storage.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/ui.js"></script>
+<script src="shared/settings.js"></script>
+<script src="shared/icons.js"></script>
+<script src="shared/quests.js"></script>
+<script src="shared/admin-meta.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
