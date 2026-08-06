@@ -209,6 +209,7 @@ window.doCraftArmorCrate=doCraftArmorCrate;
 
 initMetaData(function(){
   applyLobbyBackground(metaData.settings.lobbyTheme||"menu");
+  AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu"));
   renderCraftMaterialsLine();
   setCraftTab("cards");
 });
