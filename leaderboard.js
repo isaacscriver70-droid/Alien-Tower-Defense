@@ -42,5 +42,6 @@ function renderLeaderboard(){
 
 initMetaData(function(){
   applyLobbyBackground(metaData.settings.lobbyTheme||"menu");
+  AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu"));
   renderLeaderboard();
 });

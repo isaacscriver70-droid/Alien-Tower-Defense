@@ -161,11 +161,12 @@ window.toggleArmorCrateOdds=toggleArmorCrateOdds;
 
 function summonReturnFooter(backFn){
   const auto=!!(metaData.settings && metaData.settings.autoReturnSummon);
+  const resumeLobbyMusic=()=>{ AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu")); };
   if(auto){
-    setTimeout(()=>{ if(document.getElementById("summoning-content")){ backFn(); } },1700);
+    setTimeout(()=>{ if(document.getElementById("summoning-content")){ resumeLobbyMusic(); backFn(); } },1700);
     return `<div style="margin-top:10px;font-family:Arial;font-size:.75rem;color:#888;">Auto-returning...</div>`;
   }
-  window.__summonReturnFn=()=>{ backFn(); };
+  window.__summonReturnFn=()=>{ resumeLobbyMusic(); backFn(); };
   return `<button style="width:100%;margin-top:14px;" onclick="window.__summonReturnFn && window.__summonReturnFn()">RETURN</button>`;
 }
 
@@ -320,5 +321,6 @@ window.spinSecretTurret=spinSecretTurret;
 
 initMetaData(function(){
   applyLobbyBackground(metaData.settings.lobbyTheme||"menu");
+  AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu"));
   renderSummoningHub();
 });

@@ -156,6 +156,7 @@ function buildBestiary(){
 
 initMetaData(function(){
   applyLobbyBackground(metaData.settings.lobbyTheme||"menu");
+  AudioEngine.playMusic(lobbyMusicKeyFor(metaData.settings.lobbyTheme||"menu"));
   buildBestiary();
   startBestiaryAnimation();
 });
