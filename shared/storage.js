@@ -50,6 +50,8 @@ function defaultCustomThemes(){
 
 function defaultLocalState(){
   return {
+    playerName:null,
+    friends:[],
     biomass:0,
     bestWave:0,
     goldLevel:0,
@@ -244,6 +246,8 @@ function migrateMetaData(data){
   if(metaData.achievementsClaimed===undefined) metaData.achievementsClaimed=[];
   if(metaData.bossesDefeated===undefined) metaData.bossesDefeated=[];
   if(metaData.runHistory===undefined) metaData.runHistory=[];
+  if(metaData.playerName===undefined) metaData.playerName=null;
+  if(metaData.friends===undefined) metaData.friends=[];
   if(metaData.settings.autoReturnSummon===undefined) metaData.settings.autoReturnSummon=false;
 
   if(metaData.cardInstances===undefined) metaData.cardInstances=[];
@@ -272,6 +276,8 @@ function migrateMetaData(data){
   return metaData;
 }
 
+function getPlayerName(){ return (metaData && metaData.playerName) || "Commander"; }
+
 // Call once per page: initMetaData(function(metaData){ ...render page... })
 function initMetaData(onReady){
   requestPersistentStorage();
@@ -285,10 +291,12 @@ function initMetaData(onReady){
         AudioEngine.setSfxVolume(metaData.settings.sfxVolume/100);
         AudioEngine.setMuted(!!metaData.settings.muted);
       }
-      onReady(metaData);
+      if(typeof ensurePlayerName==="function") ensurePlayerName(()=>onReady(metaData));
+      else onReady(metaData);
     })
     .catch(()=>{
       migrateMetaData(defaultLocalState());
-      onReady(metaData);
+      if(typeof ensurePlayerName==="function") ensurePlayerName(()=>onReady(metaData));
+      else onReady(metaData);
     });
 }

@@ -35,7 +35,7 @@ function renderLeaderboard(){
   }
   el.innerHTML=rows.map((r,i)=>`
     <div class="ach-card">
-      <div class="ach-title">#${i+1} - Wave ${r.wave} &middot; ${r.kills} kills</div>
+      <div class="ach-title">#${i+1} - ${escapeHtml(r.name||"Commander")} - Wave ${r.wave} &middot; ${r.kills} kills</div>
       <div class="ach-desc">${(MODES[r.mode]&&MODES[r.mode].name)||r.mode} &middot; ${new Date(r.date).toLocaleDateString()}</div>
     </div>`).join("");
 }

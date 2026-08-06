@@ -897,7 +897,7 @@ function endGame(status){
   const previousBest=metaData.bestWave ?? 0;
   const previousUnlockedTowers=[...(metaData.unlockedAreaTowers||[])];
   metaData.runHistory=metaData.runHistory||[];
-  metaData.runHistory.push({wave,kills:killsThisGame,mode:currentMode,date:Date.now()});
+  metaData.runHistory.push({wave,kills:killsThisGame,mode:currentMode,date:Date.now(),name:getPlayerName()});
   if(metaData.runHistory.length>50) metaData.runHistory=metaData.runHistory.slice(-50);
   saveToStorage(metaData);
   lastDeathWave=wave;
@@ -1314,6 +1314,68 @@ let netTowerIdSeq=1;
 function nextTowerId(){ return netTowerIdSeq++; }
 function findTowerById(id){ return towers.find(t=>t.id===id); }
 
+// -- Invite links & friends quick-fill (local-only, no server) --------
+function netBuildInviteLink(code){
+  return window.location.origin+window.location.pathname+"?coop=online&join="+code;
+}
+function netCopyLinkToClipboard(text,statusPrefix){
+  const done=()=>{ document.getElementById("coop-status").innerText=statusPrefix+" Invite link copied!"; };
+  const fail=()=>{ document.getElementById("coop-status").innerText=statusPrefix+" Couldn't copy - link: "+text; };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fail);
+  }else{
+    fail();
+  }
+}
+function netCopyInviteLink(){
+  if(!netRoomCode) return;
+  netCopyLinkToClipboard(netBuildInviteLink(netRoomCode),"");
+  playSound("click");
+}
+window.netCopyInviteLink=netCopyInviteLink;
+
+function netOpenInviteFriendPicker(){
+  if(!netRoomCode) return;
+  const friends=metaData.friends||[];
+  if(friends.length===0) return;
+  const buttons=friends.map(f=>({
+    label:f.name,
+    onClick:()=>netInviteFriend(f)
+  }));
+  buttons.push({label:"CANCEL"});
+  showModal("Send an invite link to:",buttons);
+}
+window.netOpenInviteFriendPicker=netOpenInviteFriendPicker;
+
+function netInviteFriend(friend){
+  friend.code=netRoomCode;
+  saveToStorage(metaData);
+  const link=netBuildInviteLink(netRoomCode);
+  if(navigator.share){
+    navigator.share({title:"Alien TD co-op",text:"Join my Alien TD squad, "+friend.name+"! Code: "+netRoomCode,url:link})
+      .catch(()=>{ netCopyLinkToClipboard(link,"For "+friend.name+":"); });
+  }else{
+    netCopyLinkToClipboard(link,"For "+friend.name+":");
+  }
+}
+
+function netRenderFriendsQuicklist(){
+  const wrap=document.getElementById("coop-friends-quicklist");
+  const friends=(metaData.friends||[]).filter(f=>f.code);
+  if(!wrap) return;
+  if(friends.length===0){ wrap.style.display="none"; wrap.innerHTML=""; return; }
+  wrap.style.display="flex";
+  wrap.innerHTML=`<div style="font-family:Arial;font-size:.72rem;color:#888;text-align:center;">Or fill in a saved friend's code:</div>`+
+    friends.map(f=>`<button onclick="netFillJoinCode('${f.id}')" style="min-height:0;padding:.4em .8em;font-size:.78rem;color:var(--cyan);border-color:var(--cyan);box-shadow:none;">${escapeHtml(f.name)} - ${escapeHtml(f.code)}</button>`).join("");
+}
+function netFillJoinCode(friendId){
+  const friend=(metaData.friends||[]).find(f=>f.id===friendId);
+  if(!friend) return;
+  document.getElementById("coop-join-input").value=friend.code;
+  playSound("click");
+}
+window.netFillJoinCode=netFillJoinCode;
+
 function netOpenModal(){
   document.getElementById("coop-overlay").style.display="flex";
   if(!netRole){
@@ -1340,10 +1402,14 @@ function netStartHost(){
   document.getElementById("coop-status").innerText="Setting up...";
   const code=Math.random().toString(36).slice(2,6).toUpperCase();
   netRoomCode=code;
+  document.getElementById("coop-invite-friend-btn").disabled=true;
+  document.getElementById("coop-copy-link-btn").disabled=true;
   netPeer=new Peer("atd-"+code,{config:{iceServers:NET_ICE_SERVERS}});
   netPeer.on("open",()=>{
     document.getElementById("coop-host-code").innerText=code;
     document.getElementById("coop-status").innerText="Waiting for a teammate to join...";
+    document.getElementById("coop-invite-friend-btn").disabled=(metaData.friends||[]).length===0;
+    document.getElementById("coop-copy-link-btn").disabled=false;
   });
   netPeer.on("connection",c=>{
     if(netConn && netConn.open){ c.close(); return; }
@@ -1355,11 +1421,12 @@ function netStartHost(){
 }
 window.netStartHost=netStartHost;
 
-function netStartJoinView(){
+function netStartJoinView(prefillCode){
   document.getElementById("coop-choice-view").style.display="none";
   document.getElementById("coop-join-view").style.display="flex";
-  document.getElementById("coop-join-input").value="";
-  document.getElementById("coop-status").innerText="";
+  document.getElementById("coop-join-input").value=prefillCode||"";
+  document.getElementById("coop-status").innerText=prefillCode?"Code filled in from your invite link - hit CONNECT.":"";
+  netRenderFriendsQuicklist();
 }
 window.netStartJoinView=netStartJoinView;
 
@@ -1707,7 +1774,9 @@ initMetaData(function(){
   ensureQuestsFresh();
   const params=new URLSearchParams(window.location.search);
   if(params.get("coop")==="online"){
+    const joinCode=(params.get("join")||"").trim().toUpperCase().slice(0,4);
     netOpenModal();
+    if(joinCode) netStartJoinView(joinCode);
   }else if(params.get("autostart")==="1"){
     startGame();
   }else{

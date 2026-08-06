@@ -131,6 +131,13 @@ const AudioEngine=(function(){
 
   const musicElements={};
   let currentAudioEl=null;
+  // When a real track's play() is rejected by the browser's autoplay
+  // policy (not a load error), we fall back to the procedural track but
+  // must NOT lose the reference to the real element - stopFilePlayback()
+  // nulls currentAudioEl when procedural fallback takes over, so without
+  // this separate reference resumeMusicIfNeeded() would have nothing to
+  // retry once the player finally interacts.
+  let blockedEl=null, blockedKey=null;
 
   function getMusicEl(key){
     if(musicElements[key]) return musicElements[key];
@@ -302,6 +309,7 @@ const AudioEngine=(function(){
 
   function stopMusic(){
     currentMusicKey=null;
+    blockedEl=null; blockedKey=null;
     stopFilePlayback();
     stopProceduralFallback();
   }
@@ -311,6 +319,8 @@ const AudioEngine=(function(){
     currentMusicKey=key;
     ensureCtx();
     stopProceduralFallback();
+    // A pending retry for a previous (now-stale) key is no longer relevant.
+    blockedEl=null; blockedKey=null;
 
     const prevEl=currentAudioEl;
     const nextEl=getMusicEl(key);
@@ -328,10 +338,13 @@ const AudioEngine=(function(){
             // Autoplay was blocked (no user gesture on THIS page yet - each
             // page load resets that, since these are now separate HTML
             // pages rather than one single-page app). Fall back to
-            // procedural music immediately so something plays; the next
-            // click/tap will swap back to the real track via
-            // resumeMusicIfNeeded() below.
-            if(currentMusicKey===key) startProceduralFallback(key);
+            // procedural music immediately so something plays, but keep
+            // hold of the real element so a later gesture can swap back
+            // to it via resumeMusicIfNeeded() below.
+            if(currentMusicKey===key){
+              blockedEl=nextEl; blockedKey=key;
+              startProceduralFallback(key);
+            }
           });
         }
       }
@@ -348,6 +361,16 @@ const AudioEngine=(function(){
       // fallback that had taken over for this key.
       currentAudioEl.play().then(()=>{
         if(trackDef) stopProceduralFallback();
+      }).catch(()=>{});
+    }else if(blockedEl && blockedKey===currentMusicKey && blockedEl.paused){
+      // Procedural fallback took over earlier because the real track's
+      // autoplay was blocked. Now that we have a genuine gesture, retry
+      // the real element and swap back to it on success.
+      blockedEl.play().then(()=>{
+        stopProceduralFallback();
+        currentAudioEl=blockedEl;
+        fadeTo(currentAudioEl,muted?0:musicVolume,300);
+        blockedEl=null; blockedKey=null;
       }).catch(()=>{});
     }
   }

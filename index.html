@@ -31,6 +31,7 @@
 
 <div id="main-menu" class="screen">
   <h1>ALIEN TOWER DEFENSE</h1>
+  <div id="welcome-name" style="font-family:Arial;font-size:.85rem;color:#9fd8a0;margin:-10px 0 10px;"></div>
 
   <div class="meta-stats" id="meta-stats" style="display:none;">
     <div>Highest Wave: <span id="m-wave">0</span></div>
@@ -66,6 +67,7 @@
     <a class="btn-link" href="achievements.html">ACHIEVEMENTS</a>
     <a class="btn-link" href="quests.html">QUESTS</a>
     <a class="btn-link" href="leaderboard.html">LEADERBOARD</a>
+    <a class="btn-link" href="friends.html">FRIENDS</a>
     <button id="btn-open-coop" onclick="goOnlineCoop()" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.5);">ONLINE CO-OP</button>
     <div style="display:flex;align-items:center;gap:8px;">
       <button onclick="toggleLocalCoop()" id="btn-local-coop" style="border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),.5);">LOCAL CO-OP: OFF</button>
@@ -79,6 +81,11 @@
 
   <div class="settings-panel" id="settings-panel" style="display:none;">
     <div class="shop-title" style="color:var(--cyan);margin-bottom:14px;">SETTINGS</div>
+    <div class="settings-row">
+      <label style="flex:none;">Player Name</label>
+      <span id="settings-player-name" style="color:var(--cyan);font-weight:bold;flex:1;text-align:center;">-</span>
+      <button onclick="openChangeNameModal()" style="min-height:0;padding:.35em .8em;font-size:.75rem;flex:none;">CHANGE</button>
+    </div>
     <div class="settings-row">
       <label for="music-vol-slider">Music Volume</label>
       <input type="range" id="music-vol-slider" min="0" max="100" value="50" oninput="updateSetting('musicVolume', this.value)">

@@ -209,12 +209,17 @@
     <div id="coop-host-view" style="display:none;flex-direction:column;gap:12px;">
       <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Share this code with your teammate:</div>
       <div id="coop-host-code" style="font-size:2rem;letter-spacing:6px;color:var(--gold);text-shadow:0 0 15px var(--gold);text-align:center;">....</div>
+      <div class="admin-box-actions">
+        <button id="coop-invite-friend-btn" onclick="netOpenInviteFriendPicker()" disabled>INVITE A FRIEND</button>
+        <button id="coop-copy-link-btn" onclick="netCopyInviteLink()" disabled style="color:var(--cyan);border-color:var(--cyan);">COPY LINK</button>
+      </div>
       <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>
     </div>
 
     <div id="coop-join-view" style="display:none;flex-direction:column;gap:12px;">
       <div style="font-family:Arial;font-size:.8rem;color:#9fd8a0;">Enter your teammate's code:</div>
       <input type="text" id="coop-join-input" maxlength="4" placeholder="CODE" style="width:100%;box-sizing:border-box;padding:12px;font-family:'Orbitron';font-size:1.2rem;letter-spacing:6px;text-align:center;background:rgba(0,0,0,.6);border:2px solid var(--green);color:var(--green);border-radius:8px;text-transform:uppercase;" onkeydown="if(event.key==='Enter')netJoinSubmit();">
+      <div id="coop-friends-quicklist" style="display:none;flex-direction:column;gap:6px;"></div>
       <div class="admin-box-actions">
         <button onclick="netJoinSubmit()">CONNECT</button>
         <button onclick="netCancelSetup()" style="color:#888;border-color:#555;box-shadow:none;">CANCEL</button>

@@ -36,6 +36,10 @@ document.getElementById("loader").style.display="block";
 
 initMetaData(function(){
   document.getElementById("loader").style.display="none";
+  const welcomeEl=document.getElementById("welcome-name");
+  if(welcomeEl) welcomeEl.innerText="Commander: "+getPlayerName();
+  const nameSettingEl=document.getElementById("settings-player-name");
+  if(nameSettingEl) nameSettingEl.innerText=getPlayerName();
   document.getElementById("meta-stats").style.display="block";
   document.getElementById("armory-panel").style.display="block";
   updateMenuUI();
