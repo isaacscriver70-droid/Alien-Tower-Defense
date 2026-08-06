@@ -4,7 +4,7 @@
 // Updated for the multi-page split: every page + shared module gets
 // listed explicitly (cache.add is atomic per URL below via the
 // per-file .catch(), so one missing file never breaks the rest).
-const CACHE_NAME="alien-td-v4-split";
+const CACHE_NAME="alien-td-v5-friends";
 const APP_SHELL=[
   "./",
   "./index.html",
@@ -16,6 +16,7 @@ const APP_SHELL=[
   "./inventory.html",
   "./summoning.html",
   "./crafting.html",
+  "./friends.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
@@ -28,6 +29,7 @@ const APP_SHELL=[
   "./inventory.js",
   "./summoning.js",
   "./crafting.js",
+  "./friends.js",
   "./shared/style.css",
   "./shared/data.js",
   "./shared/storage.js",
